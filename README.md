@@ -41,9 +41,27 @@ Docugent creates scoped documentation folders like:
 
 These files help AI agents align with your project’s intent and follow a consistent build protocol.
 
-## 🧪 Test Locally
+## 📦 Features
 
-Run tests using Vitest:
+- Scaffolds folders like `ux/`, `mvc/`, `db-schema/`, `devops/`, and more
+- Prevents overwriting existing `.md` files by default
+- Supports `--force` and `--backup` for controlled overwrites
+- Designed for use with tools like Codex CLI or Claude
+
+## 🚀 Usage
+
+```bash
+# Scaffold core structure
+docugent scaffold core
+
+# Add devops structure (with backup protection)
+docugent scaffold devops --force --backup
+
+## 🧪 Test the CLI
+
+These commands are for contributors working on Docugent itself.
+
+Run unit tests using Vitest:
 
 ```bash
 npm run test
@@ -53,6 +71,9 @@ Watch test output live:
 
 ```bash
 npm run test:watch
+```
+
+Note: This is for testing the CLI generator—not your `.docugent/` scaffolds.
 ```
 
 ---
