@@ -1,0 +1,20 @@
+{
+  "name": "docugent",
+  "version": "0.1.0",
+  "description": "Scaffold AI-ready .docugent folders with checklists for docu-first development",
+  "main": "bin/docugent.js",
+  "bin": {
+    "docugent": "./bin/docugent.js"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "preferGlobal": true,
+  "author": "Pong",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "fs-extra": "^11.1.1"
+  }
+}
