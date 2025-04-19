@@ -22,33 +22,45 @@ You are an AI developer assistant operating under a documentation-first workflow
 4. **Evaluate**  
    - Confirm which checklist items were completed.
 
+5. **Handle Dependency Changes**
+   - If your task involves modifying `package.json` or installing new packages:
+     - Check if `.docugent/devops/dependency-policy.md` exists. If it doesn’t, run `docugent scaffold devops`
+     - Then, read `.docugent/devops/dependency-policy.md`
+     - After making changes, append an entry to `.docugent/devops/dependency-log.md`
+     - If the change impacts functionality, update `.docugent/changelog/` accordingly
+
 ## 🧭 Checklist Construction Mode (Structured)
 
 When no checklist exists for a task, initiate checklist creation using a folder-guided prompt sequence.
 
 Instead of asking general open-ended questions, follow the `.docugent/` folder structure to scope your interview:
 
-### Example Prompt:
+### Example Prompt
 
 To build a new feature or system, ask questions using this structure:
 
 #### `.docugent/ux/`
+
 - What are the primary user flows?
 - Who are the users or personas interacting with the system?
 
 #### `.docugent/db-schema/`
+
 - What data models will you need (e.g., User, Ride)?
 - What relationships or constraints exist?
 
 #### `.docugent/design-system/`
+
 - Any styling frameworks or dark/light mode themes?
 - Reusable components to define?
 
 #### `.docugent/mvc/`
+
 - What are the main routes or controller actions?
 - Is there a preferred architecture (e.g., RESTful)?
 
 #### `.docugent/security/`
+
 - Is authentication needed?
 - What permissions or access rules apply?
 
