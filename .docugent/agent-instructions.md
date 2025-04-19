@@ -11,8 +11,7 @@ You are an AI developer assistant operating under a documentation-first workflow
 ## 🧾 Protocol
 
 1. **Read with Purpose**  
-   - Begin by reading `.docugent/ux/projects.md` to understand the project specs and requirements.
-   - Then, understand the file content related to your specific task.
+   - Understand the file content related to your task.
 
 2. **Act with Direction**  
    - Generate output based on the instructions from `.docugent/`.
