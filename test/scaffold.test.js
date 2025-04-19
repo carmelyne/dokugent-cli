@@ -1,11 +1,13 @@
 import { describe, it, beforeAll, expect } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
+import os from 'os';
+import { mkdtempSync } from 'fs';
 import { scaffoldApp } from '../lib/scaffold.js';
 import { folderGroups } from '../lib/scaffold-groups.js'; // 🔁 We'll extract this next
 
 describe('docugent scaffold (core)', () => {
-  const testDir = path.resolve('.docugent');
+  const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docugent-test-'));
 
   // Flatten the folderGroups.core into a flat list of scaffolded paths
   const expectedFiles = [
@@ -23,14 +25,18 @@ describe('docugent scaffold (core)', () => {
     'changelog/v0.1.md',
   ];
 
+  let originalCwd;
+
   beforeAll(() => {
-    fs.removeSync(testDir);
+    originalCwd = process.cwd();
+    process.chdir(testDir);
     scaffoldApp('core', { withChecklists: true });
+    process.chdir(originalCwd);
   });
 
   expectedFiles.forEach(relativePath => {
     it(`should create .docugent/${relativePath}`, () => {
-      const fullPath = path.join(testDir, relativePath);
+      const fullPath = path.join(testDir, '.docugent', relativePath);
       const exists = fs.existsSync(fullPath);
 
       // Log the actual file existence check
