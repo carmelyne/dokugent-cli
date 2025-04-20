@@ -13,6 +13,11 @@ This document outlines the final steps before we ship Docugent as a public beta.
 - Agent instruction protocol defined
 - Token-efficient file structure
 - Tests pass without nuking presets
+- Agent-ready templates for:
+  - `qa/checklist.md`, `security/auth.md`, `db-schema/models.md`
+  - `mvc/controllers.md`, `mvc/models.md`, `mvc/views.md`, `mvc/routes.md`
+  - `agent-briefings/claude.md`, `agent-briefings/codex.md`
+- README updated with usage, customization tips, and About context
 
 ---
 
@@ -20,12 +25,11 @@ This document outlines the final steps before we ship Docugent as a public beta.
 
 ### Template Completion
 
-- [ ] create a flattened claude/codex.md
-- [ ] `qa/checklist.md`
+- [X] `qa/checklist.md`
 - [ ] `qa/edge-cases.md`
 - [ ] `testing/unit.md`
 - [ ] `testing/manual.md`
-- [ ] `security/auth.md`
+- [X] `security/auth.md`
 - [ ] `tech-seo/meta.md`
 - [ ] `tech-seo/sitemap.md`
 - [ ] `marketing/launch-checklist.md`
