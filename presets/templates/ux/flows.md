@@ -1,15 +1,19 @@
-# User Flows
+# UX – User Flows
 
-<!-- AI: This file is a reusable pattern. Follow checklist format unless instructed otherwise. -->
+This file defines the main user flows an application should support. It is designed for agent-assisted app building, prototyping, or documentation. Checklists below are agent-readable and follow a predictable structure.
 
-- Request Ride
-  - [ ] User opens app
-  - [ ] Enters pickup/drop-off
-  - [ ] Confirms ride
-  - [ ] Gets matched to driver
+## 🔄 Request Ride
 
-- Cancel Ride
-  - [ ] Cancels before match
-  - [ ] Notifies driver (if assigned)
+- [ ] User opens app
+- [ ] User enters pickup and drop-off location
+- [ ] User confirms ride request
+- [ ] System matches user to a driver
 
-<!-- Cross-ref views.md and controllers.md for action mappings -->
+## ❌ Cancel Ride
+
+- [ ] User cancels before a match is made
+- [ ] System notifies assigned driver (if applicable)
+
+---
+
+🧠 AI Note: These flows should be cross-referenced with `mvc/views.md` and `mvc/controllers.md` to map visual and backend behavior.

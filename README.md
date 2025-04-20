@@ -1,6 +1,16 @@
-# Docugent CLI (Alpha)
+# Docugent CLI
 
-Docugent is a documentation-first CLI tool that scaffolds AI-readable project structure. It helps agents like Codex and Claude understand, build, and track tasks based on human-friendly, folder-aligned checklists.
+*Alpha release – under active development*
+
+## 🧬 About
+
+AI agents need more than raw code—they need context, structure, and guidance.
+
+**Docugent** was built to solve that. It’s a CLI tool that scaffolds documentation blueprints designed for agent consumption. Instead of bloated repos or scattered prompts, Docugent gives your AI teammates a clean, token-efficient folder of structured instructions, ready to reuse across projects.
+
+While originally designed for developers, Docugent’s modular folder structure can be adapted for structured thinking in other fields—content planning, education, research, and beyond.
+
+With Docugent, your documentation becomes a reusable memory scaffold.
 
 ## 🚀 Getting Started
 
@@ -10,15 +20,13 @@ Install globally:
 npm install -g docugent
 ```
 
-## 📦 Scaffold a Project
-
-Generate a `.docugent/` folder for your current project:
+Then scaffold a `.docugent/` folder in your project:
 
 ```bash
 docugent scaffold core
 ```
 
-You can also scaffold additional documentation:
+Or scaffold other scoped documentation:
 
 ```bash
 docugent scaffold addons
@@ -26,40 +34,63 @@ docugent scaffold tech-seo
 docugent scaffold changelog
 ```
 
-## 🧠 How It Works
-
-Docugent creates scoped documentation folders like:
-
-```
-.docugent/
-  ├─ ux/
-  ├─ mvc/
-  ├─ db-schema/
-  ├─ design-system/
-  ├─ agent-instructions.md
-```
-
-These files help AI agents align with your project’s intent and follow a consistent build protocol.
-
-## 📦 Features
-
-- Scaffolds folders like `ux/`, `mvc/`, `db-schema/`, `devops/`, and more
-- Prevents overwriting existing `.md` files by default
-- Supports `--force` and `--backup` for controlled overwrites
-- Designed for use with tools like Codex CLI or Claude
-
-## 🚀 Usage
+## 🛠️ CLI Commands
 
 ```bash
 # Scaffold core structure
 docugent scaffold core
 
-# Add devops structure (with backup protection)
-docugent scaffold devops --force --backup
+# Add checklists (optional)
+docugent scaffold core --with-checklists
 
-## 🧪 Test the CLI
+# Enable safe overwrites
+docugent scaffold core --force --backup
+```
 
-These commands are for contributors working on Docugent itself.
+### Tips & Customization
+
+- Use `--backup` to automatically create `.bak` files for anything being overwritten.
+- Folder scaffolding is modular and opt-in. You can scaffold specific scopes like `tech-seo`, `addons`, or `qa` independently.
+- Advanced behavior (e.g. token limits, file exclusions) can be customized using `.docugent/llm-load.yml` or `.docugent/agent.yml`.
+
+## 🧠 How It Works
+
+Docugent creates a folder of structured, markdown-based blueprints under `.docugent/`. These are designed to be consumed by LLMs and reused across build workflows.
+
+Example folder structure:
+
+```
+.docugent/
+├── qa/
+│   └── checklist.md
+├── security/
+│   └── auth.md
+├── agent-instructions.md
+├── README.md
+```
+
+Files are grouped by scope and optimized for token efficiency. You can generate agent-briefings using:
+
+```bash
+docugent scaffold core --llm=claude
+```
+
+Which outputs:
+
+```
+.docugent/agent-briefings/claude.md
+```
+
+## 📦 Features
+
+- Modular scaffold structure (core, addons, tech-seo, etc.)
+- Token-efficient, agent-specific briefings
+- `--with-checklists` for rich template content
+- `--force` and `--backup` to safely overwrite files
+- CLI tested with Claude, Codex, and GPT agents
+- Blueprint-ready for use in multi-agent LLM workflows
+
+## 🧪 Contributing & Testing
 
 Run unit tests using Vitest:
 
@@ -73,9 +104,8 @@ Watch test output live:
 npm run test:watch
 ```
 
-Note: This is for testing the CLI generator—not your `.docugent/` scaffolds.
-```
+Note: This is for testing the CLI—not your `.docugent/` content.
 
 ---
 
-Docugent is in active development and perfect for AI-assisted app flipping, scoped prototyping, and doc-driven dev.
+Docugent is perfect for prompt-aware app development, scoped prototyping, and multi-agent project scaffolding.
