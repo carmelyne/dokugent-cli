@@ -28,8 +28,29 @@ After applying updates:
 - [ ] Log version diffs in `.docugent/changelog/vX.md`
 - [ ] If the update fails, revert and log the failure in `dependency-log.md`
 
+## 🔁 Fallback Protocol (If Update Fails)
+
+If an updated dependency causes failures or instability:
+
+1. **Revert Immediately**
+   - Restore `package-lock.json` and `package.json` from version control
+   - Reinstall using the last known good state (`npm ci`, `pnpm install`, etc.)
+
+2. **Log the Incident**
+   - Add a short note in `.docugent/devops/dependency-log.md` with:
+     - Package name
+     - Version attempted
+     - What failed (tests, runtime, build)
+
+3. **Flag for Human Review**
+   - Leave a comment or commit note tagged with `#needs-human-audit`
+   - Suggest possible next steps (e.g. lock version, explore migration path)
+
+🧠 AI Note: Do not retry upgrades in a loop. Escalate when fallback is triggered.
+
 ## 📘 Optional Command Flow
 
 ```bash
 # Dry-run future command
 docugent lock-verify
+```

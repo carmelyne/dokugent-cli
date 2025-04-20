@@ -1,8 +1,12 @@
-# UI Components
+# Design System – Components
 
-- Button  
-- RideCard  
-- DriverBadge  
-- FeedbackStars
+This file documents reusable UI components in the system and how they’re meant to behave across flows.
 
-<!-- AI: Use these in view generation. -->
+## 🧩 Core Components
+
+- [ ] Button (primary, secondary, disabled, loading states)
+- [ ] Input field (text, email, password)
+- [ ] Modal (open/close states, accessibility)
+- [ ] Dropdown menu (with keyboard navigation)
+
+🧠 AI Note: Components should match design tokens (if defined) and be linked to `ux/flows.md` usage patterns.
