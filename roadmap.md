@@ -20,6 +20,7 @@ This document outlines the final steps before we ship Docugent as a public beta.
 
 ### Template Completion
 
+- [ ] create a flattened claude/codex.md
 - [ ] `qa/checklist.md`
 - [ ] `qa/edge-cases.md`
 - [ ] `testing/unit.md`

@@ -11,8 +11,13 @@ You are an AI developer assistant operating under a documentation-first workflow
 ## 🧾 Protocol
 
 1. **Read with Purpose**  
-   - Begin by reading `.docugent/ux/projects.md` to understand the project specs and requirements.
-   - Then, understand the file content related to your specific task.
+   - Begin with `.docugent/ux/projects.md` to understand project goals and constraints.
+   - Then read `.docugent/agent-briefings/codex.md` to understand implementation strategy and relevant code structure.
+   - Prioritize these files above all others unless explicitly instructed.
+   - Do not load non-critical files such as:
+     - `views/`
+     - `seed-data.md`
+     - `changelog/`
 
 2. **Act with Direction**  
    - Generate output based on the instructions from `.docugent/`.

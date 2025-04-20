@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-const { program } = require('commander');
-const { scaffoldApp } = require('../lib/scaffold');
+import { program } from 'commander';
+import { scaffoldApp } from '../lib/core/scaffoldApp.js';
+import { scaffoldAgentBriefing } from '../lib/core/scaffoldAgentBriefing.js';
 
 program
   .command('scaffold <scope>')
@@ -8,12 +9,17 @@ program
   .option('--force', 'Overwrite existing files')
   .option('--backup', 'Create .bak backups before overwriting')
   .option('--with-checklists', 'Include starter checklist content')
+  .option('--llm <agent>', 'Compile agent briefing instead of standard scaffold')
   .action((scope, options) => {
-    scaffoldApp(scope, {
-      force: options.force,
-      backup: options.backup,
-      withChecklists: options.withChecklists,
-    });
+    if (options.llm) {
+      scaffoldAgentBriefing(options.llm);
+    } else {
+      scaffoldApp(scope, {
+        force: options.force,
+        backup: options.backup,
+        withChecklists: options.withChecklists,
+      });
+    }
   });
 
 program.parse(process.argv);
