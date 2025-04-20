@@ -14,10 +14,13 @@ With Docugent, your documentation becomes a reusable memory scaffold.
 
 ## 🚀 Getting Started
 
-Install globally:
+> 🚧 Docugent is not yet published to NPM. Until then, you can run it locally:
 
 ```bash
-npm install -g docugent
+git clone https://github.com/carmelyne/docugent-cli.git
+cd docugent-cli
+npm install
+npm link
 ```
 
 Then scaffold a `.docugent/` folder in your project:
@@ -72,12 +75,14 @@ Example folder structure:
 Files are grouped by scope and optimized for token efficiency. You can generate agent-briefings using:
 
 ```bash
+docugent scaffold core --llm=codex
 docugent scaffold core --llm=claude
 ```
 
-Which outputs:
+Which output:
 
 ```
+.docugent/agent-briefings/codex.md
 .docugent/agent-briefings/claude.md
 ```
 
@@ -89,6 +94,17 @@ Which outputs:
 - `--force` and `--backup` to safely overwrite files
 - CLI tested with Claude, Codex, and GPT agents
 - Blueprint-ready for use in multi-agent LLM workflows
+
+## 🤖 Supported LLMs
+
+Docugent supports agent-briefings tailored to different language models via the `--llm` flag.
+
+| Model      | Flag         | Best For                                       | Notes |
+|------------|--------------|------------------------------------------------|-------|
+| Codex      | `--llm=codex`  | Precise code reasoning, CLI tasks, token efficiency | Works well with dev-heavy markdown |
+| Claude     | `--llm=claude` | Broad context understanding, agent structuring, protocol logic | Responds well to structured docs + reasoning |
+| Gemini     | `--llm=gemini` | Multi-modal workflows (text + image), UI/UX feedback | Early support only, APIs vary |
+| LLaMA 3    | `--llm=llama3` | Open-source use, cost-efficient agent workflows | Needs custom context control |
 
 ## 🧪 Contributing & Testing
 
