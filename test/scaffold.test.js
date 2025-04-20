@@ -3,8 +3,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 import { mkdtempSync } from 'fs';
-import { scaffoldApp } from '../lib/scaffold.js';
-import { folderGroups } from '../lib/scaffold-groups.js'; // 🔁 We'll extract this next
+import { scaffoldApp } from '../lib/core/scaffoldApp.js';
+import { folderGroups } from '../lib/config/scaffold-groups.js'; // 🔁 We'll extract this next
 
 describe('docugent scaffold (core)', () => {
   const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docugent-test-'));
