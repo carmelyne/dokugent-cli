@@ -134,6 +134,44 @@ npm run test:watch
 
 Note: This is for testing the CLI—not your `.docugent/` content.
 
+## 🧩 Example Presets
+
+You can find reusable, real-world prompt blueprints under:
+
+```
+presets/examples/
+```
+
+Example: `policy-checker.md`
+
+This file includes a structured instruction pattern for:
+
+- Document analysis [@document_analysis]
+- Vector search alignment [@vector_search]
+- Summary generation [@text_generation]
+
+Great for agents that assess sustainability policies or conduct compliance reviews.
+
+## 🧠 Supported Tool Tags (for Agents)
+
+When writing Docugent templates, you can annotate steps with tool tags to signal agent capabilities. These tags help LLM agents parse the instruction and decide what action to take, especially in multi-tool environments.
+
+### Current Supported Tags
+
+| Tag                   | Description |
+|------------------------|-------------|
+| `@document_analysis`   | Parse and extract key info from uploaded files |
+| `@vector_search`       | Perform semantic similarity or alignment against target data |
+| `@text_generation`     | Generate a natural language summary or report |
+| `@code_execution`      | Run or simulate execution of code blocks |
+| `@web_browsing`        | Fetch or reference information from external sources |
+| `@rag_retrieval`       | Retrieve chunks from RAG-augmented knowledge base |
+| `@image_analysis`      | Analyze image input for description, labels, or metadata |
+| `@knowledge_graph`     | Build or query structured knowledge connections |
+
+> 💡 These tags are not enforced, but serve as signals for LLM-based agents trained to recognize them.
+> 🧪 Observed Behavior: Leading a prompt with a tool tag like `@text_generation:` or `@document_analysis:` helps Codex immediately recognize task intent and skip default filesystem exploration. This can make your agent outputs faster, cleaner, and more focused.
+
 ---
 
 Docugent is perfect for prompt-aware app development, scoped prototyping, and multi-agent project scaffolding.
