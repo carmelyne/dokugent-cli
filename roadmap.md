@@ -1,6 +1,6 @@
-# 📍 Docugent CLI – Roadmap to Beta
+# 📍 Dokugent CLI – Roadmap to Beta
 
-This document outlines the final steps before we ship Docugent as a public beta.
+This document outlines the final steps before we ship Dokugent as a public beta.
 
 ---
 
@@ -34,10 +34,15 @@ This document outlines the final steps before we ship Docugent as a public beta.
 - [ ] `tech-seo/sitemap.md`
 - [ ] `marketing/launch-checklist.md`
 
-### Nice-to-Have
+### CLI & Project Polish
 
-- [ ] Polish `README.md` for newcomers
-- [ ] Add a `docugent help` command
+- [ ] Add a `dokugent help` command
+- [ ] Add support for `.dokugentrc` config overrides
+- [ ] Add optional footer signature for agent-briefings
+- [ ] Improve logging and token efficiency feedback
+- [ ] Create a `tag-protocol.md` reference for Doku Tags
+- [ ] Add more `examples/` (e.g. grading-system.md, open-llm-awareness.md)
+- [ ] Update README with Doku Tag explanation and usage
 - [ ] Optional postinstall message
 
 ---
@@ -46,4 +51,6 @@ This document outlines the final steps before we ship Docugent as a public beta.
 
 - [ ] Set version to `0.9.0-beta`
 - [ ] Publish to NPM
-- [ ] Announce on GitHub + social media
+- [ ] Publish dokugent.com landing page with basic docs + example showcase
+- [ ] Announce launch on GitHub, Threads, Bluesky, LinkedIn
+- [ ] Document `@tag` behavior in a blog post or discovery thread

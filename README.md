@@ -1,4 +1,4 @@
-# Docugent CLI
+# Dokugent CLI
 
 *Alpha release – under active development*
 
@@ -6,64 +6,64 @@
 
 AI agents need more than raw code—they need context, structure, and guidance.
 
-**Docugent** was built to solve that. It’s a CLI tool that scaffolds documentation blueprints designed for agent consumption. Instead of bloated repos or scattered prompts, Docugent gives your AI teammates a clean, token-efficient folder of structured instructions, ready to reuse across projects.
+**Dokugent** was built to solve that. It’s a CLI tool that scaffolds documentation blueprints designed for agent consumption. Instead of bloated repos or scattered prompts, Dokugent gives your AI teammates a clean, token-efficient folder of structured instructions, ready to reuse across projects.
 
-While originally designed for developers, Docugent’s modular folder structure can be adapted for structured thinking in other fields—content planning, education, research, and beyond.
+While originally designed for developers, Dokugent’s modular folder structure can be adapted for structured thinking in other fields—content planning, education, research, and beyond.
 
-With Docugent, your documentation becomes a reusable memory scaffold.
+With Dokugent, your documentation becomes a reusable memory scaffold.
 
 ## 🚀 Getting Started
 
-> 🚧 Docugent is not yet published to NPM. Until then, you can run it locally:
+> 🚧 Dokugent is not yet published to NPM. Until then, you can run it locally:
 
 ```bash
-git clone https://github.com/carmelyne/docugent-cli.git
-cd docugent-cli
+git clone https://github.com/carmelyne/dokugent-cli.git
+cd dokugent-cli
 npm install
 npm link
 ```
 
-Then scaffold a `.docugent/` folder in your project:
+Then scaffold a `.dokugent/` folder in your project:
 
 ```bash
-docugent scaffold core
+dokugent scaffold core
 ```
 
 Or scaffold other scoped documentation:
 
 ```bash
-docugent scaffold addons
-docugent scaffold tech-seo
-docugent scaffold changelog
+dokugent scaffold addons
+dokugent scaffold tech-seo
+dokugent scaffold changelog
 ```
 
 ## 🛠️ CLI Commands
 
 ```bash
 # Scaffold core structure
-docugent scaffold core
+dokugent scaffold core
 
 # Add checklists (optional)
-docugent scaffold core --with-checklists
+dokugent scaffold core --with-checklists
 
 # Enable safe overwrites
-docugent scaffold core --force --backup
+dokugent scaffold core --force --backup
 ```
 
 ### Tips & Customization
 
 - Use `--backup` to automatically create `.bak` files for anything being overwritten.
 - Folder scaffolding is modular and opt-in. You can scaffold specific scopes like `tech-seo`, `addons`, or `qa` independently.
-- Advanced behavior (e.g. token limits, file exclusions) can be customized using `.docugent/llm-load.yml` or `.docugent/agent.yml`.
+- Advanced behavior (e.g. token limits, file exclusions) can be customized using `.dokugent/llm-load.yml` or `.dokugent/agent.yml`.
 
 ## 🧠 How It Works
 
-Docugent creates a folder of structured, markdown-based blueprints under `.docugent/`. These are designed to be consumed by LLMs and reused across build workflows.
+Dokugent creates a folder of structured, markdown-based blueprints under `.dokugent/`. These are designed to be consumed by LLMs and reused across build workflows.
 
 Example folder structure:
 
 ```
-.docugent/
+.dokugent/
 ├── qa/
 │   └── checklist.md
 ├── security/
@@ -75,18 +75,18 @@ Example folder structure:
 Files are grouped by scope and optimized for token efficiency. You can generate agent-briefings using:
 
 ```bash
-docugent compile --llm=codex
-docugent compile --llm=claude
+dokugent compile --llm=codex
+dokugent compile --llm=claude
 ```
 
 Which output:
 
 ```
-.docugent/agent-briefings/codex.md
-.docugent/agent-briefings/claude.md
+.dokugent/agent-briefings/codex.md
+.dokugent/agent-briefings/claude.md
 ```
 
-💡 Note: compile reads from .docugent/llm-load.yml and outputs a token-optimized context file into .docugent/agent-briefings/.
+💡 Note: compile reads from .dokugent/llm-load.yml and outputs a token-optimized context file into .dokugent/agent-briefings/.
 
 ## 📦 Features
 
@@ -99,7 +99,7 @@ Which output:
 
 ## 🤖 Supported LLMs
 
-Docugent supports agent-briefings tailored to different language models via the `--llm` flag.
+Dokugent supports agent-briefings tailored to different language models via the `--llm` flag.
 
 | Model      | Flag         | Best For                                       | Notes |
 |------------|--------------|------------------------------------------------|-------|
@@ -108,13 +108,13 @@ Docugent supports agent-briefings tailored to different language models via the 
 | Gemini     | `--llm=gemini` | Multi-modal workflows (text + image), UI/UX feedback | Early support only, APIs vary |
 | LLaMA 3    | `--llm=llama3` | Open-source use, cost-efficient agent workflows | Needs custom context control |
 
-## 💡 Why I Made Docugent
+## 💡 Why I Made Dokugent
 
 I kept running into the same problem while building with AI: LLMs are powerful, but they need structure to reason well.
 
 Too often, I’d open a repo, drop in a prompt, and hope for the best. It wasn’t scalable—and it wasn’t repeatable.
 
-Docugent is my answer to that. It’s a tool that helps both humans and agents start from the same structured base. Whether you’re scaffolding a new app or trying to reuse context across builds, Docugent gives your documentation a memory-friendly shape.
+Dokugent is my answer to that. It’s a tool that helps both humans and agents start from the same structured base. Whether you’re scaffolding a new app or trying to reuse context across builds, Dokugent gives your documentation a memory-friendly shape.
 
 I built it for myself at first. Now it’s ready for anyone else who’s tired of prompting from scratch.
 
@@ -132,7 +132,7 @@ Watch test output live:
 npm run test:watch
 ```
 
-Note: This is for testing the CLI—not your `.docugent/` content.
+Note: This is for testing the CLI—not your `.dokugent/` content.
 
 ## 🧩 Example Presets
 
@@ -154,7 +154,7 @@ Great for agents that assess sustainability policies or conduct compliance revie
 
 ## 🧠 Supported Tool Tags (for Agents)
 
-When writing Docugent templates, you can annotate steps with tool tags to signal agent capabilities. These tags help LLM agents parse the instruction and decide what action to take, especially in multi-tool environments.
+When writing Dokugent templates, you can annotate steps with tool tags to signal agent capabilities. These tags help LLM agents parse the instruction and decide what action to take, especially in multi-tool environments.
 
 ### Current Supported Tags
 
@@ -174,4 +174,4 @@ When writing Docugent templates, you can annotate steps with tool tags to signal
 
 ---
 
-Docugent is perfect for prompt-aware app development, scoped prototyping, and multi-agent project scaffolding.
+Dokugent is perfect for prompt-aware app development, scoped prototyping, and multi-agent project scaffolding.

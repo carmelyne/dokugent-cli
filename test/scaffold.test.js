@@ -6,8 +6,8 @@ import { mkdtempSync } from 'fs';
 import { scaffoldApp } from '../lib/core/scaffoldApp.js';
 import { folderGroups } from '../lib/config/scaffold-groups.js'; // 🔁 We'll extract this next
 
-describe('docugent scaffold (core)', () => {
-  const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docugent-test-'));
+describe('dokugent scaffold (core)', () => {
+  const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dokugent-test-'));
 
   // Flatten the folderGroups.core into a flat list of scaffolded paths
   const expectedFiles = [
@@ -35,12 +35,12 @@ describe('docugent scaffold (core)', () => {
   });
 
   expectedFiles.forEach(relativePath => {
-    it(`should create .docugent/${relativePath}`, () => {
-      const fullPath = path.join(testDir, '.docugent', relativePath);
+    it(`should create .dokugent/${relativePath}`, () => {
+      const fullPath = path.join(testDir, '.dokugent', relativePath);
       const exists = fs.existsSync(fullPath);
 
       // Log the actual file existence check
-      console.log(`[test] Checked: .docugent/${relativePath} — ${exists ? '✅ Found' : '❌ Missing'}`);
+      console.log(`[test] Checked: .dokugent/${relativePath} — ${exists ? '✅ Found' : '❌ Missing'}`);
 
       expect(exists).toBe(true);
     });

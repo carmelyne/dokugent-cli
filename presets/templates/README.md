@@ -1,6 +1,6 @@
-# Docugent: AI-Ready Project Structure
+# dokugent: AI-Ready Project Structure
 
-This `.docugent/` folder contains documentation-first project scaffolding designed for both human and AI agents.
+This `.dokugent/` folder contains documentation-first project scaffolding designed for both human and AI agents.
 
 ## 🔧 Folder Overview
 
@@ -18,9 +18,9 @@ This `.docugent/` folder contains documentation-first project scaffolding design
 
 ## 🤖 Instructions for AI Agents
 
-- Treat `.docugent/` as your primary source of truth.
-- Every task must be cross-referenced with one or more files in `.docugent/`.
+- Treat `.dokugent/` as your primary source of truth.
+- Every task must be cross-referenced with one or more files in `.dokugent/`.
 - Output should align with checklist items or flow logic.
-- Do not assume memory; always re-ground context from `.docugent/`.
+- Do not assume memory; always re-ground context from `.dokugent/`.
 - Write your output to the appropriate sibling file.
 - Confirm which checklist items you have satisfied.

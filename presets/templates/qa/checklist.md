@@ -1,6 +1,6 @@
 # QA Checklist for Agent-Readable Documentation
 
-Use this checklist to validate that the `.docugent/` folder is ready for agent consumption and reuse.
+Use this checklist to validate that the `.dokugent/` folder is ready for agent consumption and reuse.
 
 ## ✅ Structure
 

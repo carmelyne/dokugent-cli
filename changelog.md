@@ -4,8 +4,8 @@ Use this file to document notable changes in this version of the project. Follow
 
 ## ✨ Added
 
-- Initial scaffold using `docugent scaffold core`
-- `.docugent/ux/flows.md` seeded with starter checklist
+- Initial scaffold using `dokugent scaffold core`
+- `.dokugent/ux/flows.md` seeded with starter checklist
 - Dependency safety policy introduced in `devops/dependency-policy.md`
 - Agent-ready templates for:
   - `mvc/controllers.md`, `models.md`, `views.md`, `routes.md`
@@ -18,7 +18,7 @@ Use this file to document notable changes in this version of the project. Follow
 
 ## 🐛 Fixed
 
-- Prevented accidental overwrites of existing `.docugent` files
+- Prevented accidental overwrites of existing `.dokugent` files
 
 ## 🔍 Notes
 

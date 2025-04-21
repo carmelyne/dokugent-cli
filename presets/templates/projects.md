@@ -107,6 +107,6 @@ Pickup / Dropoff format:
 
 ## 🤖 8. AI Agent Notes
 
-> The `.docugent/` folder defines checklists and structure. This `project.md` file gives you the big picture.
+> The `.dokugent/` folder defines checklists and structure. This `project.md` file gives you the big picture.
 
 **Your output must match the MVP, stack, and goals stated here.**

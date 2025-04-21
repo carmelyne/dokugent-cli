@@ -4,7 +4,7 @@ import { scaffoldApp, compileBriefing } from '../lib/core/scaffoldApp.js';
 
 program
   .command('scaffold <scope>')
-  .description('Scaffold a .docugent folder for the given scope')
+  .description('Scaffold a .dokugent folder for the given scope')
   .option('--force', 'Overwrite existing files')
   .option('--backup', 'Create .bak backups before overwriting')
   .option('--with-checklists', 'Include starter checklist content')
@@ -20,7 +20,7 @@ program
 
 program
   .command('compile')
-  .description('Compile an agent briefing from existing .docugent/ files')
+  .description('Compile an agent briefing from existing .dokugent/ files')
   .option('--llm <agent>', 'Agent to compile briefing for')
   .action((options) => {
     if (!options.llm) {
