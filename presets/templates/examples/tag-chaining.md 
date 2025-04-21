@@ -1,0 +1,38 @@
+# 🧠 Doku Tag Chaining Example
+
+This example demonstrates how to chain multiple `@tags` in a single prompt to guide agents through complex, multi-step reasoning flows — without needing JSON, plugins, or wrappers.
+
+## Example Prompt
+
+```
+@document_analysis:
+Review the policy excerpt below and summarize key environmental goals.
+
+@vector_search:
+Compare the goals against known sustainability frameworks and surface alignment.
+
+@text_generation:
+Summarize findings into a 500-character message for a social media post.
+```
+
+## Why It Works
+
+Each tag introduces a clear reasoning boundary:
+- `@document_analysis` tells the LLM to break down input context.
+- `@vector_search` prompts similarity checks or comparison logic.
+- `@text_generation` produces human-friendly output.
+
+## Tested On
+
+✅ ChatGPT
+✅ Codex
+✅ Claude
+✅ Gemini
+✅ Meta AI
+✅ DeepSeek
+
+All models respected the tag order and completed each phase.
+
+---
+
+Doku Tags are like markdown headers — modular, readable, and chainable. Try writing your next prompt using `@tags` and see how your agents respond.

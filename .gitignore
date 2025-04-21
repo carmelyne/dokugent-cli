@@ -7,8 +7,8 @@ dist/
 build/
 
 *.bak
-.docugent/agent-briefings/
-.docugent/*.log
+.dokugent/agent-briefings/
+.dokugent/*.log
 
 # Node modules
 node_modules/

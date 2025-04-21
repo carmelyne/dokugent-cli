@@ -23,9 +23,9 @@ After applying updates:
 
 - [ ] Run all tests in `/test/`
 - [ ] Confirm no runtime errors on startup
-- [ ] Run `docugent check-integrity` (TBD)
+- [ ] Run `dokugent check-integrity` (TBD)
 - [ ] Diff `package-lock.json` against the last committed version
-- [ ] Log version diffs in `.docugent/changelog/vX.md`
+- [ ] Log version diffs in `.dokugent/changelog/vX.md`
 - [ ] If the update fails, revert and log the failure in `dependency-log.md`
 
 ## 🔁 Fallback Protocol (If Update Fails)
@@ -37,7 +37,7 @@ If an updated dependency causes failures or instability:
    - Reinstall using the last known good state (`npm ci`, `pnpm install`, etc.)
 
 2. **Log the Incident**
-   - Add a short note in `.docugent/devops/dependency-log.md` with:
+   - Add a short note in `.dokugent/devops/dependency-log.md` with:
      - Package name
      - Version attempted
      - What failed (tests, runtime, build)
@@ -52,5 +52,5 @@ If an updated dependency causes failures or instability:
 
 ```bash
 # Dry-run future command
-docugent lock-verify
+dokugent lock-verify
 ```

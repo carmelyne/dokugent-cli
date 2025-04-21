@@ -1,11 +1,11 @@
 {
-  "name": "docugent",
+  "name": "dokugent",
   "version": "0.1.0",
   "type": "module",
-  "description": "Scaffold AI-ready .docugent folders with checklists for docu-first development",
-  "main": "bin/docugent.js",
+  "description": "Scaffold AI-ready .dokugent folders with checklists for docu-first development",
+  "main": "bin/dokugent.js",
   "bin": {
-    "docugent": "./bin/docugent.js"
+    "dokugent": "./bin/dokugent.js"
   },
   "scripts": {
     "test": "vitest run",
