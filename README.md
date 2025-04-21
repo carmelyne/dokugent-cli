@@ -106,6 +106,16 @@ Docugent supports agent-briefings tailored to different language models via the 
 | Gemini     | `--llm=gemini` | Multi-modal workflows (text + image), UI/UX feedback | Early support only, APIs vary |
 | LLaMA 3    | `--llm=llama3` | Open-source use, cost-efficient agent workflows | Needs custom context control |
 
+## 💡 Why I Made Docugent
+
+I kept running into the same problem while building with AI: LLMs are powerful, but they need structure to reason well.
+
+Too often, I’d open a repo, drop in a prompt, and hope for the best. It wasn’t scalable—and it wasn’t repeatable.
+
+Docugent is my answer to that. It’s a tool that helps both humans and agents start from the same structured base. Whether you’re scaffolding a new app or trying to reuse context across builds, Docugent gives your documentation a memory-friendly shape.
+
+I built it for myself at first. Now it’s ready for anyone else who’s tired of prompting from scratch.
+
 ## 🧪 Contributing & Testing
 
 Run unit tests using Vitest:
