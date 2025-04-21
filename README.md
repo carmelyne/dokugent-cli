@@ -75,8 +75,8 @@ Example folder structure:
 Files are grouped by scope and optimized for token efficiency. You can generate agent-briefings using:
 
 ```bash
-docugent scaffold core --llm=codex
-docugent scaffold core --llm=claude
+docugent compile --llm=codex
+docugent compile --llm=claude
 ```
 
 Which output:
@@ -85,6 +85,8 @@ Which output:
 .docugent/agent-briefings/codex.md
 .docugent/agent-briefings/claude.md
 ```
+
+💡 Note: compile reads from .docugent/llm-load.yml and outputs a token-optimized context file into .docugent/agent-briefings/.
 
 ## 📦 Features
 
