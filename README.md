@@ -99,9 +99,9 @@ Which output:
 
 ## 🤖 Supported LLMs
 
-Dokugent supports agent-briefings tailored to different language models via the `--llm` flag.
+Dokugent supports agent-briefings as compiled-agent-specs tailored to different language models via the `--llm` flag.
 
-| Model      | Flag         | Best For                                       | Notes |
+| Model      | Dokugent CLI Flags         | Best For                                       | Notes |
 |------------|--------------|------------------------------------------------|-------|
 | Codex      | `--llm=codex`  | Precise code reasoning, CLI tasks, token efficiency | Works well with dev-heavy markdown |
 | Claude     | `--llm=claude` | Broad context understanding, agent structuring, protocol logic | Responds well to structured docs + reasoning |
