@@ -6,13 +6,35 @@ import { printSecrets } from '../lib/help/secretsHelp.js';
 import { chikaNiMarites } from '../lib/help/gptMarites.js';
 
 program
-  .command('scaffold <scope>')
+  .command('scaffold [scope]')
   .description('Scaffold a .dokugent folder for the given scope')
   .option('--force', 'Overwrite existing files')
   .option('--backup', 'Create .bak backups before overwriting')
   .option('--with-checklists', 'Include starter checklist content')
   .option('--llm <agent>', 'Compile agent briefing instead of standard scaffold')
+  .option('--custom <folder>', 'Scaffold a custom-named scope folder')
   .action((scope, options) => {
+    // If --custom is used, ignore scope and validate it's the only flag
+    if (options.custom) {
+      if (scope) {
+        console.error('❌ The --custom flag cannot be used with a named scope.');
+        process.exit(1);
+      }
+      scaffoldApp('custom', {
+        force: options.force,
+        backup: options.backup,
+        withChecklists: options.withChecklists,
+        llm: options.llm,
+        custom: options.custom,
+      });
+      return;
+    }
+
+    if (!scope) {
+      console.error('❌ Please provide a scope or use --custom=<folder>');
+      process.exit(1);
+    }
+
     scaffoldApp(scope, {
       force: options.force,
       backup: options.backup,

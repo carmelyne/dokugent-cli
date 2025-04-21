@@ -37,6 +37,15 @@ dokugent scaffold tech-seo
 dokugent scaffold changelog
 ```
 
+# Scaffold a blank folder for your own custom scope
+
+dokugent scaffold --custom=ai-labs
+
+```
+
+> 🔖 The `--custom` flag creates an empty folder inside `.dokugent/` using your provided name.
+> 🚫 It must be used on its own—no other flags or arguments allowed.
+
 ## 🛠️ CLI Commands
 
 ```bash
@@ -137,6 +146,16 @@ Note: This is for testing the CLI—not your `.dokugent/` content.
 ## 🧩 Example Presets
 
 You can find reusable, real-world prompt blueprints under:
+
+| Folder Name        | Description                                         |
+|--------------------|-----------------------------------------------------|
+| `core/`            | Base app scaffolding like `mvc/`, `db-schema/`      |
+| `qa/`              | Quality assurance templates like checklists         |
+| `security/`        | Templates for auth logic, security practices        |
+| `tech-seo/`        | Structured SEO and metadata instructions            |
+| `marketing/`       | Launch checklists and campaign scaffolds            |
+| `agent-briefings/` | Compiled briefings per LLM (`codex.md`, etc.)       |
+| `examples/`        | Real-world sample blueprints (e.g. policy checker)  |
 
 ```
 presets/examples/
