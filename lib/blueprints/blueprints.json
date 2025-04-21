@@ -1,0 +1,108 @@
+{
+  "wordpress-plugin": {
+    "description": "Scaffold for agent-readable WordPress plugin projects.",
+    "structure": [
+      "plugin.md",
+      "models.md",
+      "views.md",
+      "routes.md",
+      "shortcodes.md",
+      "qa/checklist.md",
+      "security.md",
+      "design-system/tokens.md"
+    ]
+  },
+  "chrome-extension": {
+    "description": "Scaffold for building a Chrome extension with agent-readable logic.",
+    "structure": [
+      "manifest.md",
+      "background.md",
+      "content-script.md",
+      "popup-ui.md",
+      "permissions.md",
+      "qa/checklist.md"
+    ]
+  },
+  "ios-app": {
+    "description": "Scaffold for iOS mobile applications (Swift/SwiftUI).",
+    "structure": [
+      "app-structure.md",
+      "view-controllers.md",
+      "api.md",
+      "auth.md",
+      "qa/checklist.md",
+      "design-system/tokens.md"
+    ]
+  },
+  "android-app": {
+    "description": "Scaffold for Android applications using Kotlin or Java.",
+    "structure": [
+      "activity-flow.md",
+      "fragments.md",
+      "api.md",
+      "auth.md",
+      "qa/checklist.md",
+      "design-system/tokens.md"
+    ]
+  },
+  "tv-app": {
+    "description": "Scaffold for Apple TV, Android TV, or Smart TV interfaces.",
+    "structure": [
+      "screens.md",
+      "remote-navigation.md",
+      "media-integration.md",
+      "qa/test-cases.md"
+    ]
+  },
+  "vue": {
+    "description": "Vue.js project scaffold for component-based UI apps.",
+    "structure": [
+      "components.md",
+      "state-management.md",
+      "routes.md",
+      "api.md",
+      "design-system/tokens.md"
+    ]
+  },
+  "next": {
+    "description": "Next.js blueprint for SSR/react apps.",
+    "structure": [
+      "pages.md",
+      "api-routes.md",
+      "middleware.md",
+      "auth.md",
+      "qa/checklist.md"
+    ]
+  },
+  "nuxt": {
+    "description": "Nuxt.js scaffold for Vue SSR projects.",
+    "structure": [
+      "pages.md",
+      "layouts.md",
+      "middleware.md",
+      "store.md",
+      "api.md"
+    ]
+  },
+  "watchapp": {
+    "description": "Blueprint for Apple Watch or Wear OS applications.",
+    "structure": [
+      "watch-ui.md",
+      "notifications.md",
+      "data-sync.md",
+      "qa/test-cases.md"
+    ]
+  },
+  "iot": {
+    "description": "IoT firmware or dashboard scaffold (microcontrollers, sensors, etc).",
+    "structure": [
+      "device-spec.md",
+      "sensors.md",
+      "connectivity.md",
+      "data-storage.md",
+      "remote-control.md",
+      "security.md",
+      "qa/test-scenarios.md"
+    ]
+  }
+}

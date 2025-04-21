@@ -13,11 +13,16 @@ program
   .option('--with-checklists', 'Include starter checklist content')
   .option('--llm <agent>', 'Compile agent briefing instead of standard scaffold')
   .option('--custom <folder>', 'Scaffold a custom-named scope folder')
+  .option('--blueprint <name>', 'Use a blueprint from blueprints.json')
   .action((scope, options) => {
     // If --custom is used, ignore scope and validate it's the only flag
     if (options.custom) {
       if (scope) {
         console.error('❌ The --custom flag cannot be used with a named scope.');
+        process.exit(1);
+      }
+      if (!options.blueprint) {
+        console.error('❌ The --custom flag must be used with --blueprint.');
         process.exit(1);
       }
       scaffoldApp('custom', {
@@ -26,6 +31,7 @@ program
         withChecklists: options.withChecklists,
         llm: options.llm,
         custom: options.custom,
+        blueprint: options.blueprint
       });
       return;
     }
@@ -40,6 +46,7 @@ program
       backup: options.backup,
       withChecklists: options.withChecklists,
       llm: options.llm,
+      blueprint: options.blueprint
     });
   });
 
