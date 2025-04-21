@@ -37,6 +37,15 @@ dokugent scaffold tech-seo
 dokugent scaffold changelog
 ```
 
+# Scaffold a blank folder for your own custom scope
+
+dokugent scaffold --custom=ai-labs
+
+```
+
+> 🔖 The `--custom` flag creates an empty folder inside `.dokugent/` using your provided name.
+> 🚫 It must be used on its own—no other flags or arguments allowed.
+
 ## 🛠️ CLI Commands
 
 ```bash
@@ -138,6 +147,16 @@ Note: This is for testing the CLI—not your `.dokugent/` content.
 
 You can find reusable, real-world prompt blueprints under:
 
+| Folder Name        | Description                                         |
+|--------------------|-----------------------------------------------------|
+| `core/`            | Base app scaffolding like `mvc/`, `db-schema/`      |
+| `qa/`              | Quality assurance templates like checklists         |
+| `security/`        | Templates for auth logic, security practices        |
+| `tech-seo/`        | Structured SEO and metadata instructions            |
+| `marketing/`       | Launch checklists and campaign scaffolds            |
+| `agent-briefings/` | Compiled briefings per LLM (`codex.md`, etc.)       |
+| `examples/`        | Real-world sample blueprints (e.g. policy checker)  |
+
 ```
 presets/examples/
 ```
@@ -174,4 +193,17 @@ When writing Dokugent templates, you can annotate steps with tool tags to signal
 
 ---
 
+### 🛡 License
+
+Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformproject.org/licenses/shield/1.0.0/).
+
+✅ You can use it for personal projects, paid client work, or internal company tooling.  
+❌ You just can’t use it to build a competing product or service.
+
+For commercial licensing or collaboration, feel free to reach out 💬
+
+---
+
 Dokugent is perfect for prompt-aware app development, scoped prototyping, and multi-agent project scaffolding.
+
+---
