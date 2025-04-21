@@ -174,4 +174,17 @@ When writing Dokugent templates, you can annotate steps with tool tags to signal
 
 ---
 
+### 🛡 License
+
+Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformproject.org/licenses/shield/1.0.0/).
+
+✅ You can use it for personal projects, paid client work, or internal company tooling.  
+❌ You just can’t use it to build a competing product or service.
+
+For commercial licensing or collaboration, feel free to reach out 💬
+
+---
+
 Dokugent is perfect for prompt-aware app development, scoped prototyping, and multi-agent project scaffolding.
+
+---
