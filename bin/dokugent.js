@@ -50,6 +50,20 @@ program
     });
   });
 
+
+program
+  .command('stage')
+  .description('Stage a human-readable instruction review before compilation')
+  .option('--scope <folder>', 'Target folder inside .dokugent to stage')
+  .option('--with-checklists', 'Include starter checklist content')
+  .option('--protocols <items>', 'Comma-separated protocol folders or "all"')
+  .action(async (options) => {
+    const scope = options.scope || '.dokugent';
+
+    const { stageReview } = await import('../lib/core/stageBlueprint.js');
+    stageReview({ scope, withChecklists: options.withChecklists, protocols: options.protocols });
+  });
+
 program
   .command('compile')
   .description('Compile an agent briefing from existing .dokugent/ files')
