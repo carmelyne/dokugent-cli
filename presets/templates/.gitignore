@@ -1,0 +1,13 @@
+# 🔐 Never commit signer private keys
+# Ignore all keys by default
+keys/*
+
+# Allow public key to be committed
+!keys/id_doku_pub.pem
+
+# ⛔️ Certs may contain sensitive signing info
+certs/
+
+# 🧪 Local build artifacts
+staging/
+compiled-agent-specs/

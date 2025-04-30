@@ -20,6 +20,7 @@ This document outlines the final steps before we ship Dokugent as a public beta.
 - README updated with usage, customization tips, and About context
 - CLI renamed to Dokugent
 - --custom flag added for user-defined scaffold folders
+- Add a staging layer for human-readable instruction review
 
 ---
 
@@ -38,8 +39,7 @@ This document outlines the final steps before we ship Dokugent as a public beta.
 
 ### Agentic Safety Features
 
-- [ ] Add a staging layer for human-readable instruction review
-- [ ] Compile immutable, versioned blueprints post-approval
+- [X] Compile immutable, versioned blueprints post-approval
 - [ ] Support agent-specific output templates (OpenAI, LangChain, etc.)
 - [ ] Hash and embed metadata in compiled instructions
 - [ ] Include human + machine readable formats in output bundle
