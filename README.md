@@ -39,7 +39,7 @@ dokugent scaffold changelog
 
 # Scaffold a blank folder for your own custom scope
 
-dokugent scaffold --custom=ai-labs
+dokugent scaffold --custom=ai-labs --blueprint=blank
 
 ```
 
@@ -74,7 +74,7 @@ dokugent scaffold --custom=ai-labs
 ```bash
 dokugent scaffold core
 dokugent scaffold core --with-checklists --backup
-dokugent scaffold --custom=ai-labs
+dokugent scaffold --custom=ai-labs --blueprint=svelte
 dokugent stage --protocols=all
 dokugent stage --protocols=qa,ux
 dokugent keygen --name carmelyne@kinderbytes.com
