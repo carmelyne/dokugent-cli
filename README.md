@@ -48,15 +48,39 @@ dokugent scaffold --custom=ai-labs
 
 ## 🛠️ CLI Commands
 
+### scaffold
+  --force            Overwrite existing files
+  --backup           Create .bak backups before overwriting
+  --with-checklists  Include checklist-enhanced templates
+  --custom=<folder>  Create an empty folder inside .dokugent/ with the given name
+
+### stage
+  --scope <folder>   Target folder to stage (defaults to .dokugent)
+  --protocols <list> Comma-separated protocol folders or "all"
+
+### keygen
+  --name <string>    Identity used to label public key metadata
+
+### certify
+  --key <path>       Path to private key for certification
+
+### compile
+  --llm <agent>      Agent to compile briefing for
+  --prod             Enforce SHA + signature verification from review.cert
+  --dev              Compile from llm-load.yml (for isolated dev testing)
+
+## 🧪 Examples
+
 ```bash
-# Scaffold core structure
 dokugent scaffold core
-
-# Add checklists (optional)
-dokugent scaffold core --with-checklists
-
-# Enable safe overwrites
-dokugent scaffold core --force --backup
+dokugent scaffold core --with-checklists --backup
+dokugent scaffold --custom=ai-labs
+dokugent stage --protocols=all
+dokugent stage --protocols=qa,ux
+dokugent keygen --name carmelyne@kinderbytes.com
+dokugent certify --key .dokugent/keys/id_doku_priv.pem
+dokugent compile --llm=codex --prod
+dokugent compile --llm=codex --dev
 ```
 
 ### Tips & Customization
@@ -105,6 +129,8 @@ Which output:
 - `--force` and `--backup` to safely overwrite files
 - CLI tested with Claude, Codex, and GPT agents
 - Blueprint-ready for use in multi-agent LLM workflows
+- Cryptographic certification of instructions via RSA keypair
+- `.gitignore` scaffolding to protect private keys and certs
 
 ## 🤖 Supported LLMs
 

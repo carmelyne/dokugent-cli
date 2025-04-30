@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { scaffoldApp, compileBriefing } from '../lib/core/scaffoldApp.js';
+import { scaffoldApp } from '../lib/core/scaffoldApp.js';
+import { compileBriefing } from '../lib/core/compileBriefing.js';
 import { printHelp } from '../lib/help/helpText.js';
 import { printSecrets } from '../lib/help/secretsHelp.js';
 import { chikaNiMarites } from '../lib/help/gptMarites.js';
+import { certifyBlueprint, generateKeypair } from '../lib/core/certifyBlueprint.js';
 
 program
   .command('scaffold [scope]')
@@ -68,13 +70,42 @@ program
   .command('compile')
   .description('Compile an agent briefing from existing .dokugent/ files')
   .option('--llm <agent>', 'Agent to compile briefing for')
+  .option('--dev', 'Compile from llm-load.yml (development mode)')
+  .option('--prod', 'Require cert and verify review.md before compiling')
   .action((options) => {
     if (!options.llm) {
       console.error('❌ Please specify an agent with --llm');
       process.exit(1);
     }
 
-    compileBriefing(options.llm);
+    compileBriefing(options.llm, options);
+  });
+
+program
+  .command('certify')
+  .description('Certify the current review.md by signing it with a private key')
+  .option('--scope <folder>', 'Target .dokugent folder', '.dokugent')
+  .option('--key <path>', 'Path to the private key PEM file')
+  .action((options) => {
+    if (!options.key) {
+      console.error('❌ Please specify a private key with --key');
+      process.exit(1);
+    }
+
+    certifyBlueprint({ scope: options.scope, key: options.key });
+  });
+
+program
+  .command('keygen')
+  .description('Generate a new RSA keypair for certification')
+  .option('--name <string>', 'Signer identity for key metadata')
+  .action((options) => {
+    if (!options.name) {
+      console.error('❌ Please provide a signer name using --name');
+      process.exit(1);
+    }
+
+    generateKeypair(options.name);
   });
 
 if (process.argv.includes('help') && process.argv.includes('secrets')) {
