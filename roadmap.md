@@ -18,6 +18,8 @@ This document outlines the final steps before we ship Dokugent as a public beta.
   - `mvc/controllers.md`, `mvc/models.md`, `mvc/views.md`, `mvc/routes.md`
   - `agent-briefings/claude.md`, `agent-briefings/codex.md`
 - README updated with usage, customization tips, and About context
+- CLI renamed to Dokugent
+- --custom flag added for user-defined scaffold folders
 
 ---
 
@@ -34,15 +36,29 @@ This document outlines the final steps before we ship Dokugent as a public beta.
 - [ ] `tech-seo/sitemap.md`
 - [ ] `marketing/launch-checklist.md`
 
+### Agentic Safety Features
+
+- [ ] Add a staging layer for human-readable instruction review
+- [ ] Compile immutable, versioned blueprints post-approval
+- [ ] Support agent-specific output templates (OpenAI, LangChain, etc.)
+- [ ] Hash and embed metadata in compiled instructions
+- [ ] Include human + machine readable formats in output bundle
+- [ ] Document alignment with Microsoft's AI failure mode taxonomy
+- [ ] Optional signature/approval field in blueprint metadata
+
 ### CLI & Project Polish
 
 - [ ] Add a `dokugent help` command
+- [X] Enforce blueprint.md for --custom scaffolds
+- [X] Finalize tag chaining support (v1)
 - [ ] Add support for `.dokugentrc` config overrides
 - [ ] Add optional footer signature for agent-briefings
 - [ ] Improve logging and token efficiency feedback
+- [X] Document easter eggs ('marites', 'secrets') for fun and transparency
 - [ ] Create a `tag-protocol.md` reference for Doku Tags
 - [ ] Add more `examples/` (e.g. grading-system.md, open-llm-awareness.md)
 - [ ] Update README with Doku Tag explanation and usage
+- [X] Clarify license intent and boundaries (DONE)
 - [ ] Optional postinstall message
 
 ---
