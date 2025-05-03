@@ -41,27 +41,43 @@ This document outlines the final steps before we ship Dokugent as a public beta.
 
 - [X] Compile immutable, versioned blueprints post-approval
 - [ ] Support agent-specific output templates (OpenAI, LangChain, etc.)
-- [ ] Hash and embed metadata in compiled instructions
+- [X] Hash and embed metadata in compiled instructions (via .cert + SHA checking in `dokugent verify`)
 - [ ] Include human + machine readable formats in output bundle
 - [ ] Document alignment with Microsoft's AI failure mode taxonomy
 - [ ] Optional signature/approval field in blueprint metadata
 
 ### CLI & Project Polish
 
-- [ ] Add a `dokugent help` command
-- [X] Enforce blueprint.md for --custom scaffolds
+- [ ] Add `dokugent help` with grouped command categories
+- [X] Enforce `blueprint.md` for --custom scaffolds
 - [X] Finalize tag chaining support (v1)
 - [ ] Add support for `.dokugentrc` config overrides
 - [ ] Add optional footer signature for agent-briefings
 - [ ] Improve logging and token efficiency feedback
 - [X] Document easter eggs ('marites', 'secrets') for fun and transparency
-- [ ] Create a `tag-protocol.md` reference for Doku Tags
+- [ ] Create `tag-protocol.md` reference for Doku Tags
 - [ ] Add more `examples/` (e.g. grading-system.md, open-llm-awareness.md)
-- [ ] Update README with Doku Tag explanation and usage
+- [ ] Update README with Doku Tag usage + CLI workflow
 - [X] Clarify license intent and boundaries (DONE)
-- [ ] Optional postinstall message
+- [ ] Add optional postinstall message
+
+### New CLI Commands (Planned)
+
+- [ ] `dokugent step` – Generate a `plan.yaml` from existing protocols (auto-plan)
+- [ ] `dokugent dryrun` – Simulate plan steps without invoking tools (debug intent)
+- [ ] `dokugent verify` – Check if compiled output matches cert (anti-tamper)
+- [ ] `dokugent simulate` – Emulate step-by-step execution with agent mock
+- [ ] `dokugent watch` – Monitor for changes that invalidate certification
 
 ---
+
+## 🌱 Field-Agnostic Future Support (hint)
+
+- Plan for domain-aware scaffolds (e.g., `research`, `civic`, `education`, etc.)
+- Explore contextual vocabulary overlays per field
+- Maintain protocol/action separation while allowing vocabulary remapping (e.g., `review.md` → `study.md`)
+- Consider field-specific linting and certification criteria
+- Ensure Dokugent stays a universal tool that adapts to how people structure and execute intent
 
 ## 🚀 Beta Launch Checklist
 
