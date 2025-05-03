@@ -1,0 +1,12 @@
+steps:
+  - id: step_one
+    description: "Summarize user goals from intake form"
+    use: summarizer-tool
+    input: intake_form.md
+    output: user_goals.md
+
+  # - id: step_two
+  #   description: "Generate suggestions"
+  #   use: gpt_suggester
+  #   input: user_goals.md
+  #   output: ideas.md

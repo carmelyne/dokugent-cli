@@ -48,26 +48,24 @@ dokugent scaffold --custom=ai-labs --blueprint=blank
 
 ## 🛠️ CLI Commands
 
-### scaffold
-  --force            Overwrite existing files
-  --backup           Create .bak backups before overwriting
-  --with-checklists  Include checklist-enhanced templates
-  --custom=<folder>  Create an empty folder inside .dokugent/ with the given name
+### ✨ Scaffolding & Planning
 
-### stage
-  --scope <folder>   Target folder to stage (defaults to .dokugent)
-  --protocols <list> Comma-separated protocol folders or "all"
+- `dokugent scaffold` – Generate `.dokugent/` folder structure
+- `dokugent review` – Validate protocols and plans for agent-readiness
+- `dokugent certify` – Sign reviewed content with your private key
+- `dokugent compile` – Output final agent briefing file
 
-### keygen
-  --name <string>    Identity used to label public key metadata
+### 🧠 Simulation & Execution
 
-### certify
-  --key <path>       Path to private key for certification
+- `dokugent dryrun` – Preview what the plan would execute (without running tools)
+- `dokugent simulate` – Mock step-by-step execution (experimental)
 
-### compile
-  --llm <agent>      Agent to compile briefing for
-  --prod             Enforce SHA + signature verification from review.cert
-  --dev              Compile from llm-load.yml (for isolated dev testing)
+### 🔐 Integrity & Monitoring
+
+- `dokugent verify` – Confirm that compiled file matches signed cert
+- `dokugent watch` – Auto-invalidate outdated certs when files change
+
+Coming soon: `dokugent step` – generate a `plan.yaml` from structured protocols.
 
 ## 🧪 Examples
 
@@ -91,7 +89,23 @@ dokugent compile --llm=codex --dev
 
 ## 🧠 How It Works
 
+## 🧭 CLI Workflow Overview
+
+Dokugent supports a clear multi-stage workflow for authoring structured agent instructions:
+
+1. `scaffold` → Create blueprint folders
+2. `review` → Validate structure and step integrity
+3. `certify` → Sign with RSA to lock integrity
+4. `compile` → Create agent-ready context file
+5. `dryrun` / `simulate` → Debug execution
+6. `verify` → Ensure no tampering
+7. `watch` → Monitor for changes
+
+This lets teams confidently build agent protocols that are modular, auditable, and safe.
+
 Dokugent creates a folder of structured, markdown-based blueprints under `.dokugent/`. These are designed to be consumed by LLMs and reused across build workflows.
+
+Dokugent now supports generating executable step plans via `dokugent step`, grading completeness with `dokugent check`, and safely dry-running agent plans using `dokugent dryrun`.
 
 Example folder structure:
 
@@ -131,6 +145,10 @@ Which output:
 - Blueprint-ready for use in multi-agent LLM workflows
 - Cryptographic certification of instructions via RSA keypair
 - `.gitignore` scaffolding to protect private keys and certs
+- `dokugent step` compiles your protocol into a structured, agent-ready plan file (`dokugent.plan.yaml`)
+- `dokugent check` (or `lint`) scores protocol completeness and agent legibility
+- `dokugent dryrun` safely previews what each step will attempt, without executing real tools
+- `dokugent simulate` (investigating) may support mock execution flows in collaboration with agent runners or tool providers
 
 ## 🤖 Supported LLMs
 

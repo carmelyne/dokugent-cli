@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { scaffoldApp } from '../lib/core/scaffoldApp.js';
-import { compileBriefing } from '../lib/core/compileBriefing.js';
+import { scaffoldApp } from '../lib/core/scaffold.js';
+import { compileBriefing } from '../lib/core/compile.js';
 import { printHelp } from '../lib/help/helpText.js';
 import { printSecrets } from '../lib/help/secretsHelp.js';
 import { chikaNiMarites } from '../lib/help/gptMarites.js';
-import { certifyBlueprint, generateKeypair } from '../lib/core/certifyBlueprint.js';
+import { certifyBlueprint, generateKeypair } from '../lib/core/certify.js';
 
 program
   .command('scaffold [scope]')
@@ -54,31 +54,41 @@ program
 
 
 program
-  .command('stage')
-  .description('Stage a human-readable instruction review before compilation')
-  .option('--scope <folder>', 'Target folder inside .dokugent to stage')
+  .command('review')
+  .description('Create or update a review file (protocol or steps)')
+  .option('--scope <folder>', 'Target folder inside .dokugent to review')
   .option('--with-checklists', 'Include starter checklist content')
   .option('--protocols <items>', 'Comma-separated protocol folders or "all"')
+  .option('--plan', 'Generate or update review-plan.yaml')
   .action(async (options) => {
     const scope = options.scope || '.dokugent';
 
-    const { stageReview } = await import('../lib/core/stageBlueprint.js');
-    stageReview({ scope, withChecklists: options.withChecklists, protocols: options.protocols });
+    const { runReview } = await import('../lib/core/review.js');
+    runReview({ scope, protocols: options.protocols, plan: options.plan, withChecklists: options.withChecklists });
   });
 
 program
   .command('compile')
-  .description('Compile an agent briefing from existing .dokugent/ files')
-  .option('--llm <agent>', 'Agent to compile briefing for')
-  .option('--dev', 'Compile from llm-load.yml (development mode)')
-  .option('--prod', 'Require cert and verify review.md before compiling')
+  .description('Compile agent-ready files from reviewed plan or protocols')
+  .option('--plan', 'Compile the reviewed plan into compiled-plan.md')
+  .option('--protocols', 'Compile the reviewed protocols into compiled-protocols.md')
+  .option('--prod', 'Write output to compiled/prod/')
+  .option('--dev', 'Write output to compiled/dev/')
+  .option('--llm <agent>', 'Optional agent type (e.g. codex, claude)')
+  .option('--versioned', 'Save compiled output with a timestamped filename')
   .action((options) => {
-    if (!options.llm) {
-      console.error('❌ Please specify an agent with --llm');
+    if (!options.plan && !options.protocols) {
+      console.error('❌ Please specify either --plan or --protocols');
       process.exit(1);
     }
 
-    compileBriefing(options.llm, options);
+    if (options.plan) {
+      compileBriefing('plan', options);
+    }
+
+    if (options.protocols) {
+      compileBriefing('protocols', options);
+    }
   });
 
 program
@@ -86,13 +96,14 @@ program
   .description('Certify the current review.md by signing it with a private key')
   .option('--scope <folder>', 'Target .dokugent folder', '.dokugent')
   .option('--key <path>', 'Path to the private key PEM file')
+  .option('--versioned', 'Save cert with a timestamped filename')
   .action((options) => {
     if (!options.key) {
       console.error('❌ Please specify a private key with --key');
       process.exit(1);
     }
 
-    certifyBlueprint({ scope: options.scope, key: options.key });
+    certifyBlueprint({ scope: options.scope, key: options.key, versioned: options.versioned });
   });
 
 program

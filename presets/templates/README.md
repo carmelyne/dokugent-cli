@@ -2,7 +2,7 @@
 
 This `.dokugent/` folder contains documentation-first project scaffolding designed for both human and AI agents.
 
-## 🔧 Folder Overview
+## 🔧 Folder Overview under Protocols
 
 - `ux/`: Defines user personas and user flows.
 - `db-schema/`: Data models, relationships, seed data, and migrations.
