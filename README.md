@@ -43,7 +43,7 @@ dokugent wizard
 ## 🔧 CLI Commands
 
 - `dokugent init` — scaffolds `.dokugent` folder structure and default files
-- `dokugent wizard` — interactively configures agent type, tools, and goals
+- `dokugent wizard` — interactively configures agent or app type, tools, and sets up project files
 - `dokugent plan` — defines the agent’s high-level steps or capabilities
 - `dokugent conventions` — describes and enforces documentation structure
 - `dokugent criteria` — defines validation rules, safety thresholds, and constraints

@@ -3,6 +3,7 @@ import { program } from 'commander';
 import { initCore } from '../lib/core/init.js';
 import { init as initBlank } from '../lib/core/init.js';
 import { printHelp } from '../lib/help/helpText.js';
+import { runPlan } from '../lib/core/plan.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -37,6 +38,14 @@ program
   .description('Print help documentation')
   .action(() => {
     printHelp();
+  });
+
+program
+  .command('plan')
+  .description('Create or update plan.md and plan.yaml in the .dokugent/plan folder')
+  .option('--force', 'overwrite existing files without confirmation')
+  .action(async (options) => {
+    await runPlan({ force: options.force || false });
   });
 
 program.parse(process.argv);
