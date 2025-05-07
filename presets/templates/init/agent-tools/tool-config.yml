@@ -1,0 +1,4 @@
+# Tool configuration for agent runtime
+fs_access: false
+api_enabled: false
+browser_dom: false
