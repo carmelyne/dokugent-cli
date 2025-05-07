@@ -17,6 +17,7 @@ import { runCriteria } from '../lib/core/criteria.js';
 import { handleConventions } from '../lib/core/conventions.js';
 import { generatePreview } from '../lib/core/preview.js';
 import { runSecurityCheck } from '../lib/core/security.js';
+import { generateKeyPair } from '../lib/core/keygen.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -105,6 +106,14 @@ program
     const denyList = options.denyList || [];
     const requireApprovals = options.requireApprovals || false;
     await runSecurityCheck({ denyList, requireApprovals });
+  });
+
+program
+  .command('keygen')
+  .description('Generate a private/public key pair for signing')
+  .option('--name <id>', 'Key name (used for filename)', 'agent')
+  .action(async (options) => {
+    await generateKeyPair(options.name);
   });
 
 program.parse(process.argv);
