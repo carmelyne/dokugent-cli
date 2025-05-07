@@ -15,6 +15,7 @@ import { printHelp } from '../lib/help/cliHelpText.js';
 import { runPlan } from '../lib/core/plan.js';
 import { runCriteria } from '../lib/core/criteria.js';
 import { handleConventions } from '../lib/core/conventions.js';
+import { generatePreview } from '../lib/core/preview.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -82,6 +83,16 @@ program
   .option('--force', 'overwrite existing convention folder with backup')
   .action(async (type, options) => {
     await handleConventions({ type, force: options.force || false });
+  });
+
+program
+  .command('preview')
+  .description('Generate preview-plan.yaml and preview-conventions.md in .dokugent/preview')
+  .option('--agent <agent>', 'Specify agent profile (codex, gpt4, claude, llama, gemini, mistral, grok)')
+  .option('--variant <variant>', 'Specify agent variant (for multi-profile agents like gemini and mistral)')
+  .action(async (options) => {
+    await generatePreview(options.agent, options.variant);
+    console.log('✅ Preview files generated in .dokugent/preview');
   });
 
 program.parse(process.argv);
