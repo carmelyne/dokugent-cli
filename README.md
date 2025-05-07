@@ -88,4 +88,4 @@ Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformp
 
 ---
 
-> 🧠 Built with agent token hygiene in mind.
+> 🧠 Structured with agents in mind.
