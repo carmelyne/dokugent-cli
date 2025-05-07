@@ -16,6 +16,7 @@ import { runPlan } from '../lib/core/plan.js';
 import { runCriteria } from '../lib/core/criteria.js';
 import { handleConventions } from '../lib/core/conventions.js';
 import { generatePreview } from '../lib/core/preview.js';
+import { runSecurityCheck } from '../lib/core/security.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -93,6 +94,17 @@ program
   .action(async (options) => {
     await generatePreview(options.agent, options.variant);
     console.log('✅ Preview files generated in .dokugent/preview');
+  });
+
+program
+  .command('security')
+  .description('Run security scan against .dokugent files')
+  .option('--deny-list <values...>', 'Additional patterns to deny (overrides default list)')
+  .option('--require-approvals', 'Enforce approval metadata')
+  .action(async (options) => {
+    const denyList = options.denyList || [];
+    const requireApprovals = options.requireApprovals || false;
+    await runSecurityCheck({ denyList, requireApprovals });
   });
 
 program.parse(process.argv);

@@ -1,0 +1,109 @@
+# SQL Injection patterns
+(['"]).*\1\s*(or|and)\s*\1.*\1
+(drop\s+table|select\s+\*|--|;.*delete\s+)
+
+# Prompt injection triggers
+ignore\s+all\s+previous\s+instructions
+you\s+are\s+now\s+(an?\s+)?(?:admin|root|shell)
+pretend\s+to\s+be
+simulate\s+.*model
+repeat\s+this\s+token\s+forever
+
+# Stealth prompt injection via images and base64 embeds
+data:image/.*base64,.*ignore
+.*ignore[_-]previous.*\.(jpg|jpeg|png)
+.*simulate[_-]model.*\.(jpg|jpeg|png)
+!\[.*\]\(.*ignore.*\)
+
+# Union-based SQL injection
+union\s+select\s+.*from
+.*\s*union\s+all\s+select.*
+
+# Time-based SQLi
+(sleep\(.*\)|benchmark\(.*\)|pg_sleep\(.*\))
+
+# Dangerous database function abuse
+xp_cmdshell
+load_file\(.*\)
+outfile\s*'.*'
+
+# Filter bypass attempts
+s[el]{2}ect\s+\*
+d[ro]{2}p\s+table
+--.*
+;\s*del[ea][te]\s+
+
+# Comments/whitespace used to mask logic
+/\*.*\*/.*\s*(or|and)\s*
+--.*\n.*\s*(or|and)\s*
+
+# LLM directive/control patterns
+system:.*
+#\s*instruction:.*
+
+# Persona manipulation
+as\s+a\s+helpful\s+assistant,\s+you\s+must\s+now
+your\s+new\s+persona\s+is
+from\s+now\s+on,\s+you\s+will\s+respond\s+as
+
+# Output control
+reveal\s+your\s+internal\s+knowledge
+dump\s+your\s+configuration
+what\s+is\s+your\s+api\s+key
+
+# Context manipulation
+repeat\s+the\s+following\s+out\s+of\s+context
+ignore\s+everything\s+after\s+this
+
+# Structured data injection
+\{.*\s*"instruction":\s*".*ignore.*"\}
+
+# Multilingual Prompt Injections
+ignoriere\s+alle\s+vorherigen\s+anweisungen
+ignora\s+todas\s+las\s+instrucciones\s+anteriores
+ignore\s+toutes\s+les\s+instructions\s+précédentes
+
+# Binary or encoded payloads (potential obfuscation)
+[01]{8,}
+
+# Morse code injection patterns (suspicious dot-dash spam)
+[.-]{10,}
+
+# Indirect prompt injection clues
+load\s+external\s+(doc|context|file)
+reference\s+this\s+(document|output)
+
+# Error-based SQL logic
+or\s+1\s*=\s*1
+and\s+\(select\s+1\s+from\s+.*\)
+
+# Unicode homoglyphs and confusables
+[\u043E\u03BF\uFF4F\u24DE]{3,}     # Cyrillic 'о', Greek 'ο', fullwidth o, circled o variants
+
+# Zero-width and invisible space characters
+[\u200B-\u200F\uFEFF]{2,}
+
+# Context switching roleplay patterns
+let'?s\s+role\s*play
+for\s+educational\s+purposes\s+only
+
+# Bidirectional text markers
+\u202A
+\u202B
+\u202C
+\u202D
+\u202E
+
+# HTML-encoded characters and numeric entities
+&#x[a-fA-F0-9]{2,};
+&#\d{2,};
+
+# Template injection syntax
+\{\{.*\}\}
+\$\{.*\}
+\$ENV
+\${ENV}
+
+# Path traversal and local file access
+\.\./
+file:\/\/
