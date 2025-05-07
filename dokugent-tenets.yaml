@@ -1,0 +1,35 @@
+version: 1.0.0
+description: Core tenets for AI-driven development workflows
+
+tenets:
+  contextual_memory:
+    description: AI should maintain and utilize development context
+    principles:
+      - Preserve implementation decisions and rationale
+      - Track progress across development sessions
+      - Learn from similar patterns in the codebase
+      - Build a knowledge base of successful approaches
+
+  intelligent_guidance:
+    description: AI should provide smart, context-aware guidance
+    principles:
+      - Break down complex implementations into manageable steps
+      - Suggest proven patterns and approaches
+      - Identify potential issues early
+      - Adapt to the project's evolving needs
+
+  continuous_learning:
+    description: AI should improve its assistance over time
+    principles:
+      - Learn from successful implementations
+      - Refine task breakdown strategies
+      - Improve pattern recognition
+      - Enhance context preservation techniques
+
+  developer_empowerment:
+    description: AI should enhance developer capabilities
+    principles:
+      - Reduce cognitive load through smart task tracking
+      - Provide relevant context when needed
+      - Maintain consistency in implementations
+      - Streamline development workflows

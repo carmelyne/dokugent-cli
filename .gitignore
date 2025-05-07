@@ -7,6 +7,8 @@ dist/
 build/
 
 *.bak
+.bak/
+*/**/*bak*
 .dokugent/
 .dokugent/agent-briefings/
 .dokugent/*.log
@@ -22,3 +24,8 @@ coverage/
 lib/bak/
 llm-load.yml
 agents.yml
+
+* copy.*
+*/**/* copy.*
+
+lib/config/commands-order.txt
