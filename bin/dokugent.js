@@ -1,9 +1,20 @@
 #!/usr/bin/env node
+
+/**
+ * Entry point for the Dokugent CLI.
+ * Handles command registration and routing for documentation-driven agent workflows.
+ * Commands include: init, plan, criteria, and help.
+ * Supports aliasing as "doku" and passes versioned execution via Commander.
+ */
+
 import { program } from 'commander';
 import { initCore } from '../lib/core/init.js';
 import { init as initBlank } from '../lib/core/init.js';
-import { printHelp } from '../lib/help/helpText.js';
+// NEW (correct source of truth)
+import { printHelp } from '../lib/help/cliHelpText.js';
 import { runPlan } from '../lib/core/plan.js';
+import { runCriteria } from '../lib/core/criteria.js';
+import { handleConventions } from '../lib/core/conventions.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -15,6 +26,14 @@ if (calledAs === 'doku') {
 program
   .description('Documentation-first CLI for agent scaffolding')
   .version('1.0.0');
+
+program.exitOverride((err) => {
+  if (err.code === 'commander.missingArgument') {
+    console.error('❌ Missing required argument <type>. Try one of: dev, writing, research.');
+    process.exit(1);
+  }
+  throw err;
+});
 
 program
   .command('init')
@@ -46,6 +65,23 @@ program
   .option('--force', 'overwrite existing files without confirmation')
   .action(async (options) => {
     await runPlan({ force: options.force || false });
+  });
+
+program
+  .command('criteria')
+  .description('Create or update criteria.md and criteria.yaml in the .dokugent/criteria folder')
+  .option('--force', 'overwrite existing files without confirmation')
+  .action(async (options) => {
+    await runCriteria({ force: options.force || false });
+  });
+
+program
+  .command('conventions')
+  .argument('<type>', 'Type of convention to copy (e.g., dev)')
+  .description('Copy template conventions into .dokugent/conventions/<type>')
+  .option('--force', 'overwrite existing convention folder with backup')
+  .action(async (type, options) => {
+    await handleConventions({ type, force: options.force || false });
   });
 
 program.parse(process.argv);
