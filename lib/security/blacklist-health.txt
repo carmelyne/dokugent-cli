@@ -1,0 +1,18 @@
+# Health-Specific Blacklist Patterns
+# These patterns are not included by default in dokugent security scans.
+# To use them, merge with the core blacklist or pass as a custom ruleset.
+
+# Personal Health Information (PHI) indicators
+patient[_\s]*id\s*[:=]?\s*\d+
+medical[_\s]*record[_\s]*number\s*[:=]?\s*\d+
+ssn\s*[:=]?\s*\d{3}-\d{2}-\d{4}
+dob\s*[:=]?\s*\d{2}/\d{2}/\d{4}
+
+# Diagnosis or prescription terms
+diagnosis\s*[:=]?
+prescription\s*[:=]?
+medication\s*[:=]?
+
+# ICD or CPT codes (loose patterns)
+icd[-\s]*10\s*[:=]?\s*[a-zA-Z0-9.]+
+cpt\s*[:=]?\s*\d{4,5}

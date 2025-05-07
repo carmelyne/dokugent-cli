@@ -1,0 +1,17 @@
+# Education-Specific Blacklist Patterns
+# These patterns are not included by default in dokugent security scans.
+# To use them, merge with the core blacklist or pass as a custom ruleset.
+
+# Prompts to bypass academic work
+write\s+my\s+(essay|assignment|homework)
+generate\s+an?\s+answer\s+for\s+this\s+exam
+solve\s+this\s+(test|quiz)\s+question
+
+# Academic integrity risks
+plagiarize
+rewrite\s+in\s+your\s+own\s+words
+answer\s+these\s+questions\s+without\s+being\s+detected
+
+# Suspicious learning assistant usage
+simulate\s+a\s+student\s+answer
+pretend\s+to\s+be\s+a\s+teacher\s+grading

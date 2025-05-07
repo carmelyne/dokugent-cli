@@ -1,3 +1,7 @@
+# Core Security Blacklist Patterns
+# These patterns are included by default in dokugent security scans.
+# They target general-purpose threats such as prompt injection, SQLi, shell abuse, and obfuscation attempts.
+
 # SQL Injection patterns
 (['"]).*\1\s*(or|and)\s*\1.*\1
 (drop\s+table|select\s+\*|--|;.*delete\s+)
