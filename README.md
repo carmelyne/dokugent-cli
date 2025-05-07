@@ -12,8 +12,6 @@ Instead of bloated repos or scattered prompts, Dokugent gives your AI teammates 
 
 While originally designed for developers, Dokugent’s modular structure can also support structured thinking in content planning, education, research, and more.
 
----
-
 ## 🚀 Features
 
 - 📁 Scaffolds agent projects with `init` and `wizard`
@@ -22,20 +20,10 @@ While originally designed for developers, Dokugent’s modular structure can als
 - 🔐 Certifies and simulates agent reasoning flows
 - 📦 Supports Claude, Codex, GPT-4, Gemini, LLaMA via `agents.yml`
 
----
-
 ## 🛠 Getting Started
 
 ```bash
 npm install -g dokugent
-```
-
-Then scaffold your first project:
-
-```bash
-dokugent init
-# then optionally
-dokugent wizard
 ```
 
 ---
@@ -57,21 +45,15 @@ dokugent wizard
 - `dokugent review` — checks trace output against expected behavior or goals
 - `dokugent keygen` — generates and stores API keys or access tokens
 
----
-
 ## 🧪 Coming Soon
 
 - `dokugent fetch` — download community-contributed agent plans and templates
-
----
 
 ## 🧱 Philosophy
 
 Dokugent embraces a protocol-first mindset for building intelligent systems. You don’t start by coding — you start by thinking, documenting, and aligning. This structure keeps your agents safe, traceable, and easy to reconfigure.
 
 With Dokugent, your documentation becomes a reusable memory scaffold.
-
----
 
 ## 📣 Trivia
 
@@ -82,8 +64,6 @@ Like **Goku**, but with **doku** — which in Japanese can mean either:
 
 Add **agent** and you get:
 **Dokugent = a reading agent…**
-
----
 
 ### 🌏 Multilingual roots
 
@@ -99,8 +79,6 @@ Add **agent** and you get:
 
 **Dokugent** is a portmanteau of all these — a cross-cultural nod to literacy, power, and intelligent agents.
 
----
-
 ## 🛡 License
 
 Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformproject.org/licenses/shield/1.0.0/).
@@ -108,4 +86,6 @@ Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformp
 ✅ Use it for personal projects, client work, or internal tooling  
 ❌ You can’t use it to build a competing product or service
 
-For commercial licensing or collaboration, feel free to reach out 💬
+---
+
+> 🧠 Built with agent token hygiene in mind.
