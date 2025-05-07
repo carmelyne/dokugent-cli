@@ -59,11 +59,45 @@ dokugent wizard
 
 ---
 
+## 🧪 Coming Soon
+
+- `dokugent fetch` — download community-contributed agent plans and templates
+
+---
+
 ## 🧱 Philosophy
 
 Dokugent embraces a protocol-first mindset for building intelligent systems. You don’t start by coding — you start by thinking, documenting, and aligning. This structure keeps your agents safe, traceable, and easy to reconfigure.
 
 With Dokugent, your documentation becomes a reusable memory scaffold.
+
+---
+
+## 📣 Trivia
+
+**How do you pronounce Dokugent?**
+Like **Goku**, but with **doku** — which in Japanese can mean either:
+
+- **読 (doku)** — “to read”
+
+Add **agent** and you get:
+**Dokugent = a reading agent…**
+
+---
+
+### 🌏 Multilingual roots
+
+- 🇯🇵 **書類読解エージェント (Shorui Dokkai Eejento)**
+  → Literally: “Document Comprehension Agent”
+  (書類 = documents, 読解 = reading comprehension)
+
+- 🇵🇭 **Dokumento**
+  → Tagalog for "document" (from Spanish *documento*)
+  → Used commonly as **"mga dokumento"** for “documents”
+
+- 🤖 **Agent** = from English, written in Japanese as エージェント (eejento)
+
+**Dokugent** is a portmanteau of all these — a cross-cultural nod to literacy, power, and intelligent agents.
 
 ---
 
