@@ -1,0 +1,11 @@
+agentSpec: .dokugent/agent/agentSpec.mjs
+criteria: .dokugent/criteria/criteria.yaml
+plan: .dokugent/plan/plan.yaml
+tools:
+  config: .dokugent/agent-tools/tool-config.yml
+  list: .dokugent/agent-tools/tool-list.md
+  hooks: .dokugent/agent-tools/agent-hooks.md
+conventions: .dokugent/conventions/
+preview: .dokugent/preview/
+certified: .dokugent/certified/
+reports: .dokugent/reports/

@@ -18,6 +18,7 @@ import { handleConventions } from '../lib/core/conventions.js';
 import { generatePreview } from '../lib/core/preview.js';
 import { runSecurityCheck } from '../lib/core/security.js';
 import { generateKeyPair } from '../lib/core/keygen.js';
+import { certify } from '../lib/core/certify.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -114,6 +115,22 @@ program
   .option('--name <id>', 'Key name (used for filename)', 'agent')
   .action(async (options) => {
     await generateKeyPair(options.name);
+  });
+
+program
+  .command('certify')
+  .description('Certify the current previewed agent setup before execution')
+  .option('--key <path>', 'Path to private key for signing')
+  .option('--name <id>', 'Name of certifying human or system')
+  .action(async (options) => {
+    const key = options.key;
+    const name = options.name;
+    try {
+      await certify({ key, name });
+    } catch (err) {
+      console.error(err.message || err);
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);
