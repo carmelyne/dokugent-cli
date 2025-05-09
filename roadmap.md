@@ -4,39 +4,6 @@ This document outlines the final steps before we ship Dokugent as a public beta.
 
 ---
 
-## ✅ Completed
-
-- `--force` and `--backup` overwrite behavior
-- `--with-checklists` loads rich templates
-- Scoped folder scaffolding (`core`, `addons`, etc.)
-- Intelligent UX copy for CLI feedback
-- Agent instruction protocol defined
-- Token-efficient file structure
-- Tests pass without nuking presets
-- Agent-ready templates for:
-  - `qa/checklist.md`, `security/auth.md`, `db-schema/models.md`
-  - `mvc/controllers.md`, `mvc/models.md`, `mvc/views.md`, `mvc/routes.md`
-  - `agent-briefings/claude.md`, `agent-briefings/codex.md`
-- README updated with usage, customization tips, and About context
-- CLI renamed to Dokugent
-- --custom flag added for user-defined scaffold folders
-- Add a staging layer for human-readable instruction review
-
----
-
-## 🛠️ To-Do for Beta
-
-### Template Completion
-
-- [X] `qa/checklist.md`
-- [ ] `qa/edge-cases.md`
-- [ ] `testing/unit.md`
-- [ ] `testing/manual.md`
-- [X] `security/auth.md`
-- [ ] `tech-seo/meta.md`
-- [ ] `tech-seo/sitemap.md`
-- [ ] `marketing/launch-checklist.md`
-
 ### Agentic Safety Features
 
 - [X] Compile immutable, versioned blueprints post-approval
@@ -49,25 +16,35 @@ This document outlines the final steps before we ship Dokugent as a public beta.
 ### CLI & Project Polish
 
 - [ ] Add `dokugent help` with grouped command categories
-- [X] Enforce `blueprint.md` for --custom scaffolds
-- [X] Finalize tag chaining support (v1)
 - [ ] Add support for `.dokugentrc` config overrides
-- [ ] Add optional footer signature for agent-briefings
 - [ ] Improve logging and token efficiency feedback
 - [X] Document easter eggs ('marites', 'secrets') for fun and transparency
-- [ ] Create `tag-protocol.md` reference for Doku Tags
 - [ ] Add more `examples/` (e.g. grading-system.md, open-llm-awareness.md)
-- [ ] Update README with Doku Tag usage + CLI workflow
 - [X] Clarify license intent and boundaries (DONE)
 - [ ] Add optional postinstall message
 
+### New CLI Commands (Stable)
+
+- [X] `init` – Scaffold a Dokugent project with structure.yaml and templates
+- [X] `wizard` — interactively configures agent or app type, tools, and sets up project files
+- [X] `plan` – Generate or inspect plan.yaml for agent workflows
+- [X] `conventions` – Load or apply structural/tagging conventions
+- [X] `criteria` – Define project rules and behavioral constraints
+- [X] `preview` — renders plan, conventions, and criteria for human review before compiling
+- [X] `security` – Run blacklist scans and signature checks for risky content
+- [X] `certify` – Snapshot and lock project state via .cert.* files
+- [X] `keygen` – Generate signing keys for certification processes
+
+### New CLI Commands (In Progress)
+
+- [ ] `compile` – Convert preview files into structured agent-ready output
+
 ### New CLI Commands (Planned)
 
-- [ ] `dokugent step` – Generate a `plan.yaml` from existing protocols (auto-plan)
-- [ ] `dokugent dryrun` – Simulate plan steps without invoking tools (debug intent)
-- [ ] `dokugent verify` – Check if compiled output matches cert (anti-tamper)
-- [ ] `dokugent simulate` – Emulate step-by-step execution with agent mock
-- [ ] `dokugent watch` – Monitor for changes that invalidate certification
+- [ ] `dryrun` – Simulate command flow without executing agent logic
+- [ ] `simulate` – Emulate step-by-step plan execution for debugging or training
+- [ ] `trace` – Map or inspect file relationships and logical dependencies
+- [ ] `review` – Evaluate compiled output against criteria and plan
 
 ---
 

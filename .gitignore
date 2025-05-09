@@ -30,3 +30,6 @@ agents.yml
 
 lib/config/commands-order.txt
 .prettierignore
+
+# .docugent
+.docugent
