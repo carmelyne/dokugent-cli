@@ -1,4 +1,4 @@
-# agent.yml
+# agents.yaml
 # Per-agent metadata and preferences for briefing formatting and ideal limits
 agents:
   claude:

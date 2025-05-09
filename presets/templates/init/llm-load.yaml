@@ -1,0 +1,10 @@
+# llm-load.yml
+# Configuration for token load estimation and agent-briefing controls
+
+tokenLimit: 6000        # Soft token limit for briefing file
+warnIfExceeds: true     # Show warning if estimated tokens exceed limit
+
+excludeFiles:
+  - views.md            # Common high-bloat files to skip
+  - seed-data.md
+  - changelog/*

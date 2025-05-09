@@ -42,8 +42,8 @@ d[ro]{2}p\s+table
 --.*\n.*\s*(or|and)\s*
 
 # LLM directive/control patterns
-system:.*
-#\s*instruction:.*
+#\s*instruction:\s*(ignore|pretend|simulate|bypass|assume\s+role)
+^\s*system:\s*(ignore|override|simulate|inject)
 
 # Persona manipulation
 as\s+a\s+helpful\s+assistant,\s+you\s+must\s+now
@@ -110,4 +110,4 @@ for\s+educational\s+purposes\s+only
 
 # Path traversal and local file access
 \.\./
-file:\/\/
+file:\/\/</file>

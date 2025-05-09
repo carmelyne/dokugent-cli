@@ -6,7 +6,7 @@
 
 AI agents need more than raw code—they need context, structure, and guidance.
 
-**Dokugent** is a documentation-first CLI tool for building, testing, and coordinating AI agents using simple Markdown and JSON scaffolds. It prioritizes transparency, human-in-the-loop workflows, and model-agnostic compatibility.
+**Dokugent** is a markdown-native, documentation-first CLI tool for building, testing, and coordinating AI agents using simple Markdown and JSON scaffolds. It prioritizes transparency, human-in-the-loop workflows, and model-agnostic compatibility.
 
 Instead of bloated repos or scattered prompts, Dokugent gives your AI teammates a clean, token-efficient folder of structured instructions, ready to reuse across projects.
 
@@ -18,7 +18,7 @@ While originally designed for developers, Dokugent’s modular structure can als
 - 🧠 Plans and compiles agent behavior from Markdown
 - 🛡️ Enforces conventions and traceable criteria
 - 🔐 Certifies and simulates agent reasoning flows
-- 📦 Supports Claude, Codex, GPT-4, Gemini, LLaMA via `agents.yml`
+- 📦 Supports Claude, Codex, GPT-4, Gemini, LLaMA via `agents.yaml`
 
 ## 🛠 Getting Started
 
