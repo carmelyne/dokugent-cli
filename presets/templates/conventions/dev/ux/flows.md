@@ -7,12 +7,12 @@ This file defines the main user flows an application should support. It is desig
 - [ ] User opens app
 - [ ] User enters pickup and drop-off location
 - [ ] User confirms ride request
-- [ ] System matches user to a driver
+- [ ] App matches user to a driver
 
 ## ❌ Cancel Ride
 
 - [ ] User cancels before a match is made
-- [ ] System notifies assigned driver (if applicable)
+- [ ] App notifies assigned driver (if applicable)
 
 ---
 

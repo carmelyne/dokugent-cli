@@ -1,4 +1,4 @@
-# Design System – Tokens
+# DesignSystems – Tokens
 
 Use these values to ensure consistent design across platforms and agents.
 

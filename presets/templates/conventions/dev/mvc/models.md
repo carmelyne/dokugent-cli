@@ -7,8 +7,6 @@ Model logic adds behavior to the schema. These methods should encapsulate logic 
 ## 🧩 Behavior Methods
 
 - [ ] `Ride.isCancelable()` → returns `true` if ride is still in `pending` status
-- [ ] `User.validatePhone()` → checks number format and length
-- [ ] `Driver.canAccept()` → returns `true` if driver has no active ride assigned
 
 ---
 

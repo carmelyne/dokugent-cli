@@ -20,5 +20,5 @@
 
  ---
 
- 🧠 **Agent Note:**  
+ 🧠 **Agent Note:**
  This checklist is used for verifying behavior in extreme or rare edge cases. If working on automated QA, prioritize simulating these scenarios with @qa/test-matrix.md and @testing/unit.md.

@@ -19,6 +19,7 @@ import { generatePreview } from '../lib/core/preview.js';
 import { runSecurityCheck } from '../lib/core/security.js';
 import { generateKeyPair } from '../lib/core/keygen.js';
 import { certify } from '../lib/core/certify.js';
+import { compile } from '../lib/core/compile.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -129,6 +130,19 @@ program
       await certify({ key, name });
     } catch (err) {
       console.error(err.message || err);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('compile')
+  .description('Compile .dokugent content into structured/compiled.json for agent consumption')
+  .action(async () => {
+    try {
+      compile();
+      console.log('✅ Compiled structured/compiled.json');
+    } catch (err) {
+      console.error('❌ Compile failed:', err.message);
       process.exit(1);
     }
   });

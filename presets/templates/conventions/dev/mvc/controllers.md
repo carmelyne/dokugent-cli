@@ -7,9 +7,6 @@ This file defines controller-level functions for handling app logic. Controllers
 ## 🚕 Ride Controller
 
 - [ ] `createRide(user_id, pickup, dropoff)`: Creates a new ride entry → returns `ride_id`
-- [ ] `acceptRide(ride_id)`: Marks a ride as accepted
-- [ ] `cancelRide(ride_id)`: Cancels a pending ride
-- [ ] `completeRide(ride_id)`: Marks a ride as completed and logs final state
 
 ---
 
