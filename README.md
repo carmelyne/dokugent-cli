@@ -30,20 +30,20 @@ npm install -g dokugent
 
 ## 🔧 CLI Commands
 
-- `dokugent init` — scaffolds `.dokugent` folder structure and default files
-- `dokugent wizard` — interactively configures agent or app type, tools, and sets up project files
-- `dokugent plan` — defines the agent’s high-level steps or capabilities
-- `dokugent conventions` — describes and enforces documentation structure
-- `dokugent criteria` — defines validation rules, safety thresholds, and constraints
-- `dokugent preview` — renders plan, conventions, and criteria for human review before compiling
-- `dokugent security` — validates against unsafe actions, tools, or behavior
-- `dokugent certify` — certifies agents or plans against predefined safety protocols
-- `dokugent compile` — compiles structured files into agent-readable prompts
-- `dokugent dryrun` — simulates agent behavior without real LLM calls
-- `dokugent simulate` — runs a test session with real or mocked model responses
-- `dokugent trace` — logs and inspects a model's step-by-step reasoning
-- `dokugent review` — checks trace output against expected behavior or goals
-- `dokugent keygen` — generates and stores API keys or access tokens
+- ✅ `dokugent init` — scaffolds `.dokugent` folder structure and default files
+- ✅ `dokugent wizard` — interactively configures agent or app type, tools, and sets up project files
+- ✅ `dokugent plan` — defines the agent’s high-level steps or capabilities
+- ✅ `dokugent conventions` — describes and enforces documentation structure
+- ✅ `dokugent criteria` — defines validation rules, safety thresholds, and constraints
+- ✅ `dokugent preview` — renders plan, conventions, and criteria for human review before compiling
+- ✅ `dokugent security` — validates against unsafe actions, tools, or behavior
+- ✅ `dokugent keygen` — generates and stores API keys or access tokens
+- ✅ `dokugent certify` — certifies agents or plans against predefined safety protocols
+- ✅ `dokugent compile` — compiles structured files into agent-readable prompts
+- 🔲 `dokugent dryrun` — simulates agent behavior without real LLM calls
+- 🔲 `dokugent simulate` — runs a test session with real or mocked model responses
+- 🔲 `dokugent trace` — logs and inspects a model's step-by-step reasoning
+- 🔲 `dokugent review` — checks trace output against expected behavior or goals
 
 ## 🧪 Coming Soon
 
