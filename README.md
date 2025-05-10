@@ -37,7 +37,7 @@ npm install -g dokugent
 - ✅ `dokugent criteria` — defines validation rules, safety thresholds, and constraints
 - ✅ `dokugent preview` — renders plan, conventions, and criteria for human review before compiling
 - ✅ `dokugent security` — validates against unsafe actions, tools, or behavior
-- ✅ `dokugent keygen` — generates and stores API keys or access tokens
+- ✅ `dokugent keygen` — generates cryptographic signing keys for certifying agent files & verifying trust
 - ✅ `dokugent certify` — certifies agents or plans against predefined safety protocols
 - ✅ `dokugent compile` — compiles structured files into agent-readable prompts
 - 🔲 `dokugent dryrun` — simulates agent behavior without real LLM calls
@@ -47,7 +47,7 @@ npm install -g dokugent
 
 ## 🧪 Coming Soon
 
-- `dokugent fetch` — download community-contributed agent plans and templates
+- 🔲 `dokugent fetch` — download community-contributed agent plans and templates
 
 ## 🧱 Philosophy
 
