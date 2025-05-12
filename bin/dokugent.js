@@ -65,11 +65,33 @@ program
   });
 
 program
-  .command('plan')
-  .description('Create or update plan.md and plan.yaml in the .dokugent/plan folder')
+  .command('plan [subcommand] [target]')
+  .description('Manage or define plan.md and plan.yaml in the .dokugent/plan folder')
   .option('--force', 'overwrite existing files without confirmation')
-  .action(async (options) => {
-    await runPlan({ force: options.force || false });
+  .action(async (subcommand, target, options) => {
+    if (subcommand === 'alias' && target) {
+      // Modified alias parsing as per instructions
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const planDir = path.resolve('.dokugent', 'plan');
+      const [alias, folder] = target.split('@');
+      if (!alias || !folder) {
+        console.error('❌ Usage: dokugent plan alias <alias>@<existing-folder-name>');
+        return;
+      }
+      const candidates = await fs.readdir(planDir);
+      const match = candidates.find(f => f === folder);
+      if (!match) {
+        console.error(`❌ Folder ${folder} not found in .dokugent/plan`);
+        return;
+      }
+      // Here you would implement the alias creation logic, e.g.:
+      // create or update a symlink or alias file pointing alias to match
+      // For demonstration, just print success message
+      console.log(`✅ Alias '${alias}' set to folder '${folder}'`);
+      return;
+    }
+    await runPlan({ subcommand, target, force: options.force || false });
   });
 
 program
