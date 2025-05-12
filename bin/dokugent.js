@@ -66,7 +66,7 @@ program
 
 program
   .command('plan [subcommand] [target]')
-  .description('Manage or define plan.md and plan.yaml in the .dokugent/plan folder')
+  .description('Manage or define plan files, symlinks, or freedoms in .dokugent/plan')
   .option('--force', 'overwrite existing files without confirmation')
   .action(async (subcommand, target, options) => {
     if (subcommand === 'alias' && target) {
@@ -89,6 +89,10 @@ program
       // create or update a symlink or alias file pointing alias to match
       // For demonstration, just print success message
       console.log(`✅ Alias '${alias}' set to folder '${folder}'`);
+      return;
+    }
+    if (subcommand === 'freedom') {
+      await runPlan({ subcommand: 'freedom', force: options.force || false });
       return;
     }
     await runPlan({ subcommand, target, force: options.force || false });
