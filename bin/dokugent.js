@@ -16,6 +16,7 @@ import { runPlan } from '../lib/core/plan.js';
 import { runCriteria } from '../lib/core/criteria.js';
 import { handleConventions, useConventions } from '../lib/core/conventions.js';
 import { generatePreview } from '../lib/core/preview.js';
+import { previewLs } from '../lib/utils/preview-ls.js';
 import { runSecurityCheck } from '../lib/core/security.js';
 import { generateKeyPair } from '../lib/core/keygen.js';
 import { certify } from '../lib/core/certify.js';
@@ -124,13 +125,17 @@ program
   });
 
 program
-  .command('preview')
-  .description('Generate preview-plan.yaml and preview-conventions.md in .dokugent/preview')
+  .command('preview [action]')
+  .description('Generate or inspect preview files')
   .option('--agent <agent>', 'Specify agent profile (codex, gpt4, claude, llama, gemini, mistral, grok)')
   .option('--variant <variant>', 'Specify agent variant (for multi-profile agents like gemini and mistral)')
-  .action(async (options) => {
-    await generatePreview(options.agent, options.variant);
-    console.log('✅ Preview files generated in .dokugent/preview');
+  .action(async (action, options) => {
+    if (action === 'ls') {
+      await previewLs();
+    } else {
+      await generatePreview(options.agent, options.variant);
+      console.log('✅ Preview files generated in .dokugent/preview');
+    }
   });
 
 program
