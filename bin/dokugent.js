@@ -104,7 +104,7 @@ program
   .option('--force', 'overwrite existing files without confirmation')
   .option('--wizard', 'run interactive wizard to scaffold criteria')
   .action(async (options) => {
-    await runCriteria({ force: options.force || false, wizard: options.wizard || false });
+    await runCriteria({ force: true, wizard: true });
   });
 
 program
