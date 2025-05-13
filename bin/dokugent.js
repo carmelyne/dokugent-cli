@@ -177,13 +177,12 @@ program
 
 program
   .command('compile')
-  .description('Compile .dokugent content into structured/compiled.json for agent consumption')
+  .description('Compile certified files into a structured JSON snapshot for agent consumption')
   .action(async () => {
     try {
-      compile();
-      console.log('✅ Compiled structured/compiled.json');
+      await compile();
     } catch (err) {
-      console.error('❌ Compile failed:', err.message);
+      console.error('❌ Compile failed:', err.message || err);
       process.exit(1);
     }
   });
