@@ -14,7 +14,7 @@ import { init as initBlank } from '../lib/core/init.js';
 import { printHelp } from '../lib/help/cliHelpText.js';
 import { runPlan } from '../lib/core/plan.js';
 import { runCriteria } from '../lib/core/criteria.js';
-import { handleConventions } from '../lib/core/conventions.js';
+import { handleConventions, useConventions } from '../lib/core/conventions.js';
 import { generatePreview } from '../lib/core/preview.js';
 import { runSecurityCheck } from '../lib/core/security.js';
 import { generateKeyPair } from '../lib/core/keygen.js';
@@ -109,11 +109,18 @@ program
 
 program
   .command('conventions')
-  .argument('<type>', 'Type of convention to copy (e.g., dev)')
+  .argument('[type]', 'Type of convention to copy (e.g., dev)')
   .description('Copy template conventions into .dokugent/conventions/<type>')
   .option('--force', 'overwrite existing convention folder with backup')
   .action(async (type, options) => {
     await handleConventions({ type, force: options.force || false });
+  });
+
+program
+  .command('conventions use <version>')
+  .description('Symlink a specific version of conventions as the active one')
+  .action(async (version) => {
+    await useConventions(version);
   });
 
 program
