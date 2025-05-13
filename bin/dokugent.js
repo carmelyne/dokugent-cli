@@ -135,13 +135,15 @@ program
 
 program
   .command('security')
-  .description('Run security scan against .dokugent files')
+  .argument('[target]', 'Folder to scan: preview or default')
+  .description('Run security scan against .dokugent or .dokugent/preview')
   .option('--deny-list <values...>', 'Additional patterns to deny (overrides default list)')
   .option('--require-approvals', 'Enforce approval metadata')
-  .action(async (options) => {
+  .action(async (target, options) => {
     const denyList = options.denyList || [];
     const requireApprovals = options.requireApprovals || false;
-    await runSecurityCheck({ denyList, requireApprovals });
+    const scanPath = target === 'preview' ? '.dokugent/preview' : undefined;
+    await runSecurityCheck({ denyList, requireApprovals, scanPath });
   });
 
 program
