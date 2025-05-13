@@ -102,8 +102,9 @@ program
   .command('criteria')
   .description('Create or update criteria.md and criteria.yaml in the .dokugent/criteria folder')
   .option('--force', 'overwrite existing files without confirmation')
+  .option('--wizard', 'run interactive wizard to scaffold criteria')
   .action(async (options) => {
-    await runCriteria({ force: options.force || false });
+    await runCriteria({ force: options.force || false, wizard: options.wizard || false });
   });
 
 program
