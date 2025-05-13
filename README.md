@@ -35,8 +35,8 @@ npm install -g dokugent
 - ✅ `dokugent plan` — defines the agent’s high-level steps or capabilities
 - ✅ `dokugent conventions` — describes and enforces documentation structure
 - ✅ `dokugent criteria` — defines validation rules, safety thresholds, and constraints
-- ✅ `dokugent preview` — renders plan, conventions, and criteria for human review before compiling
 - ✅ `dokugent security` — validates against unsafe actions, tools, or behavior
+- ✅ `dokugent preview` — renders plan, conventions, and criteria for human review before compiling
 - ✅ `dokugent keygen` — generates cryptographic signing keys for certifying agent files & verifying trust
 - ✅ `dokugent certify` — certifies agents or plans against predefined safety protocols
 - ✅ `dokugent compile` — compiles structured files into agent-readable prompts
