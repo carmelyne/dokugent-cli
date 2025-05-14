@@ -21,6 +21,7 @@ import { runSecurityCheck } from '../lib/core/security.js';
 import { generateKeyPair } from '../lib/core/keygen.js';
 import { certify } from '../lib/core/certify.js';
 import { compile } from '../lib/core/compile.js';
+import { dryrun } from '../lib/core/dryrun.js';
 
 const calledAs = process.argv[1]?.split('/').pop();
 if (calledAs === 'doku') {
@@ -94,6 +95,10 @@ program
     }
     if (subcommand === 'freedom') {
       await runPlan({ subcommand: 'freedom', force: options.force || false });
+      return;
+    }
+    if (subcommand === 'sync') {
+      await runPlan({ subcommand: 'sync', force: options.force || false });
       return;
     }
     await runPlan({ subcommand, target, force: options.force || false });
@@ -183,6 +188,18 @@ program
       await compile();
     } catch (err) {
       console.error('❌ Compile failed:', err.message || err);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('dryrun')
+  .description('Simulates agent behavior without calling real LLMs')
+  .action(async () => {
+    try {
+      await dryrun();
+    } catch (err) {
+      console.error('❌ Dryrun failed:', err.message || err);
       process.exit(1);
     }
   });
