@@ -7,6 +7,7 @@
 
 import { runInitCommand } from '../src/commands/init'; // this will fail if init is empty
 import { runPlanCommand } from '../src/commands/plan';
+import { runCriteria } from '../src/commands/criteria';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -18,8 +19,11 @@ switch (command) {
   case 'plan':
     runPlanCommand?.(args.slice(1));
     break;
+  case 'criteria':
+    runCriteria?.();
+    break;
   default:
     console.log("🚀 Dokugent CLI is alive in TS!");
     console.log("Usage: dokugent <command>");
-    console.log("Available commands: init, plan");
+    console.log("Available commands: init, plan, criteria");
 }
