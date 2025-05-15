@@ -26,6 +26,36 @@ export async function runPreviewCommand(): Promise<void> {
   const metadata = { previewed_by: 'dokugent', timestamp };
   let totalTokens = 0;
 
+  // --- Agent spec preview extraction ---
+  const specRoot = path.join(dokugentPath, 'agent-info', 'agents', 'agent-spec', 'init');
+  const specPreviewRoot = path.join(previewPath, 'specs');
+  if (await fs.pathExists(specRoot)) {
+    const agentDirs = await fs.readdir(specRoot);
+    for (const agentDir of agentDirs) {
+      const srcDir = path.join(specRoot, agentDir);
+      const destDir = path.join(specPreviewRoot, agentDir);
+      await fs.ensureDir(destDir);
+
+      for (const filename of ['agent-spec.md', 'tool-list.md']) {
+        const srcFile = path.join(srcDir, filename);
+        const jsonFile = path.join(destDir, filename.replace('.md', '.json'));
+        if (await fs.pathExists(srcFile)) {
+          const raw = await fs.readFile(srcFile, 'utf8');
+          const parsed = matter(raw);
+          const tokenCount = estimateTokensFromText(parsed.content);
+          const json = {
+            metadata: parsed.data,
+            content: parsed.content.trim(),
+            tokens: tokenCount,
+          };
+          await fs.writeJson(jsonFile, json, { spaces: 2 });
+          totalTokens += tokenCount;
+          console.log(`✅ Wrote: specs/${agentDir}/${path.basename(jsonFile)} (${tokenCount} tokens est.)`);
+        }
+      }
+    }
+  }
+
   async function mergeMdFiles(srcFolder: string, outName: string) {
     if (!(await fs.pathExists(srcFolder))) {
       console.warn(`⚠️  Skipped: ${srcFolder} not found`);
@@ -79,7 +109,7 @@ export async function runPreviewCommand(): Promise<void> {
           break;
         }
       }
-      console.log(`\n🕵️ Detected agent key from conventions/dev/:`);
+      console.log(`\n🕵️ Detected agent key from conventions/dev:`);
     } catch {
       console.warn('⚠️ Unable to scan conventions/dev for agent detection. Using default "codex".');
     }
@@ -151,13 +181,41 @@ export async function runPreviewCommand(): Promise<void> {
   if (totalTokens > idealMaxTokens) {
     console.warn(`⚠️ Over the ideal optimal size of ${idealMaxTokens} tokens — consider trimming files.`);
   } else {
-    console.log(`✅ Within the ideal optimal size of ${idealMaxTokens} tokens.`);
+    console.log(`✅ Total token estimate across all preview files is within the ideal maximum of ${idealMaxTokens} tokens.\n`);
   }
 
-  if (activeAgent.notes) {
-    console.log(`🤖 ${activeAgent.notes.trim()}`);
-  }
+  // if (activeAgent.notes) {
+  //   console.log(`🤖 ${activeAgent.notes.trim()}`);
+  // }
+
+  // Updated section for writing preview log and report
+  const previewLogLines: string[] = [
+    `🕓 Preview generated at ${new Date().toISOString()}`,
+    `📁 Files in preview: ${files.length}`,
+    `🔒 SHA256 file created`,
+    `🔢 Estimated total tokens: ${totalTokens}`,
+  ];
+
+  const previewReport: Record<string, any> = {
+    timestamp,
+    estimated_tokens: totalTokens,
+    detected_agent: agentKey,
+    preview_files: files,
+    sha256_entries: shaLines,
+  };
+
+  await fs.writeFile(path.join(previewPath, 'preview.log'), previewLogLines.join('\n'), 'utf8');
+  await fs.writeJson(path.join(previewPath, 'preview.report.json'), previewReport, { spaces: 2 });
+
+  const logsDir = path.join(dokugentPath, 'logs');
+  const reportsDir = path.join(dokugentPath, 'reports');
+  await fs.ensureDir(logsDir);
+  await fs.ensureDir(reportsDir);
+  await fs.writeFile(path.join(logsDir, 'preview.log'), previewLogLines.join('\n'), 'utf8');
+  await fs.writeJson(path.join(reportsDir, 'preview.json'), previewReport, { spaces: 2 });
 }
+
+console.log('\n📁 Note: `.dokugent/preview` files were generated and read-only.');
 
 async function convertMdToJson(sourceMd: string, targetJson: string): Promise<number> {
   const fullMdPath = path.join(previewPath, sourceMd);

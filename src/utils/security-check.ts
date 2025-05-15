@@ -89,8 +89,4 @@ export async function runSecurityCheck({
     console.log(`\n🔎 Review complete: ${issues} potential issue(s) found.\n`);
   }
 
-  if (!scanPath) {
-    console.log('📁 Note: `.dokugent/preview` files were generated and read-only.');
-  }
-
 }
