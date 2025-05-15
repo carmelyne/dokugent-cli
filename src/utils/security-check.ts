@@ -1,5 +1,3 @@
-
-
 import fs from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
@@ -92,9 +90,7 @@ export async function runSecurityCheck({
   }
 
   if (!scanPath) {
-    console.log('📁 Note: `.dokugent/preview` files are generated and read-only.');
-    console.log('\n🔒 For a complete security + validation workflow, run `dokugent preview`.');
-    console.log('   It includes automated security scans before generating output artifacts.\n');
-    console.log('   To resolve issues, modify your source `.md` and `.yaml` files in `plan/`, `criteria/`, or `conventions/`.\n');
+    console.log('📁 Note: `.dokugent/preview` files were generated and read-only.');
   }
+
 }
