@@ -5,13 +5,21 @@ import crypto from 'crypto';
 import { runSecurityCheck } from '../utils/security-check';
 import { estimateTokensFromText } from '../utils/tokenizer';
 import { agents } from '../config/agentsConfig';
-
-const dokugentPath = path.resolve('.dokugent');
-const previewPath = path.join(dokugentPath, 'preview');
+import { previewWizard } from '../utils/wizards/preview-wizard';
+import { updateSymlink } from '../utils/symlink-utils';
 
 export async function runPreviewCommand(): Promise<void> {
-  let agentKey = 'codex'; // fallback
-  const variantKey = null;
+  const wizard = await previewWizard();
+  if (!wizard) return;
+
+  const { agent: agentKey, devMode } = wizard;
+  const variantKey = undefined;
+
+  const dokugentPath = path.resolve('.dokugent');
+  const previewRoot = path.join(dokugentPath, 'preview');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const previewPath = path.join(previewRoot, `preview-${timestamp}`);
+
   console.log('\n🔐 Running security check before generating preview...');
   await runSecurityCheck();
   console.log('\n✅ Security check passed. Proceeding with preview render.');
@@ -22,7 +30,6 @@ export async function runPreviewCommand(): Promise<void> {
   }
   await fs.ensureDir(previewPath);
 
-  const timestamp = new Date().toISOString();
   const metadata = { previewed_by: 'dokugent', timestamp };
   let totalTokens = 0;
 
@@ -56,7 +63,7 @@ export async function runPreviewCommand(): Promise<void> {
     }
   }
 
-  async function mergeMdFiles(srcFolder: string, outName: string) {
+  async function mergeMdFiles(srcFolder: string, outName: string, previewPath: string) {
     if (!(await fs.pathExists(srcFolder))) {
       console.warn(`⚠️  Skipped: ${srcFolder} not found`);
       return;
@@ -88,12 +95,12 @@ export async function runPreviewCommand(): Promise<void> {
     await fs.writeFile(path.join(previewPath, outName), output);
     const estimatedTokens = estimateTokensFromText(output);
     totalTokens += estimatedTokens;
-    await convertMdToJson(outName, outName.replace('.md', '.json'));
+    await convertMdToJson(previewPath, outName, outName.replace('.md', '.json'));
     console.log(`✅ Wrote: ${outName.replace('.md', '.json')} (${estimatedTokens} tokens est.)`);
   }
 
-  await mergeMdFiles(path.join(dokugentPath, 'plan'), 'preview-plan.md');
-  await mergeMdFiles(path.join(dokugentPath, 'criteria'), 'preview-criteria.md');
+  await mergeMdFiles(path.join(dokugentPath, 'plan'), 'preview-plan.md', previewPath);
+  await mergeMdFiles(path.join(dokugentPath, 'criteria'), 'preview-criteria.md', previewPath);
 
   try {
     const realConventionsPath = await fs.realpath(path.join(dokugentPath, 'conventions', 'dev'));
@@ -105,7 +112,7 @@ export async function runPreviewCommand(): Promise<void> {
         const name = path.basename(file, '.md').toLowerCase();
         const match = knownAgents.find(k => name.includes(k));
         if (match) {
-          agentKey = match;
+          // agentKey = match; // We keep agentKey from wizard, so do not overwrite here
           break;
         }
       }
@@ -113,19 +120,12 @@ export async function runPreviewCommand(): Promise<void> {
     } catch {
       console.warn('⚠️ Unable to scan conventions/dev for agent detection. Using default "codex".');
     }
-    const devFiles = await fs.readdir(realConventionsPath);
-    const knownAgents = Object.keys(agents).map(a => a.toLowerCase());
-
-    for (const file of devFiles) {
-      const matchKey = knownAgents.find(agent => file.toLowerCase().includes(agent));
-      if (!matchKey) continue;
-
-      const agentMeta = (agents as Record<string, any>)[matchKey];
-      const filePath = path.join(realConventionsPath, file);
+    const filePath = path.join(realConventionsPath, `${devMode}.md`);
+    if (await fs.pathExists(filePath)) {
+      const agentMeta = (agents as Record<string, any>)[devMode] || {};
       const content = await fs.readFile(filePath, 'utf8');
-
       const output = {
-        agent: matchKey,
+        agent: devMode,
         label: agentMeta.label,
         maxTokenLoad: agentMeta.maxTokenLoad,
         idealBriefingSize: agentMeta.idealBriefingSize,
@@ -133,24 +133,26 @@ export async function runPreviewCommand(): Promise<void> {
         tokensEstimated: estimateTokensFromText(content),
         content,
       };
-
-      const outFile = path.join(previewPath, `preview-conventions-${matchKey}.json`);
+      const outFile = path.join(previewPath, `preview-conventions-${devMode}.json`);
       await fs.writeFile(outFile, JSON.stringify(output, null, 2));
       totalTokens += output.tokensEstimated;
-
-      console.log(`✅ Wrote: preview-conventions-${matchKey}.json (${output.tokensEstimated} tokens est. / ${output.maxTokenLoad} max token load)`);
+      console.log(`✅ Wrote: preview-conventions-${devMode}.json (${output.tokensEstimated} tokens est. / ${output.maxTokenLoad || 'N/A'} max token load)`);
     }
   } catch {
     console.warn(`⚠️  Symlink missing or invalid: conventions/dev`);
   }
 
-  const shaLines: string[] = [];
   const files = await fs.readdir(previewPath);
 
+  const shaLines: string[] = [];
   for (const file of files) {
     const fullPath = path.join(previewPath, file);
     const stat = await fs.stat(fullPath);
-    if (!stat.isFile()) continue;
+    if (
+      !stat.isFile() ||
+      file.endsWith('.log') ||
+      file.endsWith('.report.json')
+    ) continue;
 
     await fs.chmod(fullPath, 0o444);
 
@@ -169,9 +171,9 @@ export async function runPreviewCommand(): Promise<void> {
     'variants' in activeAgent &&
     variantKey &&
     (activeAgent as any).variants &&
-    (activeAgent as any).variants[variantKey]
+    (activeAgent as any).variants?.[variantKey]
   ) {
-    activeAgent = (activeAgent as any).variants[variantKey];
+    activeAgent = (activeAgent as any).variants?.[variantKey];
   }
 
   const idealMaxTokens = activeAgent.idealBriefingSize || 4000;
@@ -204,20 +206,22 @@ export async function runPreviewCommand(): Promise<void> {
     sha256_entries: shaLines,
   };
 
-  await fs.writeFile(path.join(previewPath, 'preview.log'), previewLogLines.join('\n'), 'utf8');
-  await fs.writeJson(path.join(previewPath, 'preview.report.json'), previewReport, { spaces: 2 });
-
   const logsDir = path.join(dokugentPath, 'logs');
   const reportsDir = path.join(dokugentPath, 'reports');
   await fs.ensureDir(logsDir);
   await fs.ensureDir(reportsDir);
-  await fs.writeFile(path.join(logsDir, 'preview.log'), previewLogLines.join('\n'), 'utf8');
-  await fs.writeJson(path.join(reportsDir, 'preview.json'), previewReport, { spaces: 2 });
+  await fs.writeFile(path.join(logsDir, `preview-${timestamp}.log`), previewLogLines.join('\n'), 'utf8');
+  await fs.writeJson(path.join(reportsDir, `preview-${timestamp}.json`), previewReport, { spaces: 2 });
+
+  if (files.length > 0) {
+    console.log('\n📁 Note: `.dokugent/preview` files were generated and read-only.');
+  }
+
+  // Update the latest symlink using shared utility
+  await updateSymlink(previewRoot, 'latest', path.basename(previewPath));
 }
 
-console.log('\n📁 Note: `.dokugent/preview` files were generated and read-only.');
-
-async function convertMdToJson(sourceMd: string, targetJson: string): Promise<number> {
+async function convertMdToJson(previewPath: string, sourceMd: string, targetJson: string): Promise<number> {
   const fullMdPath = path.join(previewPath, sourceMd);
   const fullJsonPath = path.join(previewPath, targetJson);
   if (!(await fs.pathExists(fullMdPath))) return 0;

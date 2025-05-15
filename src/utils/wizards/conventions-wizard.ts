@@ -5,7 +5,9 @@ import { appendTimestamp } from '../timestamp';
 import { updateSymlink } from '../symlink-utils';
 
 export async function promptConventionsWizard(force = false) {
-  const baseTemplatePath = path.join(process.cwd(), 'presets/templates/conventions');
+  const baseTemplatePath = fs.existsSync(path.resolve(__dirname, '../../../presets/templates/conventions'))
+    ? path.resolve(__dirname, '../../../presets/templates/conventions')
+    : path.resolve(process.cwd(), '.dokugent/conventions/templates');
   const targetBase = path.join(process.cwd(), '.dokugent/conventions');
 
   const { selectedType } = await inquirer.prompt([
@@ -57,6 +59,78 @@ export async function promptConventionsWizard(force = false) {
     return;
   }
 
+  let selectedAgents: string[] = [];
+
+  if (selectedType === 'dev') {
+    const response = await inquirer.prompt([
+      {
+        type: 'checkbox',
+        name: 'selectedAgents',
+        message: '🤖 Select agent profiles to include:',
+        choices: [
+          { name: 'CLAUDE.md', value: 'CLAUDE.md' },
+          { name: 'CODEX.md', value: 'CODEX.md' },
+          { name: 'GEMINI.md', value: 'GEMINI.md' },
+          { name: 'GPT4.md', value: 'GPT4.md' },
+          { name: 'GROK.md', value: 'GROK.md' },
+          { name: 'LLM-CORE.md', value: 'LLM-CORE.md' },
+          { name: 'MISTRAL.md', value: 'MISTRAL.md' },
+          new inquirer.Separator(),
+          { name: '✏️ Custom (type filenames manually)', value: '__CUSTOM__' },
+        ],
+        default: ['CLAUDE.md'],
+      },
+    ]);
+    selectedAgents = response.selectedAgents;
+
+    let manualList: string[] = [];
+
+    if (selectedAgents.includes('__CUSTOM__')) {
+      const { customFiles } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'customFiles',
+          message: 'Enter file names (comma-separated):',
+          default: 'custom.md',
+          validate: input => input.trim() !== '' || 'Please enter at least one filename',
+        },
+      ]);
+
+      manualList = customFiles
+        .split(',')
+        .map((f: string) => f.trim())
+        .filter((f: string) => Boolean(f));
+    }
+
+    // Finalize selectedAgents list
+    selectedAgents = selectedAgents
+      .filter(f => f !== '__CUSTOM__')
+      .concat(manualList);
+
+    if (selectedAgents.length === 0) {
+      console.log('⚠️ No agent files selected. Please enter filenames manually.');
+      const { customFiles } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'customFiles',
+          message: 'Enter file names (comma-separated):',
+          default: 'custom.md',
+          validate: input => input.trim() !== '' || 'Please enter at least one filename',
+        },
+      ]);
+
+      selectedAgents = customFiles
+        .split(',')
+        .map((f: string) => f.trim())
+        .filter((f: string) => Boolean(f));
+
+      if (selectedAgents.length === 0) {
+        console.log('❌ Still no agent files provided. Aborting.');
+        return;
+      }
+    }
+  }
+
   const versionedType = appendTimestamp(selectedType);
   const targetPath = path.join(targetBase, versionedType);
 
@@ -66,42 +140,25 @@ export async function promptConventionsWizard(force = false) {
   }
 
   if (selectedType === 'dev') {
-    let { selectedAgents } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedAgents',
-        message: '🤖 Select agent profiles to include:',
-        choices: [
-          'CLAUDE.md', 'CODEX.md', 'GEMINI.md', 'GPT4.md',
-          'GROK.md', 'LLM-CORE.md', 'MISTRAL.md',
-          new inquirer.Separator(),
-          '✏️ Custom (type filenames manually)'
-        ],
-        default: ['CLAUDE.md'],
-      },
-    ]);
-    if (selectedAgents.includes('✏️ Custom (type filenames manually)')) {
-      const { customFiles } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'customFiles',
-          message: 'Enter file names (comma-separated):',
-          validate: input => input.trim() !== '' || 'Please enter at least one filename',
-        },
-      ]);
-      const manualList = customFiles.split(',').map((f: string) => f.trim()).filter((f: string) => Boolean(f));
-      selectedAgents = selectedAgents.filter((f: string) => f !== '✏️ Custom (type filenames manually)').concat(manualList);
-    }
-
     await fs.ensureDir(targetPath);
     for (const agentFile of selectedAgents) {
-      await fs.copy(
-        path.join(baseTemplatePath, 'dev', agentFile),
-        path.join(targetPath, agentFile)
-      );
+      const srcPath = path.join('presets/templates/conventions/dev', agentFile);
+      const destPath = path.join(targetPath, agentFile);
+      console.log(`🛠️ ${agentFile} → ${path.relative(process.cwd(), destPath)}`);
+
+      try {
+        if (await fs.pathExists(srcPath)) {
+          await fs.copy(srcPath, destPath);
+        } else {
+          console.log(`⚠️ Template not found for ${agentFile}. Creating placeholder.`);
+          await fs.outputFile(destPath, `# ${agentFile}\n\nAdd your conventions here.\n`);
+        }
+      } catch (err) {
+        console.error(`❌ Failed to scaffold ${agentFile}:`, err);
+      }
     }
   } else {
-    const source = path.join(baseTemplatePath, selectedType);
+    const source = path.join('.dokugent/conventions', selectedType);
     await fs.copy(source, targetPath);
   }
 
