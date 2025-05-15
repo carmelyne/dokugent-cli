@@ -11,17 +11,7 @@ const planDir = path.join(process.cwd(), '.dokugent', 'plan');
     // Clean up previous test if any
     await fs.remove(planDir);
 
-    // Use echo piping to simulate input for prompts
-    const input = [
-      '', // choose 'summarize_input' (default)
-      '', // description
-      '', // agent name
-      '', // role
-      '', // goal
-      '', // constraints
-    ].join('\n');
-
-    execSync(`echo "${input}" | ts-node src/cli-entry.ts plan`, { stdio: 'inherit' });
+    execSync(`yes "" | ts-node bin/dokugent.ts plan`, { stdio: 'inherit' });
 
     const folders = await fs.readdir(planDir);
     const symlinks = folders.filter((name) =>

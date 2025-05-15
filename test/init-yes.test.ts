@@ -9,17 +9,24 @@ exec('ts-node src/commands/init.ts --yes', (err, stdout, stderr) => {
   }
 
   const basePath = path.resolve('.dokugent');
-  const agentPath = path.join(basePath, 'agents/init/default-agent');
+  const agentPath = path.join(basePath, 'agent-info/agents/agent-spec/init/default-agent');
   const specMd = path.join(agentPath, 'agent-spec.md');
+  const specJson = path.join(agentPath, 'agent-spec.json');
+  const toolList = path.join(agentPath, 'tool-list.md');
   const readme = path.join(basePath, 'README.md');
 
-  const allExist = [specMd, readme].every(existsSync);
+  const allExist = [specMd, specJson, toolList, readme].every(existsSync);
 
   if (!allExist) {
     console.error('❌ Required files missing after init.');
-    console.error({ specMd: existsSync(specMd), readme: existsSync(readme) });
+    console.error({
+      specMd: existsSync(specMd),
+      specJson: existsSync(specJson),
+      toolList: existsSync(toolList),
+      readme: existsSync(readme)
+    });
     process.exit(1);
   }
 
-  console.log('✅ dokugent init --yes test passed.');
+  console.log('\n✅ dokugent init --yes test passed.\n');
 });
