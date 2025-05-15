@@ -1,0 +1,15 @@
+# Legal-Specific Blacklist Patterns
+# These patterns are not included by default in dokugent security scans.
+# To use them, merge with the core blacklist or pass as a custom ruleset.
+
+# NDA or clause leakage
+non[-\s]?disclosure\s+agreement
+confidentiality\s+(clause|provision)
+
+# Attempt to void terms
+this\s+contract\s+is\s+no\s+longer\s+binding
+terminate\s+this\s+agreement
+
+# Sensitive legal phrases
+without\s+admitting\s+liability
+settlement\s+amount\s+[:=]?\s*\$?\d{2,}
