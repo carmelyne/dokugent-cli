@@ -21,6 +21,11 @@ export async function runInitCommand(): Promise<void> {
   for (const dir of baseDirs) {
     await fs.ensureDir(path.resolve(dir));
   }
+  // Ensure .dokugent/overrides/whitelist.txt exists
+  const whitelistPath = path.resolve('.dokugent/overrides/whitelist.txt');
+  if (!(await fs.pathExists(whitelistPath))) {
+    await fs.outputFile(whitelistPath, '');
+  }
   // Default answers for --yes (no wizard)
   const defaultAnswers = {
     agentName: 'default-agent',

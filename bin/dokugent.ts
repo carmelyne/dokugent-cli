@@ -9,6 +9,7 @@ import { runInitCommand } from '../src/commands/init'; // this will fail if init
 import { runPlanCommand } from '../src/commands/plan';
 import { runCriteria } from '../src/commands/criteria';
 import { runConventions } from '../src/commands/conventions';
+import { runSecurity } from '../src/commands/security';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -26,8 +27,11 @@ switch (command) {
   case 'conventions':
     runConventions?.();
     break;
+  case 'security':
+    runSecurity?.();
+    break;
   default:
     console.log("🚀 Dokugent CLI is alive in TS!");
     console.log("Usage: dokugent <command>");
-    console.log("Available commands: init, plan, criteria, conventions");
+    console.log("Available commands: init, plan, criteria, conventions, security");
 }
