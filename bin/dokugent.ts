@@ -11,6 +11,7 @@ import { runCriteria } from '../src/commands/criteria';
 import { runConventions } from '../src/commands/conventions';
 import { runSecurity } from '../src/commands/security';
 import { runPreviewCommand } from '../src/commands/preview';
+import { keygenCommand } from '../src/commands/keygen';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -34,8 +35,11 @@ switch (command) {
   case 'preview':
     runPreviewCommand?.();
     break;
+  case 'keygen':
+    keygenCommand?.();
+    break;
   default:
     console.log("🚀 Dokugent CLI is alive in TS!");
     console.log("Usage: dokugent <command>");
-    console.log("Available commands: init, plan, criteria, conventions, security, preview");
+    console.log("Available commands: init, plan, criteria, conventions, security, preview, keygen");
 }
