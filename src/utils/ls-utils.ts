@@ -1,10 +1,21 @@
 import fs from 'fs-extra';
 import path from 'path';
 
-const planPath = path.join(process.cwd(), '.dokugent', 'plan');
-
 export async function planLs() {
-  if (!(await fs.pathExists(planPath))) {
+  // Try both legacy and new plan locations
+  const cwd = process.cwd();
+  const possiblePlanPaths = [
+    path.join(cwd, '.dokugent', 'plan'),
+    path.join(cwd, 'plan'),
+  ];
+  let planPath: string | null = null;
+  for (const p of possiblePlanPaths) {
+    if (await fs.pathExists(p)) {
+      planPath = p;
+      break;
+    }
+  }
+  if (!planPath) {
     console.log('❌ No plan folder found.');
     return;
   }

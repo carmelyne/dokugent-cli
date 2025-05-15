@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test:init": "ts-node test/init-yes.test.ts",
+    "test:plan": "ts-node test/plan-wizard.test.ts",
     "build": "tsc",
     "dev": "ts-node bin/dokugent.ts",
     "start": "node dist/index.js"
