@@ -1,6 +1,7 @@
 /**
- * Utility functions for token estimation and token limit warnings.
- * Reads agent context preferences from agents.yaml to ensure safe LLM usage.
+ * @file tokenizer.ts
+ * @description Utility functions for estimating token usage and logging token limit warnings.
+ * Uses GPT-style encoding to calculate token counts for agent inputs and JSON bundles.
  */
 
 import { encode } from 'gpt-tokenizer';
@@ -14,19 +15,19 @@ interface TokenConfig {
 /**
  * Estimates the number of tokens in a given string using GPT-style encoding.
  *
- * @param text - The input text to estimate token usage for.
- * @returns The number of estimated tokens.
+ * @param text - The input string to tokenize.
+ * @returns {number} The estimated number of tokens.
  */
 export function estimateTokensFromText(text: string = ''): number {
   return encode(text).length;
 }
 
 /**
- * Logs a warning if the token count exceeds the configured limit.
+ * Logs a warning if the estimated token count exceeds a configured limit.
  *
- * @param agent - The name or ID of the agent being evaluated.
- * @param tokenCount - The number of estimated tokens.
- * @param config - Optional configuration object to override token limits and warning behavior.
+ * @param agent - Name or ID of the agent being evaluated.
+ * @param tokenCount - Number of tokens detected in the content.
+ * @param config - Optional configuration to customize limits and warning behavior.
  */
 export function warnIfExceedsLimit(
   agent: string,

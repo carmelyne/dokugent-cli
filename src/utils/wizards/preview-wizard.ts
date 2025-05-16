@@ -1,3 +1,8 @@
+/**
+ * @file preview-wizard.ts
+ * @description Interactive CLI wizard for selecting a development convention (e.g., codex, writing).
+ * Returns agent name, dev mode, and target preview path based on user selection.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 import readline from 'readline';
@@ -10,6 +15,14 @@ function prompt(question: string): Promise<string> {
   }));
 }
 
+/**
+ * Prompts the user to select a development convention for agent preview generation.
+ * Defaults to 'default' agent if no `.dokugent/conventions/dev/` folder or `.md` files are found.
+ *
+ * @returns {Promise<{ agent: string, devMode: string, previewPath: string } | null>} 
+ * Returns selected agent ID, devMode, and the path to write preview files into,
+ * or `null` if setup is missing or selection is invalid.
+ */
 export async function previewWizard(): Promise<{ agent: string, devMode: string, previewPath: string } | null> {
   const conventionDir = path.resolve(process.cwd(), '.dokugent/conventions/dev');
   const exists = await fs.pathExists(conventionDir);

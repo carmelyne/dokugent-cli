@@ -1,9 +1,27 @@
+/**
+ * @file conventions-wizard.ts
+ * @description Interactive CLI wizard for scaffolding convention folders used by agents.
+ * Supports predefined types (dev, writing, research) and custom user-defined configurations.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 import inquirer from 'inquirer';
 import { appendTimestamp } from '../timestamp';
 import { updateSymlink } from '../symlink-utils';
 
+/**
+ * Launches an interactive wizard for creating versioned convention folders.
+ * Can scaffold from predefined templates or custom input.
+ *
+ * Responsibilities:
+ * - Prompts user for convention type and selected agent files.
+ * - Supports both template-based and manual filename selection.
+ * - Writes convention folders with timestamped versions.
+ * - Updates symlinks to track the latest version per convention type.
+ *
+ * @param force Whether to overwrite existing folders without confirmation.
+ * @returns {Promise<void>}
+ */
 export async function promptConventionsWizard(force = false) {
   const baseTemplatePath = fs.existsSync(path.resolve(__dirname, '../../../presets/templates/conventions'))
     ? path.resolve(__dirname, '../../../presets/templates/conventions')

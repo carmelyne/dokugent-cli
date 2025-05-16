@@ -1,3 +1,7 @@
+/**
+ * @file keygen.ts
+ * @description Generates an Ed25519 keypair for an agent and stores it along with metadata in `.dokugent/keys/`.
+ */
 import { generateKeyPairSync, createHash } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
@@ -11,6 +15,16 @@ function prompt(question: string): Promise<string> {
   }));
 }
 
+/**
+ * Generates a named Ed25519 keypair for an agent.
+ *
+ * Responsibilities:
+ * - Prompts for agent name or uses default.
+ * - Writes `.private.pem`, `.public.pem`, and `.meta.json` into `.dokugent/keys/`.
+ * - Computes and stores the SHA256 fingerprint of the public key.
+ *
+ * @returns {Promise<void>}
+ */
 export async function keygenCommand() {
   const keysDir = path.join(process.cwd(), '.dokugent', 'keys');
   await fs.ensureDir(keysDir);

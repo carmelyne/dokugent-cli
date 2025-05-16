@@ -1,14 +1,22 @@
+/**
+ * @file file-writer.ts
+ * @description Provides utility functions for safely writing files with automatic backups.
+ * Ensures existing files are preserved with timestamped copies before overwriting.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 
 /**
- * Safely writes contents to a file, creating a backup if the file already exists.
+ * Safely writes contents to a file, creating a timestamped backup if the file already exists.
  *
- * If the target path exists, a timestamped backup is created in the same directory.
+ * Responsibilities:
+ * - Checks if the target file exists.
+ * - If it exists, creates a backup copy with an ISO-based timestamp in the same directory.
+ * - Writes the new contents to the target file.
  *
  * @param targetPath - The full path to the file being written.
  * @param contents - The string contents to write into the file.
- * @returns An object with the write status and path.
+ * @returns {Promise<{ status: 'backed_up' | 'written'; path: string }>} An object indicating whether a backup was made and the final file path.
  */
 export async function writeWithBackup(
   targetPath: string,

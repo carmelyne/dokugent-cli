@@ -1,8 +1,24 @@
+/**
+ * @file plan-wizard.ts
+ * @description Interactive CLI wizard for defining agent plan steps and capabilities.
+ * Outputs a versioned `plan.md` file and updates the active symlink.
+ */
 import inquirer from 'inquirer';
 import path from 'path';
 import fs from 'fs-extra';
 import { writeWithBackup } from '../file-writer';
 
+/**
+ * Launches the interactive wizard for creating an agent plan.
+ *
+ * Responsibilities:
+ * - Prompts for step ID, agent metadata, goal, and constraints.
+ * - Generates a versioned `plan.md` file describing the plan structure.
+ * - Defines tool usage and links capabilities to step identifiers.
+ * - Updates the symlink to the latest plan version.
+ *
+ * @returns {Promise<void>}
+ */
 export async function promptPlanWizard(): Promise<void> {
   const planDir = path.resolve('.dokugent/plan');
   await fs.ensureDir(planDir);

@@ -1,6 +1,7 @@
 /**
-  * Interactive wizard for configuring agent intent, behavior, and context.
- * Collects metadata and writes agent - spec.md and agent - spec.json files.
+ * @file init-wizard.ts
+ * @description Interactive CLI wizard for initializing a new Dokugent agent.
+ * Generates agent-spec.md and agent-spec.json files, along with tool lists and denylist files.
  */
 
 import inquirer from 'inquirer';
@@ -22,6 +23,18 @@ export interface InitAnswers {
   customOutputs?: string[];
 }
 
+/**
+ * Launches the interactive or default agent initialization wizard.
+ * If `useDefaultsOnly` is true, skips prompts and scaffolds with default values.
+ *
+ * Responsibilities:
+ * - Prompts for agent name, roles, protocols, outputs, and security options.
+ * - Writes `agent-spec.md`, `agent-spec.json`, `tool-list.md`, and denylist entries.
+ * - Supports both interactive and non-interactive `--yes` mode.
+ *
+ * @param useDefaultsOnly Whether to skip prompts and use default agent configuration.
+ * @returns {Promise<InitAnswers>} The full set of answers used to scaffold the agent.
+ */
 export async function promptInitWizard(useDefaultsOnly = false): Promise<InitAnswers> {
   if (useDefaultsOnly) {
     const defaults: InitAnswers = {

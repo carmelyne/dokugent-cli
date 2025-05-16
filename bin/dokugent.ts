@@ -13,6 +13,7 @@ import { runSecurity } from '../src/commands/security';
 import { runPreviewCommand } from '../src/commands/preview';
 import { keygenCommand } from '../src/commands/keygen';
 import { runCertifyCommand } from '../src/commands/certify';
+import { runCompileCommand } from '../src/commands/compile';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -39,11 +40,25 @@ switch (command) {
   case 'keygen':
     keygenCommand?.();
     break;
-  case 'certify':
-    runCertifyCommand?.();
+  case 'certify': {
+    const agentArg = args[1] || 'default-agent';
+    runCertifyCommand?.(agentArg);
+    break;
+  }
+  case 'compile':
+    runCompileCommand?.();
     break;
   default:
-    console.log("🚀 Dokugent CLI is alive in TS!");
-    console.log("Usage: dokugent <command>");
-    console.log("Available commands: init, plan, criteria, conventions, security, preview, keygen, certify");
+    console.log("\n🚀 Dokugent CLI is ready.");
+    console.log("🧠 Usage: dokugent <command>\n");
+    console.log("📜 Available commands:\n");
+    console.log("   • init        → Scaffold a new project");
+    console.log("   • plan        → Draft an agent plan");
+    console.log("   • criteria    → Define evaluation criteria");
+    console.log("   • conventions → Select AI conventions");
+    console.log("   • security    → Scan for file-level threats");
+    console.log("   • preview     → Generate agent spec bundle");
+    console.log("   • certify     → Sign and freeze validated preview");
+    console.log("   • compile     → Build deployable agent bundle");
+    console.log("   • keygen      → Create identity keypairs\n");
 }

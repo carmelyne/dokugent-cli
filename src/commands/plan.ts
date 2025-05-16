@@ -1,9 +1,27 @@
+/**
+ * @file plan.ts
+ * @description Handles subcommands related to planning agent steps.
+ * Supports listing, linking, unlinking, and invoking the plan wizard.
+ */
 import path from 'path';
 import fs from 'fs-extra';
 import { promptPlanWizard } from '../utils/wizards/plan-wizard';
 import { planLs } from '../utils/ls-utils';
 import { updateSymlink } from '../utils/symlink-utils';
 
+/**
+ * Executes the `plan` command dispatcher.
+ *
+ * Supported subcommands:
+ * - `ls`: List existing plan steps and their symlinks.
+ * - `symlink <stepId>@<version>`: Creates a symlink alias for a plan step.
+ * - `use <stepId>@<version>`: Switches symlink to point to a specific version.
+ * - `unlink <stepId>`: Removes a plan step symlink.
+ * - (default): Launches the interactive plan wizard.
+ *
+ * @param args CLI arguments passed to `dokugent plan`.
+ * @returns {Promise<void>}
+ */
 export async function runPlanCommand(args: string[]) {
   const sub = args[0];
 

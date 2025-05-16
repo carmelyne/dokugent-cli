@@ -1,8 +1,22 @@
+/**
+ * @file init.ts
+ * @description Initializes a new Dokugent project by creating the required folder structure,
+ * setting up agent scaffolding, and optionally bypassing the wizard with default values.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 import { promptInitWizard } from '../utils/wizards/init-wizard';
 import { confirmAndWriteFile } from '../utils/fs-utils';
 
+/**
+ * Executes the Dokugent `init` command.
+ *
+ * - Creates all base `.dokugent/` directories and override files
+ * - Generates agent scaffolding with either interactive wizard or `--yes` defaults
+ * - Saves generated files including agent spec, tool list, and README
+ *
+ * @returns {Promise<void>}
+ */
 export async function runInitCommand(): Promise<void> {
   const useDefaultsOnly = process.argv.includes('--yes');
 

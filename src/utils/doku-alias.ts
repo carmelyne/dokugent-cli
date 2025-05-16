@@ -1,13 +1,19 @@
+/**
+ * @file doku-alias.ts
+ * @description Utility function to create or update symlink aliases for versioned folders.
+ * Used to maintain a consistent reference point (e.g., `plan@latest`) for latest versions.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 
 /**
  * Creates or updates a symlink alias pointing to a versioned folder.
- * Example: .dokugent/plan@latest → .dokugent/plan@2025-05-15-1430
+ * Example: `.dokugent/plan@latest` → `.dokugent/plan@2025-05-15-1430`
  *
- * @param baseDir - The directory containing both the alias and target versioned folder.
- * @param target - The name of the versioned target folder (e.g., "plan@2025-05-15-1430").
- * @param alias - The alias suffix to use (default is "latest").
+ * @param baseDir - Directory containing both the alias and the versioned target folder.
+ * @param target - The versioned folder to point to (e.g., `plan@2025-05-15-1430`).
+ * @param alias - Optional alias suffix (default is `latest`).
+ * @returns {Promise<void>}
  */
 export async function createAliasLink(
   baseDir: string,

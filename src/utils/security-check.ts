@@ -1,3 +1,8 @@
+/**
+ * @file security-check.ts
+ * @description Runs a basic static scan of agent-related files to detect secrets,
+ * denied patterns, and missing approvals. Used for preview and certification safety.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
@@ -9,6 +14,18 @@ type ScanOptions = {
   scanPath?: string;
 };
 
+/**
+ * Scans agent files for sensitive patterns, denied terms, or missing approval metadata.
+ *
+ * Responsibilities:
+ * - Resolves scan root path from `scanPath` or defaults to `.dokugent/`
+ * - Applies regex checks for secrets (API keys, JWTs, etc.)
+ * - Flags terms from optional denylist
+ * - Warns on missing `approved_by` and `approved_at` if `requireApprovals` is true
+ *
+ * @param options Object containing denyList, requireApprovals, and scanPath
+ * @returns {Promise<void>}
+ */
 export async function runSecurityCheck({
   denyList = [],
   requireApprovals = false,

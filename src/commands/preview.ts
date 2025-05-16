@@ -1,3 +1,8 @@
+/**
+ * @file preview.ts
+ * @description Generates a preview from the working agent spec, plan, criteria, and conventions.
+ * Converts markdown sources to JSON, estimates token counts, and prepares integrity hashes for certification.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
@@ -8,6 +13,18 @@ import { agents } from '../config/agentsConfig';
 import { previewWizard } from '../utils/wizards/preview-wizard';
 import { updateSymlink } from '../utils/symlink-utils';
 
+/**
+ * Executes the preview process by extracting agent data from markdown,
+ * converting it to JSON, and preparing files for certification.
+ *
+ * Responsibilities:
+ * - Converts specs, plans, criteria, and conventions to `.json` format.
+ * - Estimates token usage and logs total token count.
+ * - Sets files to read-only and generates a SHA256 checksum manifest.
+ * - Writes a preview report and log, and updates the preview symlink.
+ *
+ * @returns {Promise<void>}
+ */
 export async function runPreviewCommand(): Promise<void> {
   const wizard = await previewWizard();
   if (!wizard) return;
@@ -96,6 +113,7 @@ export async function runPreviewCommand(): Promise<void> {
     const estimatedTokens = estimateTokensFromText(output);
     totalTokens += estimatedTokens;
     await convertMdToJson(previewPath, outName, outName.replace('.md', '.json'));
+    await fs.remove(path.join(previewPath, outName));
     console.log(`✅ Wrote: ${outName.replace('.md', '.json')} (${estimatedTokens} tokens est.)`);
   }
 
@@ -206,8 +224,8 @@ export async function runPreviewCommand(): Promise<void> {
     sha256_entries: shaLines,
   };
 
-  const logsDir = path.join(dokugentPath, 'logs');
-  const reportsDir = path.join(dokugentPath, 'reports');
+  const logsDir = path.join(dokugentPath, 'logs', 'preview');
+  const reportsDir = path.join(dokugentPath, 'reports', 'preview');
   await fs.ensureDir(logsDir);
   await fs.ensureDir(reportsDir);
   await fs.writeFile(path.join(logsDir, `preview-${timestamp}.log`), previewLogLines.join('\n'), 'utf8');

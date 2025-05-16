@@ -1,6 +1,21 @@
+/**
+ * @file ls-utils.ts
+ * @description Utility function for listing versioned plan folders and active symlinks.
+ * Supports legacy and modern plan directory layouts.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 
+/**
+ * Lists all available plan versions and symlinks in the plan directory.
+ *
+ * Responsibilities:
+ * - Searches for plan directory in `.dokugent/plan` or legacy `plan/` fallback.
+ * - Separates folders and symlinks for display.
+ * - Resolves symlink targets and formats the output.
+ *
+ * @returns {Promise<void>}
+ */
 export async function planLs() {
   // Try both legacy and new plan locations
   const cwd = process.cwd();

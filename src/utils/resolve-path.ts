@@ -1,10 +1,16 @@
+/**
+ * @file resolve-path.ts
+ * @description Resolves the correct directory for a versioned step identifier.
+ * Supports fallback to latest available version or non-versioned base step folder.
+ */
 import fs from 'fs';
 import path from 'path';
 
 /**
  * Resolves the actual folder path of a versioned stepId.
- * Example: "myStep@20240513" → resolves to baseDir/myStep@20240513
- * Falls back to latest version or baseDir/myStep if not found.
+ * 
+ * Example: "myStep@20240513" → resolves to baseDir/myStep@20240513.
+ * Falls back to the latest matching versioned folder or just `baseDir/myStep` if none found.
  *
  * @param baseDir - The directory where versioned steps are located.
  * @param stepIdWithVersion - A string like "myStep@20240513" or just "myStep".

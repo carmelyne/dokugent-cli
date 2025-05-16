@@ -1,10 +1,17 @@
+/**
+ * @file config-loader.ts
+ * @description Loads configuration files for LLM overrides and agent registry metadata.
+ * Supports YAML-based overrides for token settings and optional file exclusions.
+ */
 import fs from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
 
 /**
- * Load LLM override settings from `.dokugent/overrides/llm-load.yaml`.
- * Falls back to a built‑in default if the file is missing or unreadable.
+ * Loads LLM runtime override settings from `.dokugent/overrides/llm-load.yaml`.
+ * Falls back to defaults if the file is missing or unreadable.
+ *
+ * @returns {object} An object containing tokenLimit, warnIfExceeds, and excludeFiles.
  */
 export function loadLLMOverrides(): {
   tokenLimit: number;
@@ -31,8 +38,10 @@ export function loadLLMOverrides(): {
 }
 
 /**
- * Load registered agents metadata from `.dokugent/agent.yaml`.
- * Returns an object keyed by agent name, or an empty object if none found.
+ * Loads metadata for registered agents from `.dokugent/agent.yaml`.
+ * Returns a dictionary of agent configurations, or an empty object if none exist.
+ *
+ * @returns {Record<string, unknown>} A map of agent names to their config objects.
  */
 export function loadRegisteredAgents(): Record<string, unknown> {
   const configPath = path.resolve('.dokugent/agent.yaml');
