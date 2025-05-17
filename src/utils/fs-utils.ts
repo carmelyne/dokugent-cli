@@ -20,6 +20,8 @@ import inquirer from 'inquirer';
  * @returns {Promise<void>}
  */
 export async function confirmAndWriteFile(filepath: string, contents: string | Buffer): Promise<void> {
+  if (filepath.endsWith('.dokugent/README.md')) return;
+
   const exists = await fs.pathExists(filepath);
 
   if (exists) {
@@ -27,17 +29,17 @@ export async function confirmAndWriteFile(filepath: string, contents: string | B
       {
         type: 'confirm',
         name: 'overwrite',
-        message: `⚠️ ${filepath} already exists. Overwrite?`,
+        message: `⚠️ ${filepath.replace(process.cwd() + '/', '')} already exists. Overwrite?`,
         default: false,
       },
     ]);
 
     if (!overwrite) {
-      console.log(`❌ Skipped: ${filepath}`);
+      console.log(`❌ Skipped: ${filepath.replace(process.cwd() + '/', '')}`);
       return;
     }
   }
 
   await fs.outputFile(filepath, contents);
-  console.log(`✅ Saved: ${filepath}`);
+  console.log(`\n💾 Saved: ${filepath.replace(process.cwd() + '/', '')}\n`);
 }

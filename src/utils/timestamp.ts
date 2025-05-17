@@ -12,9 +12,8 @@
  */
 export function getTimestamp(): string {
   const now = new Date();
-  const pad = (n: number) => n.toString().padStart(2, '0');
-
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const iso = now.toISOString(); // "2025-05-18T05:20:33.456Z"
+  return iso.replace(/[:.]/g, '-').replace('T', '_').replace('Z', '');
 }
 
 /**

@@ -6,13 +6,6 @@
 dist/
 build/
 
-*.bak
-.bak/
-*/**/*bak*
-.dokugent/
-.dokugent/agent-briefings/
-.dokugent/*.log
-
 # Node modules
 node_modules/
 
@@ -21,16 +14,12 @@ coverage/
 .vitest/
 
 # Local presets or experimental files
-lib/bak/
 llm-load.yml
 agents.yml
 
+# Backup Chore
 * copy.*
 */**/* copy.*
-
-lib/config/commands-order.txt
-.prettierignore
-
-# .docugent
-.docugent
-.omnimodal
+*.bak
+.bak/
+*/**/*bak*

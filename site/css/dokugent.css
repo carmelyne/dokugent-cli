@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,700;1,600&display=swap');
+*,
+*::before,
+*::after {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	position: relative;
+	width: 100%;
+	height: 100vh;
+	font-family: 'Raleway', sans-serif;
+	background: #f2f2f2;
+	overflow-x: hidden;
+	z-index: 1;
+	display: flex;
+}
+
+a {
+	text-decoration: none;
+	color: #fff;
+	text-transform: uppercase;
+}
+
+#MenuToggle {
+	display: none;
+	/* position: absolute;
+ top: 30px;
+ left: 350px; */
+}
+
+
+/* Left */
+
+.sidebar {
+	position: relative;
+	width: 250px;
+	height: 100%;
+	background: #020321;
+	opacity: 1;
+	transform: translateX(0);
+	transition: all .8s ease;
+}
+
+
+/* For Navbar */
+
+.logo {
+	display: block;
+	font-size: 30px;
+	font-weight: 700;
+	text-align: center;
+	letter-spacing: .3px;
+	padding: 20px 0px;
+	background: #000831;
+}
+
+.nav_items {
+	width: 100%;
+	/* position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%); */
+}
+
+.nav_items a {
+	display: block;
+	padding: 20px 0px;
+	font-size: 18px;
+	font-weight: 400;
+	text-align: center;
+	transition: all .4s ease;
+}
+
+.nav_items a:hover,
+.nav_items a.active {
+	background: #000831;
+}
+
+
+/* Right */
+
+.right {
+	position: relative;
+	width: calc(100% - 250px);
+	height: 100%;
+	padding: 30px 30px;
+	overflow-x: hidden;
+	display: flex;
+	/* align-items: center; */
+	transition: all .8s ease;
+}
+
+.content {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+	align-self: flex-start;
+	padding-top: 80px;
+	margin-top: 0;
+  max-width: 1200px;         /* set max width */
+  margin: 0 auto;            /* center horizontally */
+  padding: 2rem;             /* optional, for spacing */
+  box-sizing: border-box;   /* include padding in width */
+}
+
+.content h2 {
+	font-size: 24px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .3px;
+	color: #000831;
+	text-align: left;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  padding: 32px 0 32px 0;
+}
+
+/* Toggle bar */
+
+.toggle__icon {
+	position: sticky;
+	top: 0;
+	left: 0;
+	cursor: pointer;
+}
+
+.toggle__icon .line {
+	width: 24px;
+	height: 3px;
+	background-color: #000831;
+	margin: 6px 0;
+	display: block;
+	border-radius: 8px;
+}
+
+
+/* If Checked */
+
+#MenuToggle:checked~.sidebar {
+	width: 0;
+	transform: translateX(-250px);
+}
+
+#MenuToggle:checked~.right {
+	width: 100%;
+}
+
+hr {
+  margin: 2rem 0 1rem;
+}

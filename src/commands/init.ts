@@ -5,26 +5,26 @@
  */
 import fs from 'fs-extra';
 import path from 'path';
-import { promptInitWizard } from '../utils/wizards/init-wizard';
 import { confirmAndWriteFile } from '../utils/fs-utils';
 
 /**
  * Executes the Dokugent `init` command.
  *
  * - Creates all base `.dokugent/` directories and override files
- * - Generates agent scaffolding with either interactive wizard or `--yes` defaults
- * - Saves generated files including agent spec, tool list, and README
+ * - Saves generated README
  *
  * @returns {Promise<void>}
  */
 export async function runInitCommand(): Promise<void> {
-  const useDefaultsOnly = process.argv.includes('--yes');
-
-  console.log("⚙️ Running dokugent init...");
+  console.log("\n⚙️ Running dokugent init...\n");
   const baseDirs = [
-    '.dokugent/plan',
-    '.dokugent/criteria',
-    '.dokugent/conventions',
+    '.dokugent/data/agent',
+    '.dokugent/data/tool-list',
+    '.dokugent/data/plan',
+    '.dokugent/data/criteria',
+    '.dokugent/data/conventions',
+    '.dokugent/data/io',
+    '.dokugent/data/compliance',
     '.dokugent/preview',
     '.dokugent/certified',
     '.dokugent/compiled',
@@ -35,63 +35,27 @@ export async function runInitCommand(): Promise<void> {
   for (const dir of baseDirs) {
     await fs.ensureDir(path.resolve(dir));
   }
+
+  console.log('\x1b[43m\x1b[30m📁 Created base .dokugent structure.\x1b[0m\n');
+
   // Ensure .dokugent/overrides/whitelist.txt exists
   const whitelistPath = path.resolve('.dokugent/overrides/whitelist.txt');
   if (!(await fs.pathExists(whitelistPath))) {
     await fs.outputFile(whitelistPath, '');
   }
-  // Default answers for --yes (no wizard)
-  const defaultAnswers = {
-    agentName: 'default-agent',
-    description: 'Assist with general research and summarization.',
-    roles: ['researcher', 'validator'],
-    protocols: ['design-intent'],
-    outputs: ['JSON'],
-    understands: ['yaml'],
-    allowExternalFiles: false,
-    requireApproval: true,
-    denylist: ['blacklist-health.txt'],
-  };
 
-  // Use defaults or run wizard
-  const answers = useDefaultsOnly ? defaultAnswers : await promptInitWizard();
+  const readmeContentFinal = `# Dokugent Workspace
 
-  const agentFolder = path.join('.dokugent/agent-info/agents/agent-spec/init', answers.agentName);
+This folder was initialized using Dokugent CLI.
+It is safe to commit, inspect, and modify files under .dokugent/.
 
-  // Place a default README.md in the newly created agent folder
-  const readmeContent = `# Agent Scaffold
+📖 See: https://github.com/carmelyne/dokugent-cli
+  `;
 
-This agent was initialized using [Dokugent CLI](https://dokugent.com)
+  const readmePathFinal = path.resolve('.dokugent/README.md');
+  await confirmAndWriteFile(readmePathFinal, readmeContentFinal);
 
-📦 GitHub repo: https://github.com/carmelyne/dokugent-cli
-`;
-
-  const readmePath = path.resolve('.dokugent/README.md');
-  await confirmAndWriteFile(readmePath, readmeContent);
-
-  // Ensure agentFolder exists before writing files
-  await fs.ensureDir(path.resolve(agentFolder));
-
-  // Generate static file contents
-  const specMd = `# Agent Spec: ${answers.agentName}\n\n${answers.description}`;
-  const specJson = JSON.stringify(answers, null, 2);
-  const toolListMd = `# Tool List for ${answers.agentName}\n\n- summarize-tool\n- validate-tool`;
-
-  // Write agent files to the correct agentFolder path
-  if (useDefaultsOnly) {
-    await confirmAndWriteFile(path.join(agentFolder, 'agent-spec.md'), specMd);
-    await confirmAndWriteFile(path.join(agentFolder, 'agent-spec.json'), specJson);
-    await confirmAndWriteFile(path.join(agentFolder, 'tool-list.md'), toolListMd);
-  }
-
-  // Final summary log to guide the user and confirm success
-  console.log('\n🎉 Dokugent agent scaffolding complete!\n');
-  console.log('📁 Output directory: .dokugent');
-  console.log('📄 Files created:');
-  console.log(`   - README.md`);
-  console.log(`   - ${path.join(agentFolder, 'agent-spec.md')}`);
-  console.log(`   - ${path.join(agentFolder, 'agent-spec.json')}`);
-  console.log(`   - ${path.join(agentFolder, 'tool-list.md')}`);
-  console.log('🔒 Denylist overrides saved to: .dokugent/overrides/blacklist/');
-  console.log('\n✅ You can now continue with: dokugent plan');
+  console.log('➡️ You can now run: dokugent agent\n');
+  console.log('\x1b[34mBlue text\x1b[0m');
+  console.log('\x1b[43m\x1b[30mYellow background with black text\x1b[0m');
 }

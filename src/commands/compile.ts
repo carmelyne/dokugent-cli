@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import crypto from 'crypto';
 // other imports...
+import { DokuVoltAssembler } from '../utils/doku-volt';
 
 /**
  * Compiles certified agent files into a finalized, hashed, and versioned bundle.
@@ -21,6 +22,27 @@ import crypto from 'crypto';
  *
  * @returns {Promise<void>} Resolves after compile completes.
  */
+
+/**
+ * Compiled Doku Volt metadata example:
+ *
+ * {
+ *  "agent": "summarybot",
+ *  "owner": "kinderbytes",
+ *  "signer": "key-ed25519-01.pem",
+ *  "mainTask": "Summarize input as 3 bullet points",
+ *  "version": "2025-05-17T10:12:04Z",
+ *  "uri": "doku:agent/summarybot@2025-05-17.kinderbytes",
+ *  "tools": ["openai-chat", "markdown-cleaner"],
+ *  "planSteps": [
+ *   "summarize_input",
+ *   "reformat_output",
+ *   "check_bullets"
+ *   ],
+ *  "criteria": ["must have 3 bullets", "max 200 words"],
+ *  "conventions": ["formal tone", "English only"]
+ */
+
 async function compile() {
   const agent = 'default-agent';
   const latestRealPath = await fs.realpath(path.join(process.cwd(), '.dokugent', 'certified', 'latest'));
@@ -119,8 +141,39 @@ async function compile() {
   await fs.symlink(path.basename(compiledFilePath), latestJsonLink);
   await fs.symlink(path.basename(compiledShaPath), latestShaLink);
 
-  // After writing compiled output
-  // Assuming variables: dokugentPath, compiledFilePath, compiledSha, agent, bundle are defined
+  // Insert DOKU canonical compiled.json creation before writing compile report/logs
+  try {
+    const dokuMetaPath = path.join(latestDir, 'doku.json');
+    const planPath = path.join(latestDir, 'plan.cert.json');
+    const toolsPath = path.join(latestDir, 'tool-list.cert.json');
+    const criteriaPath = path.join(latestDir, 'criteria.cert.json');
+    const conventionsPath = path.join(latestDir, 'conventions.cert.json');
+
+    const [dokuMeta, plan, toolList, criteria, conventions] = await Promise.all([
+      fs.readJson(dokuMetaPath),
+      fs.readJson(planPath),
+      fs.readJson(toolsPath),
+      fs.readJson(criteriaPath),
+      fs.readJson(conventionsPath)
+    ]);
+
+    const volt = new DokuVoltAssembler();
+    volt.setInit({ agent: dokuMeta.agent || agent, owner: dokuMeta.owner, mainTask: dokuMeta.mainTask || dokuMeta.summary });
+    volt.setSigner(dokuMeta.signer || 'unknown');
+    volt.setVersion(timestamp);
+    volt.setURI(dokuMeta.uri || `doku:agent/${dokuMeta.agent || agent}@${timestamp}.${dokuMeta.owner}`);
+    volt.setTools(toolList.map((t: any) => t.name));
+    volt.setPlanSteps(plan.map((p: any) => p.name));
+    volt.setCriteria(criteria.map((c: any) => c.description || c));
+    volt.setConventions(conventions.map((c: any) => c.rule || c));
+
+    const compiledMeta = volt.getVolt();
+
+    const simplifiedCompiledPath = path.join(dokugentPath, 'compiled', 'compiled.json');
+    await fs.writeJson(simplifiedCompiledPath, compiledMeta, { spaces: 2 });
+  } catch (err) {
+    console.warn('⚠️ Failed to write compiled.json:', (err as any).message);
+  }
 
   const reportsDir = path.join(dokugentPath, 'reports', 'compile');
   const logsDir = path.join(dokugentPath, 'logs', 'compile');

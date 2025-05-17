@@ -1,0 +1,37 @@
+theme:
+  name: material
+  custom_dir: overrides
+  features:
+    - navigation.expand
+    - navigation.sections
+    - navigation.instant
+    - content.code.copy
+    - content.tabs.link
+    - content.action.edit
+    - content.action.view
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+  icon:
+    logo: material/file-document-multiple
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  language: en

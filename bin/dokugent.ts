@@ -14,6 +14,7 @@ import { runPreviewCommand } from '../src/commands/preview';
 import { keygenCommand } from '../src/commands/keygen';
 import { runCertifyCommand } from '../src/commands/certify';
 import { runCompileCommand } from '../src/commands/compile';
+import { runAgentCommand } from '../src/commands/agent';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -48,6 +49,9 @@ switch (command) {
   case 'compile':
     runCompileCommand?.();
     break;
+  case 'agent':
+    runAgentCommand?.();
+    break;
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("🧠 Usage: dokugent <command>\n");
@@ -60,5 +64,6 @@ switch (command) {
     console.log("   • preview     → Generate agent spec bundle");
     console.log("   • certify     → Sign and freeze validated preview");
     console.log("   • compile     → Build deployable agent bundle");
-    console.log("   • keygen      → Create identity keypairs\n");
+    console.log("   • keygen      → Create identity keypairs");
+    console.log("   • agent       → Create a new agent identity\n");
 }
