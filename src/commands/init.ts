@@ -25,11 +25,14 @@ export async function runInitCommand(): Promise<void> {
     '.dokugent/data/conventions',
     '.dokugent/data/io',
     '.dokugent/data/compliance',
-    '.dokugent/preview',
-    '.dokugent/certified',
-    '.dokugent/compiled',
-    '.dokugent/reports',
-    '.dokugent/logs'
+    '.dokugent/ops/preview',
+    '.dokugent/ops/compiled',
+    '.dokugent/ops/certified',
+    '.dokugent/ops/logs',
+    '.dokugent/ops/reports',
+    '.dokugent/audit/trace',
+    '.dokugent/audit/signatures',
+    '.dokugent/overrides'
   ];
 
   for (const dir of baseDirs) {
