@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { confirmAndWriteFile } from '../fs-utils';
 import { getTimestamp } from '../timestamp';
+import { estimateTokensFromText } from '../tokenizer';
 
 export interface InitAnswers {
   agentName: string;
@@ -128,6 +129,17 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     ownerId: answers.ownerId,
     mainTask: answers.mainTask
   };
+
+  const summaryText = [
+    typedAnswers.agentName,
+    typedAnswers.description,
+    typedAnswers.roles.join(', '),
+    typedAnswers.processableTypes.join(', '),
+    typedAnswers.mainTask
+  ].join(' ');
+
+  const tokenCount = estimateTokensFromText(summaryText);
+  console.log(`\n🧮 Estimated agent profile tokens: \x1b[32m~${tokenCount} tokens\x1b[0m`);
 
   return typedAnswers;
 }

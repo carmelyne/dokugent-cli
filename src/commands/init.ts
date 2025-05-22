@@ -18,7 +18,7 @@ import { confirmAndWriteFile } from '../utils/fs-utils';
 export async function runInitCommand(): Promise<void> {
   console.log("\n⚙️ Running dokugent init...\n");
   const baseDirs = [
-    '.dokugent/data/agent',
+    '.dokugent/data/agents',
     '.dokugent/data/tool-list',
     '.dokugent/data/plan',
     '.dokugent/data/criteria',
@@ -40,6 +40,12 @@ export async function runInitCommand(): Promise<void> {
   }
 
   console.log('\x1b[43m\x1b[30m📁 Created base .dokugent structure.\x1b[0m\n');
+  console.log(`📂 .dokugent/
+├── audit       → Signature logs and trace evidence
+├── data        → Editable input: agent, plans, tools, rules
+├── ops         → Output folders: preview, compiled, certified agents
+└── overrides   → Local dev overrides like whitelists
+  `);
 
   // Ensure .dokugent/overrides/whitelist.txt exists
   const whitelistPath = path.resolve('.dokugent/overrides/whitelist.txt');
@@ -58,7 +64,5 @@ It is safe to commit, inspect, and modify files under .dokugent/.
   const readmePathFinal = path.resolve('.dokugent/README.md');
   await confirmAndWriteFile(readmePathFinal, readmeContentFinal);
 
-  console.log('➡️ You can now run: dokugent agent\n');
-  console.log('\x1b[34mBlue text\x1b[0m');
-  console.log('\x1b[43m\x1b[30mYellow background with black text\x1b[0m');
+  console.log('➡️ You can now run: \x1b[34mdokugent agent\x1b[0m\n');
 }
