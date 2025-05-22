@@ -56,3 +56,64 @@ export async function planLs() {
   }
   console.log(`\n`);
 }
+
+/**
+ * Sets the specified agent as the current symlink target.
+ *
+ * @param {string} slug - The folder name of the agent to set as current.
+ */
+export async function setAgentCurrent(slug: string): Promise<void> {
+  const agentDir = path.join('.dokugent', 'data', 'agents');
+  const target = path.join(agentDir, slug);
+  const symlink = path.join(agentDir, 'current');
+
+  if (!(await fs.pathExists(target))) {
+    throw new Error(`❌ Agent folder does not exist: ${slug}`);
+  }
+
+  try {
+    await fs.remove(symlink);
+  } catch { }
+
+  await fs.symlink(slug, symlink); // relative path
+  console.log(`\n🟢 Current agent set to: ${slug}\n`);
+}
+
+/**
+ * Lists all available agent folders and symlinks in the agents directory.
+ *
+ * Shows:
+ * - current (symlink)
+ * - latest (symlink, if present)
+ * - all other agent versions
+ */
+export async function agentLs() {
+  const cwd = process.cwd();
+  const agentPath = path.join(cwd, '.dokugent', 'data', 'agents');
+
+  if (!(await fs.pathExists(agentPath))) {
+    console.log('❌ No agents directory found.');
+    return;
+  }
+
+  const entries = await fs.readdir(agentPath);
+  const folders: string[] = [];
+  const symlinks: string[] = [];
+
+  for (const entry of entries) {
+    const full = path.join(agentPath, entry);
+    const stat = await fs.lstat(full);
+    if (stat.isSymbolicLink()) symlinks.push(entry);
+    else if (stat.isDirectory()) folders.push(entry);
+  }
+
+  console.log(`\n🧠 Available Agents (${folders.length}):\n`);
+  folders.forEach(f => console.log(`  📂 ${f}`));
+
+  console.log(`\n🔗 Symlinks (${symlinks.length}):\n`);
+  for (const name of symlinks) {
+    const target = await fs.readlink(path.join(agentPath, name));
+    console.log(`  🌳 ${name} → ${path.basename(target)}`);
+  }
+  console.log(`\n`);
+}

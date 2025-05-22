@@ -10,6 +10,7 @@ import {
   validateAgentIdentity,
   resolveAgentSlugFromArgs
 } from '../utils/agent-utils';
+import { agentLs, setAgentCurrent } from '../utils/ls-utils';
 
 export function runAgentCommand() {
   (async () => {
@@ -64,6 +65,18 @@ export function runAgentCommand() {
     if (process.argv.includes('--check')) {
       const slug = resolveAgentSlugFromArgs(process.argv);
       validateAgentIdentity(slug);
+      return;
+    }
+
+    if (process.argv.includes('--ls')) {
+      await agentLs();
+      return;
+    }
+
+    const useIndex = process.argv.indexOf('--use');
+    if (useIndex !== -1 && process.argv[useIndex + 1]) {
+      const slug = process.argv[useIndex + 1];
+      await setAgentCurrent(slug);
       return;
     }
 
