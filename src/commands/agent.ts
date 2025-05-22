@@ -4,6 +4,12 @@ import fs from 'fs';
 import path from 'path';
 import { getTimestamp } from '../utils/timestamp';
 import { estimateTokensFromText } from '../utils/tokenizer';
+import {
+  showAgentIdentity,
+  editAgentIdentity,
+  validateAgentIdentity,
+  resolveAgentSlugFromArgs
+} from '../utils/agent-utils';
 
 export function runAgentCommand() {
   (async () => {
@@ -41,6 +47,24 @@ export function runAgentCommand() {
       // TODO: Add support for `--clean` to auto-rename folder to match updated agent name
       console.log(`\n✅  Next: \x1b[34mdokugent plan --agent ${slug}\x1b[0m\n`);
       process.exit(0);
+    }
+
+    if (process.argv.includes('--show')) {
+      const slug = resolveAgentSlugFromArgs(process.argv);
+      showAgentIdentity(slug);
+      return;
+    }
+
+    if (process.argv.includes('--edit')) {
+      const slug = resolveAgentSlugFromArgs(process.argv);
+      editAgentIdentity(slug);
+      return;
+    }
+
+    if (process.argv.includes('--check')) {
+      const slug = resolveAgentSlugFromArgs(process.argv);
+      validateAgentIdentity(slug);
+      return;
     }
 
     // fallback to wizard

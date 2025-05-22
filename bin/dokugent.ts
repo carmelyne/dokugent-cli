@@ -84,7 +84,7 @@ switch (command) {
     console.log("\n🧠 Usage: dokugent <command>\n");
     console.log("📜 Available commands:\n");
     console.log("   \x1b[34m• init\x1b[0m        → Scaffold a new project");
-    console.log("   \x1b[34m• agent\x1b[0m       → Create a new agent identity");
+    console.log("   \x1b[34m• agent\x1b[0m       → Create a new agent identity (use --t for a template)");
     console.log("   \x1b[34m• plan\x1b[0m        → Draft an agent plan");
     console.log("   \x1b[34m• criteria\x1b[0m    → Define evaluation criteria");
     console.log("   \x1b[34m• conventions\x1b[0m → Select AI conventions");

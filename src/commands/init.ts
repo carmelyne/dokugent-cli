@@ -45,6 +45,9 @@ export async function runInitCommand(): Promise<void> {
 ├── data        → Editable input: agent, plans, tools, rules
 ├── ops         → Output folders: preview, compiled, certified agents
 └── overrides   → Local dev overrides like whitelists
+
+📄 Files created:
+- .dokugent/README.md
   `);
 
   // Ensure .dokugent/overrides/whitelist.txt exists
