@@ -25,3 +25,5 @@ agents.yml
 */**/*bak*
 
 site
+# Prevent tracking mkdocs config edits for CLI site builds
+# (git update-index --assume-unchanged site/mkdocs.yml)

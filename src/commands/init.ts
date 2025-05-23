@@ -17,6 +17,11 @@ import { confirmAndWriteFile } from '../utils/fs-utils';
  */
 export async function runInitCommand(): Promise<void> {
   console.log("\n⚙️ Running dokugent init...\n");
+  const targetRoot = path.resolve('.dokugent');
+  if (await fs.pathExists(targetRoot)) {
+    console.warn('⚠️  .dokugent folder already exists. Skipping initialization.\n');
+    return;
+  }
   const baseDirs = [
     '.dokugent/data/agents',
     '.dokugent/data/tool-list',
@@ -65,7 +70,7 @@ It is safe to commit, inspect, and modify files under .dokugent/.
   `;
 
   const readmePathFinal = path.resolve('.dokugent/README.md');
-  await confirmAndWriteFile(readmePathFinal, readmeContentFinal);
+  await fs.outputFile(readmePathFinal, readmeContentFinal);
 
   console.log('➡️ You can now run: \x1b[34mdokugent agent\x1b[0m\n');
 }
