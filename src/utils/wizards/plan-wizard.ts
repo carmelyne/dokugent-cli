@@ -155,7 +155,7 @@ ${toolSet.map(tool => `- ${tool}`).join('\n')}
   await fs.outputFile(mdPath, `# PLAN.md\n\n${combined}`);
 
   const tokenCount = estimateTokensFromText(combined);
-  console.log(`\n✅ plan.md created at:\n   .dokugent/data/plans/${agentId}/\n`);
+  console.log(`\n✅ plan.md generated inside:\n   .dokugent/data/plans/${agentId}/\n`);
   console.log(`🧮 Estimated agent plan step tokens: \x1b[32m~${tokenCount} tokens\x1b[0m\n`);
 
   // Update latest symlink
