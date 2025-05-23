@@ -86,8 +86,40 @@ export async function runPlanCommand(args: string[]) {
     }
 
     case undefined:
-    default:
-      await promptPlanWizard();
+    default: {
+      const agentSymlink = path.resolve('.dokugent/data/agents/current');
+      try {
+        const agentId = await fs.readlink(agentSymlink);
+        const planCurrentSymlink = path.resolve('.dokugent/data/aplan', agentId, 'current');
+        const resolvedPlanPath = await fs.readlink(planCurrentSymlink);
+        const planPath = path.resolve('.dokugent/data/aplan', agentId, resolvedPlanPath);
+        console.log(`📂 Active plan: ${planPath}`);
+        // future: load or present options for the plan
+      } catch {
+        const agentExists = await fs.pathExists(agentSymlink);
+        if (!agentExists) {
+          console.error('❌ No active agent profile found. Run `dokugent agent use <name>` first.');
+          return;
+        }
+        console.warn('\n⚠️ No active plan found. Launching wizard...\n');
+        await promptPlanWizard();
+      }
       break;
+    }
+  }
+}
+/**
+ * Resolves the path to the currently active plan for the active agent.
+ * Returns null if no active agent or plan is found.
+ */
+async function resolveActivePlanPath(): Promise<string | null> {
+  const agentSymlink = path.resolve('.dokugent/data/agents/current');
+  try {
+    const agentId = await fs.readlink(agentSymlink);
+    const planCurrentSymlink = path.resolve('.dokugent/data/aplan', agentId, 'current');
+    const resolvedPlanPath = await fs.readlink(planCurrentSymlink);
+    return path.resolve('.dokugent/data/aplan', agentId, resolvedPlanPath);
+  } catch {
+    return null;
   }
 }

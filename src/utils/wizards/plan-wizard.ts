@@ -7,6 +7,7 @@ import inquirer from 'inquirer';
 import path from 'path';
 import fs from 'fs-extra';
 import { writeWithBackup } from '../file-writer';
+import { estimateTokensFromText } from '../tokenizer';
 
 /**
  * Launches the interactive wizard for creating an agent plan.
@@ -20,15 +21,32 @@ import { writeWithBackup } from '../file-writer';
  * @returns {Promise<void>}
  */
 export async function promptPlanWizard(): Promise<void> {
-  const planDir = path.resolve('.dokugent/plan');
-  await fs.ensureDir(planDir);
+  const agentSymlink = path.resolve('.dokugent/data/agents/current');
+  let agentId = 'unknown-agent';
+  try {
+    agentId = await fs.readlink(agentSymlink);
+  } catch {
+    console.error('❌ No active agent found. Run `dokugent agent use <name>` first.');
+    return;
+  }
+  const baseFolder = path.resolve('.dokugent/data/plans', agentId);
+  const mdPath = path.join(baseFolder, 'plan.md');
+  await fs.ensureDir(baseFolder);
+
+  const stepFolder = path.join('.dokugent/data/plans', agentId, 'steps');
+  await fs.ensureDir(stepFolder);
+  const existingSteps = (await fs.readdir(stepFolder)).map(f => f.replace('.md', ''));
+
+  const availableChoices = ['summarize_input', 'web_search', 'data_extraction', 'custom'].filter(
+    step => !existingSteps.includes(step)
+  );
 
   const { stepId } = await inquirer.prompt([
     {
       type: 'list',
       name: 'stepId',
       message: 'Select a plan step ID:',
-      choices: ['summarize_input', 'web_search', 'data_extraction', 'custom'],
+      choices: availableChoices,
     },
   ]);
 
@@ -42,6 +60,9 @@ export async function promptPlanWizard(): Promise<void> {
         default: 'my_step',
       },
     ]);
+    if (existingSteps.includes(customStepId)) {
+      console.warn(`⚠️ Step ID "${customStepId}" already exists. This will overwrite the current step.`);
+    }
     finalStepId = customStepId;
   }
 
@@ -51,12 +72,6 @@ export async function promptPlanWizard(): Promise<void> {
       name: 'description',
       message: 'Plan overview (what is this step about?)',
       default: `High-level description for ${finalStepId}`,
-    },
-    {
-      type: 'input',
-      name: 'agent',
-      message: 'Agent name:',
-      default: 'llm-core',
     },
     {
       type: 'input',
@@ -79,13 +94,6 @@ export async function promptPlanWizard(): Promise<void> {
     },
   ]);
 
-  const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-  let baseFolder = path.join(planDir, `${finalStepId}-${timestamp}`);
-  let suffix = 1;
-  while (await fs.pathExists(baseFolder)) {
-    baseFolder = path.join(planDir, `${finalStepId}-${timestamp}-${suffix++}`);
-  }
-  await fs.ensureDir(baseFolder);
 
   const steps = [
     { id: finalStepId, use: 'summarize-tool', input: 'input.md', output: 'draft-summary.md' },
@@ -93,14 +101,16 @@ export async function promptPlanWizard(): Promise<void> {
   ];
   const toolSet = [...new Set(steps.map(step => step.use))];
 
-  const mdPath = path.join(baseFolder, 'plan.md');
   const planMdContent = `# PLAN.md
+
+## Plan Step ID
+${finalStepId}
 
 ## Plan Description
 ${answers.description}
 
 ## Agent Name
-${answers.agent}
+${agentId}
 
 ## Agent Role
 ${answers.role}
@@ -118,15 +128,40 @@ ${answers.constraints.map((c: string) => `- ${c}`).join('\n')}
 ${toolSet.map(tool => `- ${tool}`).join('\n')}
 `;
 
-  await writeWithBackup(mdPath, planMdContent);
+  const stepFileName = `${finalStepId}.md`;
+  const stepFilePath = path.join(stepFolder, stepFileName);
+  if (await fs.pathExists(stepFilePath)) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = path.join(stepFolder, `${finalStepId}-${timestamp}.bak.md`);
+    await fs.copyFile(stepFilePath, backupPath);
+  }
+  await fs.outputFile(stepFilePath, planMdContent);
 
-  console.log(`✅ plan.md created in ${baseFolder}/`);
-  console.log(`ℹ️  Run 'dokugent plan sync' to regenerate plan.json`);
+  const allStepFiles = await fs.readdir(stepFolder);
+  const combined = (
+    await Promise.all(
+      allStepFiles
+        .filter(f => f.endsWith('.md') && !f.endsWith('.bak.md'))
+        .sort()
+        .map(f => fs.readFile(path.join(stepFolder, f), 'utf8'))
+    )
+  ).join('\n\n---\n\n');
 
-  const symlinkPath = path.join(planDir, finalStepId);
+  // Simplified behavior: write combined plan directly to plan.md with backup
+  if (await fs.pathExists(mdPath)) {
+    const backupPath = path.join(baseFolder, `plan.bak.md`);
+    await fs.copyFile(mdPath, backupPath);
+  }
+  await fs.outputFile(mdPath, `# PLAN.md\n\n${combined}`);
+
+  const tokenCount = estimateTokensFromText(combined);
+  console.log(`\n✅ plan.md created at:\n   .dokugent/data/plans/${agentId}/\n`);
+  console.log(`🧮 Estimated agent plan step tokens: \x1b[32m~${tokenCount} tokens\x1b[0m\n`);
+
+  // Update latest symlink
+  const symlinkPath = path.resolve('.dokugent/data/plans', 'latest');
   try {
     await fs.remove(symlinkPath);
   } catch { }
   await fs.symlink(baseFolder, symlinkPath, 'dir');
-  console.log(`🔗 Symlink updated: ${finalStepId} → ${path.basename(baseFolder)}`);
 }

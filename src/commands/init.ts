@@ -25,7 +25,7 @@ export async function runInitCommand(): Promise<void> {
   const baseDirs = [
     '.dokugent/data/agents',
     '.dokugent/data/tool-list',
-    '.dokugent/data/plan',
+    '.dokugent/data/plans',
     '.dokugent/data/criteria',
     '.dokugent/data/conventions',
     '.dokugent/data/io',
