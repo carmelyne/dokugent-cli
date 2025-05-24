@@ -12,7 +12,17 @@ export function loadAgentIdentity(slug: string): any {
   if (!fs.existsSync(identityPath)) {
     throw new Error(`❌ identity.json not found for agent: ${slug}`);
   }
-  return JSON.parse(fs.readFileSync(identityPath, 'utf-8'));
+
+  try {
+    const raw = fs.readFileSync(identityPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return {
+      ...parsed,
+      ecosystem: parsed.ecosystem || 'unspecified'
+    };
+  } catch (err) {
+    throw new Error(`❌ Failed to load or parse identity.json for agent ${slug}: ${err}`);
+  }
 }
 
 export function showAgentIdentity(slug: string): void {

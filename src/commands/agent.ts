@@ -14,39 +14,53 @@ import { agentLs, setAgentCurrent } from '../utils/ls-utils';
 
 export function runAgentCommand() {
   (async () => {
-    if (process.argv.includes('--t')) {
-      const templateData = {
-        name: 'sample_agent',
-        description: 'A starting agent identity template',
-        roles: ['summarizer'],
-        contentTypes: ['english', 'markdown'],
-        owner: 'Kinderbytes',
-        ownerId: 'kinderbytes.org',
-        task: 'Summarize input into 3 key points'
-      };
-
-      const slug = `${templateData.name}@${getTimestamp()}`;
-      const agentDir = path.resolve('.dokugent/data/agents', slug);
+    const templateIndex = process.argv.indexOf('--t');
+    const ecosystemIndex = process.argv.indexOf('--e');
+    if (templateIndex !== -1 && process.argv[templateIndex + 1]) {
+      const agentName = process.argv[templateIndex + 1];
+      const ecosystem = ecosystemIndex !== -1 ? process.argv[ecosystemIndex + 1] : 'none';
+      const timestamp = getTimestamp();
+      const agentId = `${agentName}@${timestamp}`;
+      const agentDir = path.resolve('.dokugent/data/agents', agentId);
       fs.mkdirSync(agentDir, { recursive: true });
 
-      const outPath = path.join(agentDir, 'identity.json');
-      fs.writeFileSync(outPath, JSON.stringify(templateData, null, 2));
+      const identity = {
+        agentName,
+        description: '',
+        roles: [],
+        contentTypes: [],
+        owner: '',
+        ownerId: '',
+        task: '',
+        requiresConventions: false,
+        ecosystem
+      };
+      const identityPath = path.join(agentDir, 'identity.json');
+      fs.writeFileSync(identityPath, JSON.stringify(identity, null, 2));
+      console.log(`💾 Saved: ${identityPath}`);
+
+      if (ecosystem !== 'none') {
+        const presetPath = path.resolve('src/presets/ecosystems', ecosystem);
+        const targetEcosystemPath = path.join(agentDir, 'ecosystems', ecosystem);
+        if (fs.existsSync(presetPath)) {
+          fs.mkdirSync(targetEcosystemPath, { recursive: true });
+          fs.cpSync(presetPath, targetEcosystemPath, { recursive: true });
+          console.log(`📦 Presets copied from ecosystem: ${ecosystem}`);
+        } else {
+          console.warn(`⚠️ Preset path not found: ${presetPath}`);
+        }
+      }
 
       const summary = [
-        templateData.name,
-        templateData.description,
-        templateData.roles?.join(','),
-        templateData.contentTypes?.join(','),
-        templateData.task
+        identity.agentName,
+        identity.description,
+        identity.roles.join(','),
+        identity.contentTypes.join(','),
+        identity.task
       ].join(' ');
       const tokenEstimate = estimateTokensFromText(summary);
-
       console.log(`\n🧮 Estimated agent profile tokens: \x1b[32m~${tokenEstimate} tokens\x1b[0m`);
-      console.log(`\n💾 Sample agent file created:\n   .dokugent/data/agents/${slug}/identity.json`);
-      console.log(`\n✏️  You can edit this agent before planning.`);
-      console.log(`\n⚠️  If you change the "name" field in the file,\n   also rename the folder to match.`);
-      // TODO: Add support for `--clean` to auto-rename folder to match updated agent name
-      console.log(`\n✅  Next: \x1b[34mdokugent plan --agent ${slug}\x1b[0m\n`);
+      console.log(`\n✅ Next: \x1b[34mdokugent preview --agent ${agentId}\x1b[0m\n`);
       process.exit(0);
     }
 
@@ -82,9 +96,12 @@ export function runAgentCommand() {
 
     // fallback to wizard
     const answers = await promptAgentWizard();
-    const agentId = `${answers.agentName}@${getTimestamp()}`;
+    const typedAnswers = {
+      ...answers,
+      ecosystem: answers.ecosystem
+    };
+    const agentId = `${typedAnswers.agentName}@${getTimestamp()}`;
     const targetPath = path.resolve('.dokugent/data/agents', agentId, 'identity.json');
-    await confirmAndWriteFile(targetPath, JSON.stringify(answers, null, 2));
-    console.log(`✅  You can now continue with:\n    \x1b[34m"dokugent plan --agent ${agentId}"\x1b[0m\n`);
+    // await confirmAndWriteFile(targetPath, JSON.stringify(typedAnswers, null, 2));
   })();
 }

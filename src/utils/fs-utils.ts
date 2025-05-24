@@ -41,5 +41,5 @@ export async function confirmAndWriteFile(filepath: string, contents: string | B
   }
 
   await fs.outputFile(filepath, contents);
-  console.log(`\n💾 Saved: ${filepath.replace(process.cwd() + '/', '')}\n`);
+  console.log(`\n💾 Saved:\n  ${filepath.replace(process.cwd() + '/', '')}\n`);
 }

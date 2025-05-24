@@ -19,6 +19,8 @@ export interface InitAnswers {
   owner: string;
   ownerId: string;
   mainTask: string;
+  requiresConventions: boolean;
+  ecosystem: string;
 }
 
 /**
@@ -42,7 +44,9 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       processableTypes: ['english', 'markdown structure'],
       owner: 'Kinderbytes',
       ownerId: 'kinderbytes.org',
-      mainTask: 'Summarize input as 3 bullet points'
+      mainTask: 'Summarize input as 3 bullet points',
+      requiresConventions: false,
+      ecosystem: 'none'
     };
 
     return defaults;
@@ -102,6 +106,19 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       name: 'mainTask',
       message: 'What is the main task of this agent?',
       default: 'Summarize input as 3 bullet points'
+    },
+    {
+      type: 'confirm',
+      name: 'requiresConventions',
+      message: 'Does this agent require behavioral conventions?',
+      default: false
+    },
+    {
+      type: 'list',
+      name: 'ecosystem',
+      message: 'Which ecosystem does this agent align with?',
+      choices: ['none', 'nvidia', 'openai', 'anthropic', 'google', 'microsoft'],
+      default: 'none'
     }
   ]);
 
@@ -127,8 +144,32 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     processableTypes: answers.processableTypes,
     owner: answers.owner,
     ownerId: answers.ownerId,
-    mainTask: answers.mainTask
+    mainTask: answers.mainTask,
+    requiresConventions: answers.requiresConventions,
+    ecosystem: answers.ecosystem
   };
+
+  const timestamp = getTimestamp();
+  const agentId = `${typedAnswers.agentName}@${timestamp}`;
+  const agentFolder = path.resolve('.dokugent/data/agents', agentId);
+  const identityPath = path.join(agentFolder, 'identity.json');
+
+  fs.ensureDirSync(agentFolder);
+  //complete files and folder structure on this timestamp
+  await confirmAndWriteFile(identityPath, JSON.stringify(typedAnswers, null, 2));
+  // console.log(`💾 Saved: ${identityPath}`);
+
+  if (typedAnswers.ecosystem && typedAnswers.ecosystem !== 'none') {
+    const presetPath = path.resolve('src/presets/ecosystems', typedAnswers.ecosystem);
+    const targetEcosystemPath = path.join(agentFolder, 'ecosystems', typedAnswers.ecosystem);
+    if (fs.existsSync(presetPath)) {
+      fs.ensureDirSync(targetEcosystemPath);
+      fs.copySync(presetPath, targetEcosystemPath, { overwrite: false });
+      console.log(`📦 Presets added:\n  .dokugent/data/agents/${agentId}/ecosystems/${typedAnswers.ecosystem}`);
+    } else {
+      console.warn(`⚠️ Preset path not found:\n  ${presetPath}`);
+    }
+  }
 
   const summaryText = [
     typedAnswers.agentName,
@@ -139,7 +180,10 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
   ].join(' ');
 
   const tokenCount = estimateTokensFromText(summaryText);
-  console.log(`\n🧮 Estimated agent profile tokens: \x1b[32m~${tokenCount} tokens\x1b[0m`);
+  console.log(`\n🧮 Estimated agent profile tokens: \x1b[32m~${tokenCount} tokens\x1b[0m\n`);
 
+  if (!typedAnswers.ecosystem || typedAnswers.ecosystem === 'none') {
+    console.log(`✅  You can now continue with:\n    \x1b[34m"dokugent plan --agent ${agentId}"\x1b[0m\n`);
+  }
   return typedAnswers;
 }
