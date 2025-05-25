@@ -8,6 +8,7 @@ import fs from 'fs-extra';
 import { promptPlanWizard } from '../utils/wizards/plan-wizard';
 import { planLs } from '../utils/ls-utils';
 import { updateSymlink } from '../utils/symlink-utils';
+import { formatRelativePath } from '../utils/format-path';
 
 /**
  * Executes the `plan` command dispatcher.
@@ -90,11 +91,58 @@ export async function runPlanCommand(args: string[]) {
       const agentSymlink = path.resolve('.dokugent/data/agents/current');
       try {
         const agentId = await fs.readlink(agentSymlink);
+        const activeLabel = agentSymlink.endsWith('latest') ? 'latest' : 'current';
+        console.log(`\n📌 Using agent assigned as ${activeLabel}:\n   \x1b[32m${agentId}\x1b[0m`);
         const planCurrentSymlink = path.resolve('.dokugent/data/aplan', agentId, 'current');
-        const resolvedPlanPath = await fs.readlink(planCurrentSymlink);
-        const planPath = path.resolve('.dokugent/data/aplan', agentId, resolvedPlanPath);
-        console.log(`📂 Active plan: ${planPath}`);
-        // future: load or present options for the plan
+        let resolvedPlanPath: string | null = null;
+
+        if (await fs.pathExists(planCurrentSymlink)) {
+          try {
+            resolvedPlanPath = await fs.readlink(planCurrentSymlink);
+            const planPath = path.resolve('.dokugent/data/plans', agentId, resolvedPlanPath);
+            console.log(`📂 Active plan: ${planPath}`);
+          } catch {
+            resolvedPlanPath = null;
+          }
+        }
+
+        if (!resolvedPlanPath) {
+          const planDir = path.resolve('.dokugent/data/plans');
+          const all = await fs.readdir(planDir);
+          // Only show symlinks that don't have '-' in their name (step aliases)
+          const symlinks = [];
+          for (const name of all) {
+            if (!name.includes('-')) {
+              const stat = await fs.lstat(path.join(planDir, name));
+              if (stat.isSymbolicLink()) {
+                symlinks.push(name);
+              }
+            }
+          }
+          if (symlinks.length) {
+            for (const step of symlinks) {
+              const link = await fs.readlink(path.join(planDir, step));
+              const linkPath = path.resolve(planDir, link);
+              const stepsDir = path.join(linkPath, 'steps');
+              let stepFiles: string[] = [];
+              try {
+                stepFiles = (await fs.readdir(stepsDir))
+                  .filter(f => f.endsWith('.md'))
+                  .map(f => f.replace('.md', ''));
+              } catch {}
+
+              if (stepFiles.length) {
+                console.log(`\n📂 Steps in - \x1b[34m${step}\x1b[0m → ${formatRelativePath(linkPath)}`);
+                for (const file of stepFiles) {
+                  console.log(`   - ${file}`);
+                }
+              }
+            }
+          }
+        }
+
+        console.log('\n🛠️ Launching plan wizard for new or custom steps...\n');
+        await promptPlanWizard();
       } catch {
         const agentExists = await fs.pathExists(agentSymlink);
         if (!agentExists) {
