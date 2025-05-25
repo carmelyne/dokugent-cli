@@ -82,7 +82,7 @@ export function runAgentCommand() {
       return;
     }
 
-    if (process.argv.includes('--ls')) {
+    if (process.argv.includes('--ls') || process.argv.includes('ls')) {
       await agentLs();
       return;
     }

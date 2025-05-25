@@ -101,7 +101,7 @@ export async function promptPlanWizard(): Promise<void> {
   ];
   const toolSet = [...new Set(steps.map(step => step.use))];
 
-  const planMdContent = `# PLAN.md
+  const planMdContent = `
 
 ## Plan Step ID
 ${finalStepId}
@@ -136,6 +136,20 @@ ${toolSet.map(tool => `- ${tool}`).join('\n')}
     await fs.copyFile(stepFilePath, backupPath);
   }
   await fs.outputFile(stepFilePath, planMdContent);
+
+  // Update plan.index.md to reflect linkage
+  const indexPath = path.join(baseFolder, 'plan.index.md');
+  let indexLines: string[] = [];
+
+  if (await fs.pathExists(indexPath)) {
+    indexLines = (await fs.readFile(indexPath, 'utf-8')).split('\n');
+  }
+
+  const alreadyListed = indexLines.some(line => line.trim().startsWith(`${finalStepId} -`));
+  if (!alreadyListed) {
+    indexLines.push(`${finalStepId} - linked`);
+    await fs.writeFile(indexPath, indexLines.join('\n'), 'utf-8');
+  }
 
   const allStepFiles = await fs.readdir(stepFolder);
   const combined = (
