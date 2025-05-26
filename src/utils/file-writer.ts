@@ -24,15 +24,14 @@ export async function writeWithBackup(
 ): Promise<{ status: 'backed_up' | 'written'; path: string }> {
   const exists = await fs.pathExists(targetPath);
   if (exists) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const dir = path.dirname(targetPath);
     const ext = path.extname(targetPath);
     const baseName = path.basename(targetPath, ext);
-    const backupPath = path.join(dir, `${baseName}-${timestamp}${ext}`);
+    const backupPath = path.relative(process.cwd(), path.join(dir, `${baseName}.bak${ext}`));
 
     await fs.ensureDir(dir);
     await fs.copy(targetPath, backupPath);
-    console.log(`📦 Backup created at ${backupPath}`);
+    console.log(`\n📦 Backup created at\n   ${backupPath}`);
   }
 
   await fs.outputFile(targetPath, contents);

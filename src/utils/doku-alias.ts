@@ -2,6 +2,9 @@
  * @file doku-alias.ts
  * @description Utility function to create or update symlink aliases for versioned folders.
  * Used to maintain a consistent reference point (e.g., `plan@latest`) for latest versions.
+ *
+ * 🔧 Available Utilities:
+ * - `doku-alias.ts` – createAliasLink(): safely creates or updates versioned symlinks (e.g., `plan@latest`)
  */
 import fs from 'fs-extra';
 import path from 'path';

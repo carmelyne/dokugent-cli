@@ -165,17 +165,36 @@ export async function runPlanCommand(args: string[]) {
       console.log(`\n📍 Plan Trace (${path.basename(planPath)})\n`);
 
       console.log('🗂️  plan.index.md');
+      // Collect step metadata
+      const stepMeta: { stepId: string, status: string, exists: boolean, tokens?: number }[] = [];
       const linkedSteps: string[] = [];
+
       for (const line of lines) {
         if (!line.includes(' - ')) continue;
         const [stepId, status] = line.split(' - ').map(s => s.trim());
         const filePath = path.join(stepFolder, `${stepId}.md`);
         const exists = await fs.pathExists(filePath);
-        const icon = status === 'linked'
-          ? exists ? '✅' : '⚠️'
+        const meta: { stepId: string, status: string, exists: boolean, tokens?: number } = { stepId, status, exists };
+        if (status === 'linked' && exists) {
+          const content = await fs.readFile(filePath, 'utf-8');
+          meta.tokens = Math.ceil(content.split(/\s+/).length / 0.75);
+        }
+        stepMeta.push(meta);
+      }
+
+      // Sort linked first, then unlinked; each group alphabetically
+      const sortedMeta = stepMeta.sort((a, b) => {
+        if (a.status === b.status) return a.stepId.localeCompare(b.stepId);
+        return a.status === 'linked' ? -1 : 1;
+      });
+
+      for (const meta of sortedMeta) {
+        const icon = meta.status === 'linked'
+          ? meta.exists ? '✅' : '⚠️'
           : '⛔';
-        console.log(`  - ${stepId.padEnd(20)} → ${status} ${icon}`);
-        if (status === 'linked' && exists) linkedSteps.push(stepId);
+        const tokenNote = meta.tokens ? `  ~${meta.tokens} tokens` : '';
+        console.log(`  - ${meta.stepId.padEnd(20)} → ${meta.status} ${icon}${tokenNote}`);
+        if (meta.status === 'linked' && meta.exists) linkedSteps.push(meta.stepId);
       }
 
       if (linkedSteps.length) {
@@ -183,7 +202,17 @@ export async function runPlanCommand(args: string[]) {
         linkedSteps.forEach((step, i) => {
           console.log(`  ${i + 1}. ${step}`);
         });
-        console.log('\n');
+        // --- Begin estimated total tokens block
+        const tokenEstimates = await Promise.all(
+          linkedSteps.map(async (stepId) => {
+            const filePath = path.join(stepFolder, `${stepId}.md`);
+            const content = await fs.readFile(filePath, 'utf-8');
+            return Math.ceil(content.split(/\s+/).length / 0.75);
+          })
+        );
+        const totalTokens = tokenEstimates.reduce((sum, tokens) => sum + tokens, 0);
+        console.log(`\n🧮 Estimated Total Tokens: ~${totalTokens} tokens in plan.md\n`);
+        // --- End estimated total tokens block
       } else {
         console.log('\n⚠️ No linked steps found.\n');
       }

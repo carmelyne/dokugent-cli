@@ -1,6 +1,3 @@
-
-type CommandType = 'plan' | 'criteria' | 'conventions' | 'compliance' | 'io' | 'init' | 'tool-list';
-
 /**
  * Returns scaffold-ready default values for DokuVolt certificate sections,
  * aligned with doku-cert-schema.md.

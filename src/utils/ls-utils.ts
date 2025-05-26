@@ -117,3 +117,25 @@ export async function agentLs() {
   }
   console.log(`\n`);
 }
+
+/**
+ * Resolves the active path from a given type's data directory, using `current` or `latest` symlinks.
+ *
+ * @param type - The data type to resolve (e.g. 'agents', 'plans', 'criteria', 'conventions')
+ * @returns Full real path to the resolved folder or null if neither symlink exists
+ */
+export async function resolveActivePath(type: 'agents' | 'plans' | 'criteria' | 'conventions'): Promise<string | null> {
+  const baseDir = path.resolve('.dokugent/data', type);
+  const currentPath = path.join(baseDir, 'current');
+  const latestPath = path.join(baseDir, 'latest');
+
+  if (await fs.pathExists(currentPath)) {
+    return await fs.realpath(currentPath);
+  }
+
+  if (await fs.pathExists(latestPath)) {
+    return await fs.realpath(latestPath);
+  }
+
+  return null;
+}
