@@ -51,6 +51,32 @@ export async function promptCriteriaWizard(force = false) {
       .filter(Boolean)
   );
 
+  const extractList = (regex: RegExp) =>
+    [...existingContent.matchAll(regex)]
+      .flatMap(m =>
+        m[1]
+          .split('\n')
+          .map(line => line.replace(/^- /, '').trim())
+          .filter(Boolean)
+      );
+
+  if (existingContent) {
+    console.log(`\n📌 Using agent assigned as current:\n   ${fullAgentId}`);
+    console.log(`\n🧾 Existing criteria in\n    → ${formatRelativePath(mdPath)}\n`);
+
+    const printSection = (title: string, entries: string[]) => {
+      if (entries.length) {
+        console.log(`## ${title}`);
+        entries.forEach(e => console.log(`- ${e}`));
+        console.log('');
+      }
+    };
+
+    printSection('Success Conditions', existingSuccessConditions);
+    printSection('Failure Conditions', extractList(/## Failure Conditions\n([\s\S]*?)(?=\n##|$)/g));
+    printSection('Evaluation Metrics', extractList(/## Evaluation Metrics\n([\s\S]*?)(?=\n##|$)/g));
+  }
+
   const successChoices = [
     { name: 'Accurate', value: 'Accurate', checked: true },
     { name: 'Relevant', value: 'Relevant', checked: true },
@@ -81,6 +107,8 @@ export async function promptCriteriaWizard(force = false) {
         type: 'input',
         name: 'customSuccess',
         message: '✍️ Enter your custom success condition:',
+        validate: (input: string) =>
+          input.trim() === '' ? 'Custom success condition cannot be empty.' : true,
       }
     ]);
     // Remove 'custom' from the list, keep others in order
@@ -95,15 +123,6 @@ export async function promptCriteriaWizard(force = false) {
   }
 
   // Parse existing lists
-  const extractList = (regex: RegExp) =>
-    [...existingContent.matchAll(regex)]
-      .flatMap(m =>
-        m[1]
-          .split('\n')
-          .map(line => line.replace(/^- /, '').trim())
-          .filter(Boolean)
-      );
-
   const existingSuccess = extractList(/## Success Conditions\n([\s\S]*?)(?=\n##|$)/g);
   const existingFailure = extractList(/## Failure Conditions\n([\s\S]*?)(?=\n##|$)/g);
   const existingMetrics = extractList(/## Evaluation Metrics\n([\s\S]*?)(?=\n##|$)/g);
@@ -144,6 +163,8 @@ export async function promptCriteriaWizard(force = false) {
         type: 'input',
         name: 'customMetric',
         message: '✍️ Enter your custom evaluation metric:',
+        validate: (input: string) =>
+          input.trim() === '' ? 'Custom evaluation metric cannot be empty.' : true,
       }
     ]);
     const filtered = finalMetrics.filter((m: string) => m !== 'custom');
@@ -191,4 +212,9 @@ ${mergedMetrics.map(m => `- ${m}`).join('\n')}
 
   console.log(`\n✅ criteria.md created in\n   ${formatRelativePath(versionedFolder)}/\n`);
   console.log(`🔗 Symlink updated:\n   criteria → ${path.basename(versionedFolder)}\n`);
+
+  const estimatedTokens = await import('../tokenizer').then(mod =>
+    mod.estimateTokensFromText(mdContent)
+  );
+  console.log(`\n🧮 Estimated tokens: \x1b[32m~${estimatedTokens}\x1b[0m\n`);
 }

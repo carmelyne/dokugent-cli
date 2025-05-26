@@ -24,7 +24,7 @@
 
 import { runInitCommand } from '../src/commands/init'; // this will fail if init is empty
 import { runPlanCommand } from '../src/commands/plan';
-import { runCriteria } from '../src/commands/criteria';
+import { runCriteriaCommand } from '../src/commands/criteria';
 import { runConventions } from '../src/commands/conventions';
 import { runSecurity } from '../src/commands/security';
 import { runPreviewCommand } from '../src/commands/preview';
@@ -45,7 +45,7 @@ switch (command) {
     runPlanCommand?.(args.slice(1));
     break;
   case 'criteria':
-    runCriteria?.();
+    runCriteriaCommand?.(args.slice(1));
     break;
   case 'conventions':
     runConventions?.();

@@ -9,8 +9,8 @@ import fs from 'fs-extra';
 import { readPlanFile, getPlanStepFile } from '../utils/plan-utils';
 import { spawn } from 'child_process';
 import { promptPlanWizard } from '../utils/wizards/plan-wizard';
-import { planLs } from '../utils/ls-utils';
-import { updateSymlink } from '../utils/symlink-utils';
+// import { planLs } from '../utils/ls-utils';
+// import { updateSymlink } from '../utils/symlink-utils';
 import { formatRelativePath } from '../utils/format-path';
 
 /**
@@ -211,7 +211,7 @@ export async function runPlanCommand(args: string[]) {
           })
         );
         const totalTokens = tokenEstimates.reduce((sum, tokens) => sum + tokens, 0);
-        console.log(`\n🧮 Estimated Total Tokens: ~${totalTokens} tokens in plan.md\n`);
+        console.log(`\n🧮 Estimated Total Tokens: \x1b[32m~${totalTokens}\x1b[0m tokens in plan.md\n`);
         // --- End estimated total tokens block
       } else {
         console.log('\n⚠️ No linked steps found.\n');
