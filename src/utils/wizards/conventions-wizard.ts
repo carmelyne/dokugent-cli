@@ -6,8 +6,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import inquirer from 'inquirer';
-import { appendTimestamp } from '../timestamp';
-import { updateSymlink } from '../symlink-utils';
+
 
 /**
  * Launches an interactive wizard for creating versioned convention folders.
@@ -16,8 +15,8 @@ import { updateSymlink } from '../symlink-utils';
  * Responsibilities:
  * - Prompts user for convention type and selected agent files.
  * - Supports both template-based and manual filename selection.
- * - Writes convention folders with timestamped versions.
- * - Updates symlinks to track the latest version per convention type.
+ * - Writes convention folders under convention type and agentId.
+ * - Updates symlinks to track the latest version per convention type and agentId.
  *
  * @param force Whether to overwrite existing folders without confirmation.
  * @returns {Promise<void>}
@@ -26,15 +25,33 @@ export async function promptConventionsWizard(force = false) {
   const baseTemplatePath = fs.existsSync(path.resolve(__dirname, '../../../presets/templates/conventions'))
     ? path.resolve(__dirname, '../../../presets/templates/conventions')
     : path.resolve(process.cwd(), '.dokugent/conventions/templates');
-  const targetBase = path.join(process.cwd(), '.dokugent/conventions');
+  const conventionsBase = path.join(process.cwd(), '.dokugent/data/conventions');
+  const agentCurrentSymlink = path.join(process.cwd(), '.dokugent/data/agents/current');
+
+  let agentId = '';
+  try {
+    agentId = await fs.readlink(agentCurrentSymlink);
+  } catch (err) {
+    console.log(`⚠️ Could not read current agent symlink at ${agentCurrentSymlink}. Please ensure it exists.`);
+    return;
+  }
+
+  const availableTypes = ['dev'];
+  ['writing', 'research'].forEach(type => {
+    const typePath = path.join(conventionsBase, type);
+    if (!fs.existsSync(typePath)) {
+      availableTypes.push(type);
+    }
+  });
+  availableTypes.push('custom');
 
   const { selectedType } = await inquirer.prompt([
     {
       type: 'list',
       name: 'selectedType',
       message: '📚 Pick a convention type to scaffold:',
-      choices: ['dev', 'writing', 'research', 'custom'],
-      default: 'dev',
+      choices: availableTypes,
+      default: availableTypes.includes('dev') ? 'dev' : 'custom',
     },
   ]);
 
@@ -58,45 +75,73 @@ export async function promptConventionsWizard(force = false) {
       },
     ]);
 
-    const versioned = appendTimestamp(customName);
-    const targetPath = path.join(targetBase, versioned);
+    const targetPath = path.join(conventionsBase, customName, agentId);
 
     if (await fs.pathExists(targetPath) && !force) {
-      console.log(`⚠️ .dokugent/conventions/${versioned} already exists. Use --force to overwrite.`);
+      console.log(`⚠️ ${path.relative(process.cwd(), targetPath)} already exists. Use --force to overwrite.`);
       return;
     }
 
     if (base === 'Blank') {
       await fs.ensureDir(targetPath);
+      const readmePath = path.join(targetPath, 'README.md');
+      await fs.outputFile(readmePath, `# ${customName} Conventions\n\nDescribe your conventions here.\n`);
     } else {
       const source = path.join(baseTemplatePath, base);
-      await fs.copy(source, targetPath);
+      await fs.ensureDir(targetPath);
+      if (await fs.pathExists(source)) {
+        await fs.copy(source, targetPath);
+      } else {
+        console.log(`⚠️ Template not found for base "${base}". Created blank folder.`);
+        const readmePath = path.join(targetPath, 'README.md');
+        await fs.outputFile(readmePath, `# ${customName} Conventions\n\nDescribe your conventions here.\n`);
+      }
     }
 
-    await updateSymlink(targetBase, customName, versioned);
+    await fs.ensureDir(targetPath);
+    // Create/replace symlink for latest custom convention
+    const symlinkPath = path.join(conventionsBase, customName, 'latest');
+    try {
+      await fs.remove(symlinkPath);
+    } catch { }
+    await fs.symlink(targetPath, symlinkPath, 'dir');
     return;
   }
 
   let selectedAgents: string[] = [];
 
   if (selectedType === 'dev') {
+    const devTargetPath = path.join(conventionsBase, selectedType, agentId);
+    await fs.ensureDir(devTargetPath);
+    const existingFiles = (await fs.readdir(devTargetPath)).filter(f => f.endsWith('.md'));
+
+    const allChoices = [
+      'CLAUDE.md',
+      'CODEX.md',
+      'GEMINI.md',
+      'GPT4.md',
+      'GROK.md',
+      'LLM-CORE.md',
+      'MISTRAL.md',
+    ];
+
+    const remainingChoices = allChoices.filter(choice => !existingFiles.includes(choice));
+
+    if (remainingChoices.length === 0) {
+      console.log('✅ All default profiles already added. Showing only custom option.');
+    }
+
     const response = await inquirer.prompt([
       {
         type: 'checkbox',
         name: 'selectedAgents',
         message: '🤖 Select agent profiles to include:',
         choices: [
-          { name: 'CLAUDE.md', value: 'CLAUDE.md' },
-          { name: 'CODEX.md', value: 'CODEX.md' },
-          { name: 'GEMINI.md', value: 'GEMINI.md' },
-          { name: 'GPT4.md', value: 'GPT4.md' },
-          { name: 'GROK.md', value: 'GROK.md' },
-          { name: 'LLM-CORE.md', value: 'LLM-CORE.md' },
-          { name: 'MISTRAL.md', value: 'MISTRAL.md' },
+          ...remainingChoices.map(f => ({ name: f, value: f })),
           new inquirer.Separator(),
           { name: '✏️ Custom (type filenames manually)', value: '__CUSTOM__' },
         ],
-        default: ['CLAUDE.md'],
+        default: remainingChoices.includes('CLAUDE.md') ? ['CLAUDE.md'] : [],
       },
     ]);
     selectedAgents = response.selectedAgents;
@@ -149,18 +194,17 @@ export async function promptConventionsWizard(force = false) {
     }
   }
 
-  const versionedType = appendTimestamp(selectedType);
-  const targetPath = path.join(targetBase, versionedType);
+  const targetPath = path.join(conventionsBase, selectedType, agentId);
 
   if (await fs.pathExists(targetPath) && !force) {
-    console.log(`⚠️ .dokugent/conventions/${versionedType} already exists. Use --force to overwrite.`);
-    return;
+    console.log(`📂 Adding to existing folder: ${path.relative(process.cwd(), targetPath)}`);
   }
 
   if (selectedType === 'dev') {
     await fs.ensureDir(targetPath);
+
     for (const agentFile of selectedAgents) {
-      const srcPath = path.join('presets/templates/conventions/dev', agentFile);
+      const srcPath = path.join(baseTemplatePath, 'dev', agentFile);
       const destPath = path.join(targetPath, agentFile);
       console.log(`🛠️ ${agentFile} → ${path.relative(process.cwd(), destPath)}`);
 
@@ -175,10 +219,31 @@ export async function promptConventionsWizard(force = false) {
         console.error(`❌ Failed to scaffold ${agentFile}:`, err);
       }
     }
+    await fs.ensureDir(targetPath);
+    // Create/replace symlink for latest dev convention
+    const symlinkPath = path.join(conventionsBase, selectedType, 'latest');
+    try {
+      await fs.remove(symlinkPath);
+    } catch { }
+    await fs.symlink(targetPath, symlinkPath, 'dir');
   } else {
-    const source = path.join('.dokugent/conventions', selectedType);
-    await fs.copy(source, targetPath);
+    const source = path.join(baseTemplatePath, selectedType);
+    if (await fs.pathExists(source)) {
+      await fs.copy(source, targetPath);
+      console.log(`✅ Convention template copied from: ${source}`);
+    } else {
+      await fs.ensureDir(targetPath);
+      const readmePath = path.join(targetPath, 'README.md');
+      await fs.outputFile(readmePath, `# ${selectedType} Conventions\n\nAdd files to this folder as needed.\n`);
+      console.log(`⚠️ No template found for "${selectedType}". Created empty folder with README at ${targetPath}`);
+    }
   }
 
-  await updateSymlink(targetBase, selectedType, versionedType);
+  await fs.ensureDir(targetPath);
+  // Create/replace symlink for latest convention (non-dev types)
+  const symlinkPath = path.join(conventionsBase, selectedType, 'latest');
+  try {
+    await fs.remove(symlinkPath);
+  } catch { }
+  await fs.symlink(targetPath, symlinkPath, 'dir');
 }
