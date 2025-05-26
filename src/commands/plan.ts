@@ -156,8 +156,8 @@ export async function runPlanCommand(args: string[]) {
       const stepFolder = path.join(planPath, 'steps');
 
       if (!(await fs.pathExists(indexPath))) {
-        console.error('❌ plan.index.md not found.');
-        return;
+        console.warn('⚠️ plan.index.md not found. Creating empty index...');
+        await fs.writeFile(indexPath, '', 'utf-8');
       }
 
       const lines = (await fs.readFile(indexPath, 'utf-8')).split('\n');
@@ -389,7 +389,7 @@ ${path.basename(planPath)}
       });
 
       if (!modified) {
-        console.warn(`⚠️ Step '${stepId}' not found or already unlinked.`);
+        console.warn(`\n⚠️ Step '${stepId}' not found or already unlinked.\n`);
         return;
       }
 
@@ -424,7 +424,7 @@ ${path.basename(planPath)}
 
       const compiled = files.filter(Boolean).join('\n\n---\n\n');
       await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
-      console.log(`✅ Step '${stepId}' unlinked and plan.md recompiled.`);
+      console.log(`\n✅ Step '${stepId}' unlinked and plan.md recompiled.\n`);
       break;
     }
     case 'link': {
@@ -529,8 +529,169 @@ ${path.basename(planPath)}
 
       const compiled = files.filter(Boolean).join('\n\n---\n\n');
       await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
-      console.log(`✅ Step '${stepId}' linked and plan.md recompiled.`);
+      console.log(`\n✅ Step '${stepId}' linked and plan.md recompiled.\n`);
       break;
+    }
+
+    case '--doctor': {
+      // Support --fix-all flag
+      const fixAll = args.includes('--fix-all');
+      const scrub = fixAll || args.includes('--scrub');
+      const createMissing = fixAll || args.includes('--create-missing');
+      const rebuildIndex = args.includes('--rebuild-index');
+
+      const planPath = await resolveActivePlanPath();
+      if (!planPath) {
+        console.error('❌ No active plan folder found.');
+        return;
+      }
+
+      const stepFolder = path.join(planPath, 'steps');
+      const indexPath = path.join(planPath, 'plan.index.md');
+
+      const stepFiles = (await fs.readdir(stepFolder))
+        .filter(file => file.endsWith('.md'))
+        .map(file => file.replace('.md', ''));
+
+      // --- --rebuild-index logic
+      if (rebuildIndex) {
+        const rebuiltLines = stepFiles.map(stepId => `${stepId} - unlinked`);
+        await fs.writeFile(indexPath, rebuiltLines.join('\n'), 'utf-8');
+
+        if (rebuiltLines.length) {
+          console.log('\n🔧 Actions Taken\n');
+          console.log('🔁 Rebuilt plan.index.md from step files:\n');
+          rebuiltLines.forEach(line => {
+            console.log(`   ${line}`);
+          });
+        } else {
+          console.log('\n🔧 Actions Taken\n');
+          console.log('🔁 No step files found to rebuild index.');
+        }
+
+        console.log('\n_____\n\n✅ plan doctor completed.\n');
+        return;
+      }
+
+      // --- New logic: create missing plan.index.md and set createdIndex flag
+      let createdIndex = false;
+      if (!(await fs.pathExists(indexPath))) {
+        console.warn('⚠️ plan.index.md not found. Creating empty index file.');
+        await fs.writeFile(indexPath, '', 'utf-8');
+        createdIndex = true;
+      }
+
+      const indexLines = (await fs.readFile(indexPath, 'utf-8')).split('\n');
+      const listedSteps = indexLines
+        .map(line => line.trim())
+        .filter(line => line.includes(' - '))
+        .map(line => {
+          const [stepId, status] = line.split(' - ').map(s => s.trim());
+          return { stepId, status };
+        });
+
+      const listedStepIds = listedSteps.map(({ stepId }) => stepId);
+      const missingFiles = listedSteps.filter(({ stepId }) => !stepFiles.includes(stepId));
+      const unlistedFiles = stepFiles.filter(id => !listedStepIds.includes(id));
+
+      // ---- Status Report Section
+      // If we created the index, always print Status Report header
+      if (createdIndex) {
+        console.log('\n📋 Status Report:\n');
+      }
+      let printedStatusHeader = createdIndex;
+      if (missingFiles.length) {
+        if (!printedStatusHeader) {
+          console.log('\n📋 Status Report:\n');
+          printedStatusHeader = true;
+        }
+        console.warn(`⚠️ Listed in plan.index.md but missing .md file:`);
+        for (const { stepId } of missingFiles) {
+          console.log(`   - ${stepId}`);
+        }
+      }
+
+      if (unlistedFiles.length) {
+        if (!printedStatusHeader) {
+          console.log('\n📋 Status Report:\n');
+          printedStatusHeader = true;
+        }
+        console.warn(`⚠️ Found step files not listed in plan.index.md:`);
+        for (const id of unlistedFiles) {
+          console.log(`  - ${id}.md`);
+        }
+      }
+
+      if (!missingFiles.length && !unlistedFiles.length && !createdIndex) {
+        console.log('\n✅ plan.index.md and steps folder are in sync.\n');
+        return;
+      }
+
+      // ---- Actions Taken Section
+      let didActions = false;
+      if (scrub || createMissing) {
+        console.log('\n🔧 Actions Taken:\n');
+        didActions = true;
+      }
+
+      // Add logic to handle --scrub and --create-missing (and --fix-all)
+      const origLines = (await fs.readFile(indexPath, 'utf-8')).split('\n');
+      const updatedLines = [];
+      for (const line of origLines) {
+        const trimmed = line.trim();
+        if (!trimmed.includes(' - ')) {
+          updatedLines.push(line);
+          continue;
+        }
+        const [stepId, status] = trimmed.split(' - ').map(s => s.trim());
+        if (scrub) {
+          // Remove if .md file does not exist (regardless of status)
+          const stepFilePath = path.join(stepFolder, `${stepId}.md`);
+          // eslint-disable-next-line no-await-in-loop
+          if (!(await fs.pathExists(stepFilePath))) {
+            console.log(`🧹 Scrubbed from plan.index.md:\n   - ${stepId}`);
+            continue; // skip this line (scrub)
+          }
+        }
+        updatedLines.push(line);
+      }
+      await fs.writeFile(indexPath, updatedLines.join('\n'), 'utf-8');
+
+      if (createMissing) {
+        for (const { stepId } of listedSteps) {
+          const filePath = path.join(stepFolder, `${stepId}.md`);
+          // Only create if file does not exist
+          if (!(await fs.pathExists(filePath))) {
+            const content = `## Plan Step ID
+${stepId}
+
+## Plan Description
+
+## Agent Name
+${path.basename(planPath)}
+
+## Agent Role
+
+## Goal
+
+## Capabilities
+1.
+
+## Constraints
+-
+
+## Tools It Can Use
+-
+`;
+            await fs.writeFile(filePath, content, 'utf-8');
+            console.log(`📝 Created missing step file: ${stepId}.md`);
+          }
+        }
+      }
+
+      // ---- Completion Banner
+      console.log('\n_____\n\n✅ plan doctor completed.\n');
+      return;
     }
 
     case undefined:
