@@ -25,7 +25,7 @@
 import { runInitCommand } from '../src/commands/init'; // this will fail if init is empty
 import { runPlanCommand } from '../src/commands/plan';
 import { runCriteriaCommand } from '../src/commands/criteria';
-import { runConventions } from '../src/commands/conventions';
+import { runConventionsCommand } from '../src/commands/conventions';
 import { runSecurity } from '../src/commands/security';
 import { runPreviewCommand } from '../src/commands/preview';
 import { keygenCommand } from '../src/commands/keygen';
@@ -48,7 +48,7 @@ switch (command) {
     runCriteriaCommand?.(args.slice(1));
     break;
   case 'conventions':
-    runConventions?.();
+    runConventionsCommand?.(args.slice(1));
     break;
   case 'security':
     runSecurity?.();

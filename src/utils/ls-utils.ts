@@ -137,5 +137,16 @@ export async function resolveActivePath(type: 'agents' | 'plans' | 'criteria' | 
     return await fs.realpath(latestPath);
   }
 
+  // Special case for conventions: check nested folders (e.g., dev/latest, qa/latest, etc.)
+  if (type === 'conventions') {
+    const subdirs = await fs.readdir(baseDir);
+    for (const dir of subdirs) {
+      const candidate = path.join(baseDir, dir, 'latest');
+      if (await fs.pathExists(candidate)) {
+        return await fs.realpath(candidate);
+      }
+    }
+  }
+
   return null;
 }
