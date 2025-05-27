@@ -16,8 +16,6 @@ export interface InitAnswers {
   description: string;
   roles: string[];
   processableTypes: string[];
-  owner: string;
-  ownerId: string;
   mainTask: string;
   requiresConventions: boolean;
   ecosystem: string;
@@ -42,8 +40,6 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       description: 'An AI agent scaffolded with default settings.',
       roles: ['summarizer'],
       processableTypes: ['english', 'markdown structure'],
-      owner: 'Kinderbytes',
-      ownerId: 'kinderbytes.org',
       mainTask: 'Summarize input as 3 bullet points',
       requiresConventions: false,
       ecosystem: 'none'
@@ -91,18 +87,6 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     },
     {
       type: 'input',
-      name: 'owner',
-      message: 'Who owns this agent? (e.g., Kinderbytes)',
-      default: 'Kinderbytes'
-    },
-    {
-      type: 'input',
-      name: 'ownerId',
-      message: 'Owner ID or domain (e.g., kinderbytes.org)',
-      default: 'kinderbytes.org'
-    },
-    {
-      type: 'input',
       name: 'mainTask',
       message: 'What is the main task of this agent?',
       default: 'Summarize input as 3 bullet points'
@@ -142,8 +126,6 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     description: answers.description,
     roles: answers.roles,
     processableTypes: answers.processableTypes,
-    owner: answers.owner,
-    ownerId: answers.ownerId,
     mainTask: answers.mainTask,
     requiresConventions: answers.requiresConventions,
     ecosystem: answers.ecosystem

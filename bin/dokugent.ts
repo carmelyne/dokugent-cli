@@ -33,6 +33,8 @@ import { runCertifyCommand } from '../src/commands/certify';
 import { runCompileCommand } from '../src/commands/compile';
 import { runAgentCommand } from '../src/commands/agent';
 import { runComplianceWizard } from '../src/commands/compliance';
+import { runOwnerCommand } from '../src/commands/owner'; // added at top with other imports
+
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -79,6 +81,9 @@ switch (command) {
     runComplianceWizard(agentArg);
     break;
   }
+  case 'owner':
+    runOwnerCommand?.();
+    break;
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("\n🧠 Usage: dokugent <command>\n");
@@ -95,5 +100,6 @@ switch (command) {
     console.log("   \x1b[34m• certify\x1b[0m     → Sign and freeze validated preview");
     console.log("   \x1b[34m• compile\x1b[0m     → Build deployable agent bundle");
     console.log("   \x1b[34m• keygen\x1b[0m      → Create identity keypairs");
+    console.log("   \x1b[34m• owner\x1b[0m       → Set or view project owner metadata");
     console.log("\n");
 }
