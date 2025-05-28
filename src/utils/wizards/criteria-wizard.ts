@@ -42,23 +42,18 @@ export async function promptCriteriaWizard(force = false) {
   if (await fs.pathExists(mdPath)) {
     existingContent = await fs.readFile(mdPath, 'utf-8');
   }
-  let existingSuccessConditions: string[] = [];
-  const successSections = [...existingContent.matchAll(/## Success Conditions\n([\s\S]*?)(?=\n##|$)/g)];
-  existingSuccessConditions = successSections.flatMap(match =>
-    match[1]
-      .split('\n')
-      .map(line => line.replace(/^- /, '').trim())
-      .filter(Boolean)
-  );
+  const jsonPath = path.join(versionedFolder, 'criteria.json');
+  let criteriaData: any = {};
+  if (await fs.pathExists(jsonPath)) {
+    const raw = await fs.readFile(jsonPath, 'utf-8');
+    criteriaData = JSON.parse(raw);
+  }
+  const existingSuccessConditions = criteriaData['Success Conditions'] || [];
+  const existingFailureConditions = criteriaData['Failure Conditions'] || [];
+  const existingMetricsConditions = criteriaData['Evaluation Metrics'] || [];
+  const existingMetrics = existingMetricsConditions;
 
-  const extractList = (regex: RegExp) =>
-    [...existingContent.matchAll(regex)]
-      .flatMap(m =>
-        m[1]
-          .split('\n')
-          .map(line => line.replace(/^- /, '').trim())
-          .filter(Boolean)
-      );
+  const extractList = (_: any) => []; // No longer used
 
   if (existingContent) {
     console.log(`\n📌 Using agent assigned as current:\n   ${fullAgentId}`);
@@ -73,8 +68,8 @@ export async function promptCriteriaWizard(force = false) {
     };
 
     printSection('Success Conditions', existingSuccessConditions);
-    printSection('Failure Conditions', extractList(/## Failure Conditions\n([\s\S]*?)(?=\n##|$)/g));
-    printSection('Evaluation Metrics', extractList(/## Evaluation Metrics\n([\s\S]*?)(?=\n##|$)/g));
+    printSection('Failure Conditions', existingFailureConditions);
+    printSection('Evaluation Metrics', existingMetrics);
   }
 
   const successChoices = [
@@ -106,7 +101,8 @@ export async function promptCriteriaWizard(force = false) {
       {
         type: 'input',
         name: 'customSuccess',
-        message: '✍️ Enter your custom success condition:',
+        message: 'Enter your custom success condition:',
+        default: 'Response includes at least one citation',
         validate: (input: string) =>
           input.trim() === '' ? 'Custom success condition cannot be empty.' : true,
       }
@@ -123,9 +119,8 @@ export async function promptCriteriaWizard(force = false) {
   }
 
   // Parse existing lists
-  const existingSuccess = extractList(/## Success Conditions\n([\s\S]*?)(?=\n##|$)/g);
-  const existingFailure = extractList(/## Failure Conditions\n([\s\S]*?)(?=\n##|$)/g);
-  const existingMetrics = extractList(/## Evaluation Metrics\n([\s\S]*?)(?=\n##|$)/g);
+  const existingSuccess = existingSuccessConditions;
+  const existingFailure = existingFailureConditions;
 
   const metricChoices = [
     { name: 'Accuracy', value: 'Accuracy', checked: true },
@@ -163,6 +158,7 @@ export async function promptCriteriaWizard(force = false) {
         type: 'input',
         name: 'customMetric',
         message: '✍️ Enter your custom evaluation metric:',
+        default: 'Clarity of explanation',
         validate: (input: string) =>
           input.trim() === '' ? 'Custom evaluation metric cannot be empty.' : true,
       }
@@ -186,23 +182,17 @@ export async function promptCriteriaWizard(force = false) {
   ]));
   const mergedMetrics = Array.from(new Set([...existingMetrics, ...finalMetrics]));
 
-  // Build clean output
-  const mdContent = `# CRITERIA.md
-
-Agent: ${fullAgentId}
-
-## Success Conditions
-${mergedSuccess.map(s => `- ${s}`).join('\n')}
-
-## Failure Conditions
-${mergedFailure.map(s => `- ${s}`).join('\n')}
-
-## Evaluation Metrics
-${mergedMetrics.map(m => `- ${m}`).join('\n')}
-`;
-
+  // Build clean output (removed mdContent and writing criteria.md)
   await fs.ensureDir(versionedFolder);
-  await writeWithBackup(mdPath, mdContent);
+
+  // Write criteria.json alongside criteria.md with backup
+  const jsonContent = {
+    "Success Conditions": mergedSuccess,
+    "Failure Conditions": mergedFailure,
+    "Evaluation Metrics": mergedMetrics,
+  };
+  await writeWithBackup(jsonPath, JSON.stringify(jsonContent, null, 2));
+  console.log(`\n📄 criteria.json created at\n   ${formatRelativePath(jsonPath)}\n`);
 
   const symlinkPath = path.join(baseDir, 'latest');
   try {
@@ -210,11 +200,9 @@ ${mergedMetrics.map(m => `- ${m}`).join('\n')}
   } catch { }
   await fs.symlink(versionedFolder, symlinkPath, 'dir');
 
-  console.log(`\n✅ criteria.md created in\n   ${formatRelativePath(versionedFolder)}/\n`);
+  // Removed criteria.md confirmation log
   console.log(`🔗 Symlink updated:\n   criteria → ${path.basename(versionedFolder)}\n`);
 
-  const estimatedTokens = await import('../tokenizer').then(mod =>
-    mod.estimateTokensFromText(mdContent)
-  );
-  console.log(`\n🧮 Estimated tokens: \x1b[32m~${estimatedTokens}\x1b[0m\n`);
+  // Optionally, you could estimate tokens from the JSON file if needed.
+  // Otherwise, removed token estimation log.
 }

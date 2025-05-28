@@ -19,6 +19,7 @@ export interface InitAnswers {
   mainTask: string;
   requiresConventions: boolean;
   ecosystem: string;
+  avatar?: string;
 }
 
 /**
@@ -42,7 +43,8 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       processableTypes: ['english', 'markdown structure'],
       mainTask: 'Summarize input as 3 bullet points',
       requiresConventions: false,
-      ecosystem: 'none'
+      ecosystem: 'none',
+      avatar: '',
     };
 
     return defaults;
@@ -87,6 +89,12 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     },
     {
       type: 'input',
+      name: 'avatar',
+      message: 'Provide an avatar URL or description (optional):',
+      default: ''
+    },
+    {
+      type: 'input',
       name: 'mainTask',
       message: 'What is the main task of this agent?',
       default: 'Summarize input as 3 bullet points'
@@ -128,13 +136,23 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     processableTypes: answers.processableTypes,
     mainTask: answers.mainTask,
     requiresConventions: answers.requiresConventions,
-    ecosystem: answers.ecosystem
+    ecosystem: answers.ecosystem,
+    avatar: answers.avatar || '',
   };
 
   const timestamp = getTimestamp();
   const agentId = `${typedAnswers.agentName}@${timestamp}`;
   const agentFolder = path.resolve('.dokugent/data/agents', agentId);
   const identityPath = path.join(agentFolder, 'identity.json');
+
+  // Update 'latest' symlink to point to the most recent agent folder
+  const latestSymlinkPath = path.resolve('.dokugent/data/agents', 'latest');
+  try {
+    if (fs.existsSync(latestSymlinkPath)) fs.unlinkSync(latestSymlinkPath);
+    fs.symlinkSync(agentFolder, latestSymlinkPath, 'dir');
+  } catch (err) {
+    console.warn('⚠️ Failed to create latest symlink:', err);
+  }
 
   fs.ensureDirSync(agentFolder);
   //complete files and folder structure on this timestamp

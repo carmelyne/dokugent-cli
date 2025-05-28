@@ -10,7 +10,7 @@ export async function promptOwnerWizard(): Promise<{
   organization?: string;
   trustLevel?: string;
 }> {
-  console.log('\n📛 Dokugent Owner Identity Wizard\n');
+  console.log('\n📛 Dokugent Keygen: Create a Signing Identity\n');
 
   const answers = await inquirer.prompt([
     {
@@ -23,7 +23,12 @@ export async function promptOwnerWizard(): Promise<{
       type: 'input',
       name: 'email',
       message: '📧 Enter contact email:',
-      validate: (input) => input.trim() !== '' || 'Email is required.',
+      validate: (input) => {
+        const trimmed = input.trim();
+        if (!trimmed) return 'Email is required.';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(trimmed) || 'Invalid email format.';
+      },
     },
     {
       type: 'input',

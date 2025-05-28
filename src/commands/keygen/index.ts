@@ -36,7 +36,7 @@ function prompt(question: string): Promise<string> {
  *
  * @returns {Promise<void>}
  */
-export async function keygenCommand(args: string[] = []) {
+export async function runKeygenCommand(args: string[] = []) {
   const knownFlags = ['--show'];
   const validArgs = args.filter(arg =>
     !arg.startsWith('--') &&
@@ -56,7 +56,13 @@ export async function keygenCommand(args: string[] = []) {
   await fs.ensureDir(keysDir);
 
   const ownerData: OwnerData = await promptOwnerWizard();
-  const name = ownerData?.name || 'agent';
+
+  if (!ownerData?.name) {
+    console.error('❌ No owner name provided. Cannot generate keypair.');
+    return;
+  }
+
+  const name = ownerData.name;
 
   const timestamp = getTimestamp();
   const keyFolder = path.join(keysDir, 'owners', name, timestamp);

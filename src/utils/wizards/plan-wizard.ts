@@ -30,7 +30,6 @@ export async function promptPlanWizard(): Promise<void> {
     return;
   }
   const baseFolder = path.resolve('.dokugent/data/plans', agentId);
-  const mdPath = path.join(baseFolder, 'plan.md');
   await fs.ensureDir(baseFolder);
 
   const stepFolder = path.join('.dokugent/data/plans', agentId, 'steps');
@@ -96,46 +95,14 @@ export async function promptPlanWizard(): Promise<void> {
 
 
   const steps = [
-    { id: finalStepId, use: 'summarize-tool', input: 'input.md', output: 'draft-summary.md' },
-    { id: 'review_summary', use: 'review-tool', input: 'draft-summary.md', output: 'output.md', required_approvals: ['human-review'] }
+    {
+      id: finalStepId,
+      use: 'summarize-tool',
+      input: 'input.md',
+      output: 'draft-summary.md'
+    }
   ];
-  const toolSet = [...new Set(steps.map(step => step.use))];
-
-  const planMdContent = `
-
-## Plan Step ID
-${finalStepId}
-
-## Plan Description
-${answers.description}
-
-## Agent Name
-${agentId}
-
-## Agent Role
-${answers.role}
-
-## Goal
-${answers.goal}
-
-## Capabilities
-${steps.map((step, i) => `${i + 1}. ${step.id} → ${step.use} (${step.input} → ${step.output})`).join('\n')}
-
-## Constraints
-${answers.constraints.map((c: string) => `- ${c}`).join('\n')}
-
-## Tools It Can Use
-${toolSet.map(tool => `- ${tool}`).join('\n')}
-`;
-
-  const stepFileName = `${finalStepId}.md`;
-  const stepFilePath = path.join(stepFolder, stepFileName);
-  if (await fs.pathExists(stepFilePath)) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupPath = path.join(stepFolder, `${finalStepId}-${timestamp}.bak.md`);
-    await fs.copyFile(stepFilePath, backupPath);
-  }
-  await fs.outputFile(stepFilePath, planMdContent);
+  const toolSet = Array.from(new Set(steps.map(step => step.use)));
 
   // Update plan.index.md to reflect linkage
   const indexPath = path.join(baseFolder, 'plan.index.md');
@@ -151,25 +118,41 @@ ${toolSet.map(tool => `- ${tool}`).join('\n')}
     await fs.writeFile(indexPath, indexLines.join('\n'), 'utf-8');
   }
 
-  const allStepFiles = await fs.readdir(stepFolder);
-  const combined = (
-    await Promise.all(
-      allStepFiles
-        .filter(f => f.endsWith('.md') && !f.endsWith('.bak.md'))
-        .sort()
-        .map(f => fs.readFile(path.join(stepFolder, f), 'utf8'))
-    )
-  ).join('\n\n---\n\n');
+  // Write plan.json as a twin of plan.md, with backup if exists, and merge with existing if present
+  const jsonPath = path.join(baseFolder, 'plan.json');
+  const jsonData = {
+    agentId,
+    steps: steps.map(step => ({
+      id: step.id,
+      use: step.use,
+      input: step.input,
+      output: step.output,
+      description: answers.description,
+      role: answers.role,
+      goal: answers.goal,
+      constraints: answers.constraints
+    }))
+  };
 
-  // Simplified behavior: write combined plan directly to plan.md with backup
-  if (await fs.pathExists(mdPath)) {
-    const backupPath = path.join(baseFolder, `plan.bak.md`);
-    await fs.copyFile(mdPath, backupPath);
+  if (await fs.pathExists(jsonPath)) {
+    const backupPath = path.join(baseFolder, 'plan.bak.json');
+    await fs.copyFile(jsonPath, backupPath);
+
+    const existingJson = await fs.readJson(jsonPath);
+    const existingSteps = existingJson.steps || [];
+
+    // Merge with deduplication
+    const mergedSteps = [...existingSteps, ...jsonData.steps].filter(
+      (step, index, self) =>
+        index === self.findIndex(s => s.id === step.id)
+    );
+
+    jsonData.steps = mergedSteps;
   }
-  await fs.outputFile(mdPath, `# PLAN.md\n\n${combined}`);
+  await fs.outputJson(jsonPath, jsonData, { spaces: 2 });
 
-  const tokenCount = estimateTokensFromText(combined);
-  console.log(`\n✅ plan.md generated inside:\n   .dokugent/data/plans/${agentId}/\n`);
+  const tokenCount = estimateTokensFromText(JSON.stringify(jsonData, null, 2));
+  console.log(`\n✅ plan.json updated inside:\n   .dokugent/data/plans/${agentId}/\n`);
   console.log(`🧮 Estimated agent plan step tokens: \x1b[32m~${tokenCount} tokens\x1b[0m\n`);
 
   // Update latest symlink

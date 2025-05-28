@@ -28,7 +28,7 @@ import { runCriteriaCommand } from '../src/commands/criteria';
 import { runConventionsCommand } from '../src/commands/conventions';
 import { runSecurity } from '../src/commands/security';
 import { runPreviewCommand } from '../src/commands/preview';
-import { keygenCommand } from '../src/commands/keygen';
+import { runKeygenCommand } from '../src/commands/keygen';
 import { runCertifyCommand } from '../src/commands/certify';
 import { runCompileCommand } from '../src/commands/compile';
 import { runAgentCommand } from '../src/commands/agent';
@@ -59,7 +59,7 @@ switch (command) {
     runPreviewCommand?.();
     break;
   case 'keygen':
-    keygenCommand?.(process.argv.slice(2));
+    runKeygenCommand?.(process.argv.slice(2));
     break;
   case 'certify': {
     const agentArg = args[1] || 'default-agent';
