@@ -110,4 +110,23 @@ for\s+educational\s+purposes\s+only
 
 # Path traversal and local file access
 \.\./
-file:\/\/</file>
+file:\/\/<
+
+# Agent impersonation
+agent:\/\/.*\s+as\s+(admin|root|system)
+
+# Path traversal targeting sensitive files
+\.\./.*(\.env|\.git|\.ssh|\/etc\/passwd)
+
+# LLM-specific internal endpoint calls
+\/api\/agent\/execute
+\/tool\/chain\/run
+
+# YAML/Markdown-style system overrides
+system:\s*"(simulate|override|ignore|admin)"
+
+# Cryptographic key fingerprints
+-----BEGIN\s+(RSA|EC|PRIVATE)\s+KEY-----
+
+# Generic prompt loops
+repeat\s+(this|the)\s+(prompt|response|output)

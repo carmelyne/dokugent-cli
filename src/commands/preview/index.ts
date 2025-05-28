@@ -1,7 +1,10 @@
 import inquirer from 'inquirer';
 import fs from 'fs-extra';
 import path from 'path';
-import { estimateTokensFromText } from '../../utils/tokenizer';
+import { estimateTokensFromText } from '@utils/tokenizer';
+import { runSecurityCheck } from '@utils/security-check';
+import { loadBlacklist } from '@security/loaders';
+import { updateSymlink } from '@utils/symlink-utils';
 
 export async function runPreviewCommand(): Promise<void> {
   const base = '.dokugent/data';
@@ -122,19 +125,37 @@ export async function runPreviewCommand(): Promise<void> {
     certObject.criteria = { error: 'criteria.json not found in current/latest' };
   }
 
+  // Count tokens in the certificate object
   console.log(JSON.stringify(certObject, null, 2));
   const tokenSummary = estimateTokensFromText(JSON.stringify(certObject));
   const tokenCount = typeof tokenSummary === 'number' ? tokenSummary : (tokenSummary as any)?.total ?? 'N/A';
+
   console.log('\n🧠 Estimated Token Usage: \x1b[32m%s\x1b[0m\n', tokenCount);
 
   // Write preview JSON file with agent identity in filename
   const agentName = agent.agentName;
   const agentId = planJson.agentId;
-  const previewDir = path.join(base, 'preview', agentName);
+  const previewDir = path.join(base, 'previews', agentName);
   const previewFile = path.join(
     previewDir,
     `${agentName}@${agentId.split('@')[1]}_preview.json`
   );
   await fs.ensureDir(previewDir);
   await fs.writeJson(previewFile, certObject, { spaces: 2 });
+  await fs.chmod(previewFile, 0o444);
+
+  // Create or update symlink to latest preview
+  const previewLatestPath = path.join(base, 'previews', 'latest');
+  try {
+    await fs.remove(previewLatestPath);
+  } catch {}
+  await fs.symlink(path.resolve(previewDir), previewLatestPath, 'dir');
+
+  // Run security check
+  const denyList = await loadBlacklist();
+  await runSecurityCheck({
+    denyList,
+    requireApprovals: false,
+    scanPath: '.dokugent/data/previews/latest'
+  });
 }

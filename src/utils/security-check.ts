@@ -3,6 +3,8 @@
  * @description Runs a basic static scan of agent-related files to detect secrets,
  * denied patterns, and missing approvals. Used for preview and certification safety.
  */
+import { loadBlacklist, loadWhitelist } from '@security/loaders';
+import { formatRelativePath } from '@utils/format-path';
 import fs from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
@@ -31,27 +33,45 @@ export async function runSecurityCheck({
   requireApprovals = false,
   scanPath
 }: ScanOptions = {}) {
-  const root = scanPath ? path.resolve(process.cwd(), scanPath) : path.resolve(process.cwd(), '.dokugent');
-  console.log('🔍 Running security scan in:', root);
+  const root = scanPath ? path.resolve(process.cwd(), scanPath) : path.resolve(process.cwd(), '.dokugent/data');
+  console.log('🔍 Running security scan in:', formatRelativePath(root));
 
-  const filePatterns = scanPath === '.dokugent/preview'
-    ? ['*.md', '*.yaml']
+  const filePatterns = (scanPath?.includes('preview') || scanPath?.includes('previews'))
+    ? ['**/*.md', '**/*.yaml', '**/*.json']
     : [
-      'plan/**/*.yaml',
-      'criteria/**/*.yaml',
-      'agent-tools/**/*.yaml',
-      'plan/**/*.md',
+      'plans/**/*.json',
+      'plans/**/*.md',
+      'plans/**/*.yaml',
+      'criteria/**/*.json',
       'criteria/**/*.md',
-      'agent-tools/**/*.md'
+      'criteria/**/*.yaml',
+      'agent-tools/**/*.json',
+      'agent-tools/**/*.md',
+      'agent-tools/**/*.yaml',
+      'conventions/**/*.json',
+      'conventions/**/*.md',
+      'conventions/**/*.yaml',
+      'previews/**/*.json',
+      'previews/**/*.md',
+      'previews/**/*.yaml'
     ];
 
   const files = await glob(filePatterns, {
-    cwd: root,
+    cwd: formatRelativePath(root),
     absolute: true,
     ignore: ['**/*-20??-??-??T*.*']
   });
 
-  console.log(`\n🗂️  Files scanned: ${files.length}\n`);
+  const displayedFiles = files.map(formatRelativePath);
+  if (displayedFiles.length) {
+    console.log(`\n📄 Found ${displayedFiles.length} file${displayedFiles.length > 1 ? 's' : ''} to scan:`);
+    for (const file of displayedFiles) {
+      console.log(`   • ${file}`);
+    }
+  } else {
+    console.log('\n📄 No files matched the scan criteria.');
+  }
+  console.log(`\n🔢 Total files scanned: ${files.length}\n`);
 
   const sensitivePatterns = [
     /api[_-]?key\s*:/i,
@@ -64,7 +84,7 @@ export async function runSecurityCheck({
   let issues = 0;
 
   for (const file of files) {
-    const relPath = path.relative(root, file);
+    const relPath = formatRelativePath(file);
     const content = await fs.readFile(file, 'utf8');
     let parsed: any = {};
 
@@ -107,3 +127,5 @@ export async function runSecurityCheck({
   }
 
 }
+
+export { loadBlacklist, loadWhitelist };

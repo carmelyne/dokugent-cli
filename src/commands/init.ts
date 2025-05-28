@@ -30,7 +30,7 @@ export async function runInitCommand(): Promise<void> {
     '.dokugent/data/conventions',
     '.dokugent/data/io',
     '.dokugent/data/compliance',
-    '.dokugent/ops/preview',
+    '.dokugent/ops/previews',
     '.dokugent/ops/compiled',
     '.dokugent/ops/certified',
     '.dokugent/ops/logs',
