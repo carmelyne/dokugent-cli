@@ -59,7 +59,7 @@ switch (command) {
     runPreviewCommand?.();
     break;
   case 'keygen':
-    keygenCommand?.();
+    keygenCommand?.(process.argv.slice(2));
     break;
   case 'certify': {
     const agentArg = args[1] || 'default-agent';
