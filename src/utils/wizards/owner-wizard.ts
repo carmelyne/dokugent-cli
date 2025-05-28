@@ -1,6 +1,7 @@
 import inquirer from 'inquirer';
 import fs from 'fs-extra';
 import path from 'path';
+import crypto from 'crypto';
 import { formatRelativePath } from '../format-path';
 import { getTimestamp } from '../timestamp';
 
@@ -67,14 +68,17 @@ export async function promptOwnerWizard(): Promise<{
   const OWNER_PATH = path.resolve(`.dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json`);
 
   if (answers.confirm) {
-    const ownerData = {
+    const ownerData: any = {
       name: answers.ownerName,
       email: answers.email || null,
       organization: answers.organization || null,
       publicKey: publicKey,
       trustLevel: answers.trustLevel || null,
-      createdAt: getTimestamp()
+      createdAt: getTimestamp(),
+      fingerprint: '' // placeholder, will be updated below
     };
+
+    ownerData.fingerprint = crypto.createHash('sha256').update(JSON.stringify(ownerData)).digest('hex');
 
     await fs.ensureDir(path.dirname(OWNER_PATH));
     await fs.writeJson(OWNER_PATH, ownerData, { spaces: 2 });
