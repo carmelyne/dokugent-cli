@@ -9,6 +9,7 @@ import readline from 'readline';
 import { formatRelativePath } from '../../utils/format-path';
 import { promptOwnerWizard } from '../../utils/wizards/owner-wizard';
 import { getTimestamp } from '../../utils/timestamp';
+import { runShowKeygen } from './show';
 
 interface OwnerData {
   name: string;
@@ -36,7 +37,7 @@ function prompt(question: string): Promise<string> {
  * @returns {Promise<void>}
  */
 export async function keygenCommand(args: string[] = []) {
-  const knownFlags = ['--show', '--force'];
+  const knownFlags = ['--show'];
   const validArgs = args.filter(arg =>
     !arg.startsWith('--') &&
     !knownFlags.includes(arg) &&
@@ -45,8 +46,12 @@ export async function keygenCommand(args: string[] = []) {
   const nameFromArg = validArgs.length > 0 ? validArgs[0] : undefined;
 
   const flags = new Set(args.filter(arg => arg.startsWith('--')));
-  const verbose = flags.has('--show');
-  const force = flags.has('--force');
+
+  if (flags.has('--show')) {
+    await runShowKeygen(args);
+    return;
+  }
+
   const keysDir = path.join(process.cwd(), '.dokugent', 'keys');
   await fs.ensureDir(keysDir);
 
@@ -85,9 +90,4 @@ export async function keygenCommand(args: string[] = []) {
   const symlinkLatest = path.join(keysDir, 'owners', name!, 'latest');
   await fs.remove(symlinkLatest);
   await fs.ensureSymlink(keyFolder, symlinkLatest, 'dir');
-
-  if (verbose) {
-    console.log(`\n📄 Public Key Content:\n${publicKey}`);
-    console.log(`\n📄 Private Key Content:\n${privateKey}`);
-  }
 }
