@@ -105,6 +105,18 @@ export async function promptConventionsWizard(force = false) {
       await fs.remove(symlinkPath);
     } catch { }
     await fs.symlink(targetPath, symlinkPath, 'dir');
+
+    const metaPath = path.join(targetPath, 'conventions.meta.json');
+    const meta = {
+      by: 'wizard',
+      type: customName,
+      agentId,
+      createdAt: new Date().toISOString(),
+      files: [],
+      conventions: [],
+    };
+    await fs.writeJson(metaPath, meta, { spaces: 2 });
+
     return;
   }
 
@@ -226,6 +238,39 @@ export async function promptConventionsWizard(force = false) {
       await fs.remove(symlinkPath);
     } catch { }
     await fs.symlink(targetPath, symlinkPath, 'dir');
+
+    const metaPath = path.join(targetPath, 'conventions.meta.json');
+    let existingMeta = { by: 'wizard', type: selectedType, agentId, createdAt: new Date().toISOString(), conventions: [] };
+
+    if (await fs.pathExists(metaPath)) {
+      try {
+        existingMeta = await fs.readJson(metaPath);
+      } catch {
+        console.warn(`⚠️ Failed to parse existing meta. Overwriting.`);
+      }
+    }
+
+    const updatedConventions = selectedAgents.map(f => ({
+      llmName: path.basename(f, '.md').toUpperCase(),
+      file: f.toLowerCase(),
+      content: ""
+    }));
+
+    const newMeta = {
+      ...existingMeta,
+      by: 'wizard',
+      type: selectedType,
+      agentId,
+      createdAt: new Date().toISOString(),
+      conventions: [
+        ...(existingMeta.conventions || []).filter(
+          (c: any) => !updatedConventions.find((u: any) => u.file === c.file)
+        ),
+        ...updatedConventions
+      ]
+    };
+
+    await fs.writeJson(metaPath, newMeta, { spaces: 2 });
   } else {
     const source = path.join(baseTemplatePath, selectedType);
     if (await fs.pathExists(source)) {
@@ -246,4 +291,32 @@ export async function promptConventionsWizard(force = false) {
     await fs.remove(symlinkPath);
   } catch { }
   await fs.symlink(targetPath, symlinkPath, 'dir');
+  const metaPath = path.join(targetPath, 'conventions.meta.json');
+  // Gather markdown files in the targetPath
+  const markdowns = (await fs.readdir(targetPath))
+    .filter(f => f.endsWith('.md'));
+  let meta;
+  if (selectedType === 'dev') {
+    meta = {
+      by: 'wizard',
+      type: selectedType,
+      agentId,
+      createdAt: new Date().toISOString(),
+      conventions: markdowns.map(f => ({
+        llmName: path.basename(f, '.md'),
+        file: f,
+        content: ''
+      }))
+    };
+  } else {
+    meta = {
+      by: 'wizard',
+      type: selectedType,
+      agentId,
+      createdAt: new Date().toISOString(),
+      files: markdowns
+    };
+  }
+  // Write meta JSON to conventions.meta.json
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 }

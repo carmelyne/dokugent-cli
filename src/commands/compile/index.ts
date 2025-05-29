@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { estimateTokensFromText, warnIfExceedsLimit } from '@utils/tokenizer';
 import { runSecurityCheck } from '@utils/security-check';
-import { AGENT_DIR, CERT_DIR, BYO_DIR, LOG_DIR, REPORTS_DIR, AGENTS_CONFIG_DIR } from '@constants/paths';
+import { AGENT_DIR, CERT_DIR, BYO_DIR, LOG_DIR, REPORTS_DIR, AGENTS_CONFIG_DIR, COMPILED_DIR } from '@constants/paths';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -130,8 +130,22 @@ export async function runCompileCommand(agentId?: string) {
         compiledBy: COMPILED_BY || 'unknown',
       };
 
-      const compiledCertPath = path.join(CERT_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.json`);
-      const compiledShaPath = path.join(CERT_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.sha256`);
+      // Versioned compiled cert/sha logic
+      const agentCompiledDir = path.join(COMPILED_DIR, agentName);
+      fs.mkdirSync(agentCompiledDir, { recursive: true });
+
+      const baseName = `${agentName}@${birthTimestamp}.compiled`;
+      let compiledCertPath = path.join(agentCompiledDir, `${baseName}.cert.json`);
+      let compiledShaPath = path.join(agentCompiledDir, `${baseName}.cert.sha256`);
+
+      if (fs.existsSync(compiledCertPath)) {
+        const existingVersions = fs.readdirSync(agentCompiledDir)
+          .filter(f => f.startsWith(baseName + '.v') && f.endsWith('.cert.json'));
+        const nextVersion = existingVersions.length + 1;
+        compiledCertPath = path.join(agentCompiledDir, `${baseName}.v${nextVersion}.cert.json`);
+        compiledShaPath = path.join(agentCompiledDir, `${baseName}.v${nextVersion}.cert.sha256`);
+        console.warn(`\n⚠️  Existing compiled cert found. Writing new version as v${nextVersion}.`);
+      }
 
       try {
         const jsonString = JSON.stringify(compiledData, null, 2);
@@ -152,7 +166,7 @@ export async function runCompileCommand(agentId?: string) {
   // STEP 7: Create audit logs and write to compiled logs directory
   for (const dir of agentFolders) {
     const agentName = dir.name;
-    const certFiles = fs.readdirSync(path.join(CERT_DIR, agentName))
+    const certFiles = fs.readdirSync(path.join(COMPILED_DIR, agentName))
       .filter(file => file.endsWith('.compiled.cert.json'));
 
     for (const certFile of certFiles) {
@@ -163,8 +177,8 @@ export async function runCompileCommand(agentId?: string) {
       const logDir = path.join(LOG_DIR, agentName, `${agentName}@${birthTimestamp}`);
       fs.mkdirSync(logDir, { recursive: true });
 
-      const compiledCertPath = path.join(CERT_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.json`);
-      const compiledShaPath = path.join(CERT_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.sha256`);
+      const compiledCertPath = path.join(COMPILED_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.json`);
+      const compiledShaPath = path.join(COMPILED_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.sha256`);
       const shaContent = fs.existsSync(compiledShaPath) ? fs.readFileSync(compiledShaPath, 'utf-8') : 'N/A';
 
       const byoFilesIncluded = Object.keys(byoBundle).join(', ') || 'None';
@@ -218,7 +232,7 @@ Log File: SUCCESS
   // STEP 8: Save compile report and show summary to user
   for (const dir of agentFolders) {
     const agentName = dir.name;
-    const certFiles = fs.readdirSync(path.join(CERT_DIR, agentName))
+    const certFiles = fs.readdirSync(path.join(COMPILED_DIR, agentName))
       .filter(file => file.endsWith('.compiled.cert.json'));
 
     for (const certFile of certFiles) {

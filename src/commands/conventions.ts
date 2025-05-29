@@ -5,10 +5,11 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { globby } from 'globby';
-import { promptConventionsWizard } from '../utils/wizards/conventions-wizard';
-import { resolveActivePath } from '../utils/ls-utils';
-import { formatRelativePath } from '../utils/format-path';
-import { estimateTokensFromText } from '../utils/tokenizer';
+import { promptConventionsWizard } from '@utils/wizards/conventions-wizard';
+import { resolveActivePath } from '@utils/ls-utils';
+import { formatRelativePath } from '@utils/format-path';
+import { estimateTokensFromText } from '@utils/tokenizer';
+import getActiveAgentInfo from '@utils/agent-info';
 
 /**
  * Executes the `conventions` command dispatcher.
@@ -168,8 +169,53 @@ export async function runConventionsCommand(args: string[]) {
     default: {
       if (!args.length) {
         await promptConventionsWizard();
+
+        const baseTypes = ['dev', 'writing', 'research', 'custom'];
+
+        for (const type of baseTypes) {
+          const baseFolder = path.join('.dokugent/data/conventions', type);
+          const { agentId } = await getActiveAgentInfo();
+          const agentFolder = path.join(baseFolder, agentId);
+          const latestLink = path.join(agentFolder, 'latest');
+
+          if (await fs.pathExists(latestLink)) {
+            const targetPath = await fs.realpath(latestLink);
+            const markdowns = await globby('*.md', { cwd: targetPath });
+
+            let meta;
+            if (type === 'dev') {
+              meta = {
+                by: 'wizard',
+                type,
+                agentId,
+                createdAt: new Date().toISOString(),
+                conventions: markdowns.map(f => ({
+                  llmName: path.basename(f, '.md'),
+                  file: f,
+                  content: ''
+                }))
+              };
+            } else {
+              meta = {
+                by: 'wizard',
+                type,
+                agentId,
+                createdAt: new Date().toISOString(),
+                files: markdowns
+              };
+            }
+
+            const metaPath = path.join(targetPath, 'conventions.meta.json');
+            await fs.writeJson(metaPath, meta, { spaces: 2 });
+          }
+        }
       }
       return;
     }
   }
 }
+
+export const command = {
+  run: runConventionsCommand,
+  alias: ['convention'],
+};
