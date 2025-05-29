@@ -17,10 +17,9 @@ export async function runSecurity() {
   const denyList = await loadBlacklist();
   const whitelist = await loadWhitelist();
 
-  await runSecurityCheck({
+  await runSecurityCheck('security', {
     denyList,
-    requireApprovals: true,
-    scanPath: undefined // full scan
+    requireApprovals: true
   });
 
   console.log('\n🔒 For a complete security + validation workflow, run `dokugent preview`.');

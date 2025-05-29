@@ -29,7 +29,7 @@ export async function runPreviewCommand(): Promise<void> {
   const conventionReadme = path.join(conventionsDir, 'CODEX.md');
 
   // Resolve owner (multi-owner strategy)
-  const ownerDir = path.join(base, 'owners');
+  const ownerDir = path.join('.dokugent/keys', 'owners');
   const owners = await fs.readdir(ownerDir);
 
   let selectedOwner = owners[0];
@@ -45,12 +45,13 @@ export async function runPreviewCommand(): Promise<void> {
     selectedOwner = selected;
   }
 
-  const ownerJsonFile = `owner.${selectedOwner}.json`;
-  const ownerPath = path.join(ownerDir, selectedOwner, ownerJsonFile);
+  const ownerJsonFile = `${selectedOwner}.meta.json`;
+  const ownerLatestDir = path.join(ownerDir, selectedOwner, 'latest');
+  const ownerPath = path.join(ownerLatestDir, ownerJsonFile);
 
   const exists = await fs.pathExists(ownerPath);
   if (!exists) {
-    throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in ${path.join(ownerDir, selectedOwner)}`);
+    throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in .dokugent/keys/owners/${selectedOwner}/latest`);
   }
 
   // Utility function to parse markdown to JSON (improved: headings and lists)
@@ -159,10 +160,27 @@ export async function runPreviewCommand(): Promise<void> {
 
   // Run security check
   const denyList = await loadBlacklist();
-  await runSecurityCheck({
+
+  const scanPaths = [
+    planDir,
+    criteriaDir,
+    conventionsDir,
+    ownerDir
+  ];
+
+  const securityIssues = await runSecurityCheck('preview', {
     denyList,
     requireApprovals: false,
-    scanPath: '.dokugent/ops/previews/latest'
+    scanPaths
   });
+
+  if (securityIssues.length === 0) {
+    console.log(`\n🔍 Files scanned:`);
+    scanPaths.forEach(file => {
+      console.log(`   - ${file}`);
+    });
+    console.log(`\n`);
+  }
+
   await fs.chmod(previewFile, 0o444);
 }
