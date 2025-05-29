@@ -23,10 +23,10 @@ export async function runPreviewCommand(): Promise<void> {
   const planPath = path.join(planDir, 'plan.json');
 
   // Resolve conventions (defaulting to dev)
-  //.dokugent/data/conventions/dev/latest/CODEX.md [example only]
+  //.dokugent/data/conventions/dev/latest/
   const conventionsDir = path.join(base, 'conventions', 'dev', 'latest');
   // TODO: Handle multiple convention types
-  const conventionReadme = path.join(conventionsDir, 'CODEX.md');
+  const conventionsMetaPath = path.join(conventionsDir, 'conventions.meta.json');
 
   // Resolve owner (multi-owner strategy)
   const ownerDir = path.join('.dokugent/keys', 'owners');
@@ -54,47 +54,19 @@ export async function runPreviewCommand(): Promise<void> {
     throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in .dokugent/keys/owners/${selectedOwner}/latest`);
   }
 
-  // Utility function to parse markdown to JSON (improved: headings and lists)
-  function parseMarkdownToJson(markdown: string): Record<string, any> {
-    const lines = markdown.split('\n');
-    const json: Record<string, any> = {};
-    let currentKey = '';
-    let buffer: string[] = [];
-    let started = false;
-
-    const flushBuffer = () => {
-      const content = buffer.join('\n').trim();
-      const allList = buffer.every(line => line.trim().startsWith('- '));
-      if (allList) {
-        json[currentKey] = buffer.map(item => item.trim().slice(2).trim());
-      } else {
-        json[currentKey] = content;
-      }
-      buffer = [];
-    };
-
-    for (const line of lines) {
-      const headingMatch = line.match(/^##+\s+(.*)/);
-      if (headingMatch) {
-        if (!started) started = true;
-        if (currentKey) flushBuffer();
-        currentKey = headingMatch[1].trim();
-      } else if (started) {
-        buffer.push(line);
-      }
-    }
-
-    if (currentKey) flushBuffer();
-
-    return json;
-  }
-
-  const [agent, planJson, conventions, owner] = await Promise.all([
+  const [agent, planJson, conventionsRaw, owner] = await Promise.all([
     fs.readJson(agentMetaPath),
     fs.readJson(planPath),
-    fs.readFile(conventionReadme, 'utf-8'),
+    fs.readJson(conventionsMetaPath),
     fs.readJson(ownerPath),
   ]);
+
+  for (const item of conventionsRaw.conventions) {
+    const filePath = path.join(conventionsDir, item.file);
+    item.content = await fs.readFile(filePath, 'utf-8');
+  }
+
+  const conventions = conventionsRaw;
 
   const certObject: any = {
     agent: {
@@ -108,7 +80,7 @@ export async function runPreviewCommand(): Promise<void> {
     },
     plan: planJson,
     criteria: undefined,
-    conventions: [conventions], // embed CODEX.md or README.md content
+    conventions: conventions,
     owner,
     fingerprint: owner.fingerprint,
     signingKeyVersion: path.basename(path.dirname(ownerPath))

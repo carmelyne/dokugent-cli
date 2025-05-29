@@ -121,9 +121,11 @@ export async function runCompileCommand(agentId?: string) {
       if (!match) continue;
       const birthTimestamp = match[1];
 
+      const previewPath = path.join(CERT_DIR, agentName, certFile);
+      const previewData = JSON.parse(fs.readFileSync(previewPath, 'utf-8'));
+
       const compiledData = {
-        agent: agentName,
-        birth: birthTimestamp,
+        ...previewData,
         compiledAt: new Date().toISOString(),
         fromPreview: certFile,
         globalByo: byoBundle,
