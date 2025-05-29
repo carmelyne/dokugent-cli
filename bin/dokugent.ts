@@ -61,11 +61,9 @@ switch (command) {
   case 'keygen':
     runKeygenCommand?.(process.argv.slice(2));
     break;
-  case 'certify': {
-    const agentArg = args[1] || 'default-agent';
-    runCertifyCommand?.(agentArg);
+  case 'certify':
+    runCertifyCommand?.();
     break;
-  }
   case 'compile':
     runCompileCommand?.();
     break;

@@ -15,7 +15,8 @@
       "@utils/*": [
         "utils/*"
       ]
-    }
+    },
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*"

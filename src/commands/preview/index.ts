@@ -135,7 +135,7 @@ export async function runPreviewCommand(): Promise<void> {
   // Write preview JSON file with agent identity in filename
   const agentName = agent.agentName;
   const agentId = planJson.agentId;
-  const previewDir = path.join(base, 'previews', agentName);
+  const previewDir = path.join('.dokugent/ops', 'previews', agentName);
   const previewFile = path.join(
     previewDir,
     `${agentName}@${agentId.split('@')[1]}_preview.json`
@@ -151,7 +151,7 @@ export async function runPreviewCommand(): Promise<void> {
   await fs.writeJson(previewFile, certObject, { spaces: 2 });
 
   // Create or update symlink to latest preview
-  const previewLatestPath = path.join(base, 'previews', 'latest');
+  const previewLatestPath = path.join('.dokugent/ops', 'previews', 'latest');
   try {
     await fs.remove(previewLatestPath);
   } catch { }
@@ -162,7 +162,7 @@ export async function runPreviewCommand(): Promise<void> {
   await runSecurityCheck({
     denyList,
     requireApprovals: false,
-    scanPath: '.dokugent/data/previews/latest'
+    scanPath: '.dokugent/ops/previews/latest'
   });
   await fs.chmod(previewFile, 0o444);
 }
