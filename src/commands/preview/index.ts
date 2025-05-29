@@ -141,14 +141,20 @@ export async function runPreviewCommand(): Promise<void> {
     `${agentName}@${agentId.split('@')[1]}_preview.json`
   );
   await fs.ensureDir(previewDir);
+
+  // Always delete existing preview file first
+  if (await fs.pathExists(previewFile)) {
+    await fs.chmod(previewFile, 0o644); // ensure it's writable
+    await fs.remove(previewFile);
+  }
+
   await fs.writeJson(previewFile, certObject, { spaces: 2 });
-  await fs.chmod(previewFile, 0o444);
 
   // Create or update symlink to latest preview
   const previewLatestPath = path.join(base, 'previews', 'latest');
   try {
     await fs.remove(previewLatestPath);
-  } catch {}
+  } catch { }
   await fs.symlink(path.resolve(previewDir), previewLatestPath, 'dir');
 
   // Run security check
@@ -158,4 +164,5 @@ export async function runPreviewCommand(): Promise<void> {
     requireApprovals: false,
     scanPath: '.dokugent/data/previews/latest'
   });
+  await fs.chmod(previewFile, 0o444);
 }

@@ -61,6 +61,12 @@ export async function runInitCommand(): Promise<void> {
     await fs.outputFile(whitelistPath, '');
   }
 
+  // Ensure .dokugent/overrides/blacklist.txt exists
+  const blacklistPath = path.resolve('.dokugent/overrides/blacklist.txt');
+  if (!(await fs.pathExists(blacklistPath))) {
+    await fs.outputFile(blacklistPath, '');
+  }
+
   const readmeContentFinal = `# Dokugent Workspace
 
 This folder was initialized using Dokugent CLI.

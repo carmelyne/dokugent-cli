@@ -66,7 +66,7 @@ export async function runSecurityCheck({
   if (displayedFiles.length) {
     console.log(`\n📄 Found ${displayedFiles.length} file${displayedFiles.length > 1 ? 's' : ''} to scan:`);
     for (const file of displayedFiles) {
-      console.log(`   • ${file}`);
+      console.log(`   ${file}`);
     }
   } else {
     console.log('\n📄 No files matched the scan criteria.');
