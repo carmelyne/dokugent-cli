@@ -5,7 +5,7 @@ import minimist from 'minimist';
 import inquirer from 'inquirer';
 import { resolveCertIdentity } from '@utils/resolveCert';
 
-/**
+/**git push
  * Runs the complete certification flow: preview, identity resolution, certification, and compilation.
  * @param argv Command-line arguments.
  */

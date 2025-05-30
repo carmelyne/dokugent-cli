@@ -35,6 +35,7 @@ import { runAgentCommand } from '../src/commands/agent';
 import { runComplianceWizard } from '../src/commands/compliance';
 import { runOwnerCommand } from '../src/commands/owner'; // added at top with other imports
 import { runDeployCommand } from '../src/commands/deploy';
+import { runDryrunCommand } from '../src/commands/dryrun';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -85,6 +86,9 @@ switch (command) {
   case 'deploy':
     runDeployCommand?.(args.slice(1));
     break;
+  case 'dryrun':
+    runDryrunCommand?.();
+    break;
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("\n🧠 Usage: dokugent <command>\n");
@@ -103,5 +107,6 @@ switch (command) {
     console.log("   \x1b[34m• compile\x1b[0m     → Build deployable agent bundle");
     console.log("   \x1b[34m• keygen\x1b[0m      → Create identity keypairs");
     console.log("   \x1b[34m• owner\x1b[0m       → Set or view project owner metadata");
+    console.log("   \x1b[34m• dryrun\x1b[0m      → Simulate plan execution without real actions");
     console.log("\n");
 }
