@@ -34,7 +34,7 @@ import { runCompileCommand } from '../src/commands/compile';
 import { runAgentCommand } from '../src/commands/agent';
 import { runComplianceWizard } from '../src/commands/compliance';
 import { runOwnerCommand } from '../src/commands/owner'; // added at top with other imports
-
+import { runDeployCommand } from '../src/commands/deploy';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -82,6 +82,9 @@ switch (command) {
   case 'owner':
     runOwnerCommand?.();
     break;
+  case 'deploy':
+    runDeployCommand?.(args.slice(1));
+    break;
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("\n🧠 Usage: dokugent <command>\n");
@@ -92,6 +95,7 @@ switch (command) {
     console.log("   \x1b[34m• criteria\x1b[0m    → Define evaluation criteria");
     console.log("   \x1b[34m• conventions\x1b[0m → Select AI conventions");
     console.log("   \x1b[34m• compliance\x1b[0m  → Fill in GDPR and governance metadata");
+    console.log("   \x1b[34m• deploy\x1b[0m      → Run full deploy: preview → certify → compile");
     console.log("   \x1b[34m• io\x1b[0m          → Fill in I/O & Rules");
     console.log("   \x1b[34m• security\x1b[0m    → Scan for file-level threats");
     console.log("   \x1b[34m• preview\x1b[0m     → Generate agent spec bundle");
