@@ -1,0 +1,172 @@
+[
+  {
+    // Summary agent
+    "_doc": "Summarizes input into concise bullet points.",
+    "agent": "summarybot",
+    "owner": "kinderbytes",
+    "signer": "key-ed25519-01.pem",
+    "mainTask": "Summarize input as 3 bullet points",
+    "version": "2025-05-17T10:12:04Z",
+    "uri": "doku:agent/summarybot@2025-05-17.kinderbytes",
+    "tools": ["openai-chat", "markdown-cleaner"],
+    "planSteps": ["summarize_input", "reformat_output", "check_bullets"],
+    "criteria": ["must have 3 bullets", "max 200 words"],
+    "conventions": ["formal tone", "English only"]
+  },
+  {
+    // Translation agent
+    "_doc": "Translates content from English to Tagalog with context awareness.",
+    "agent": "linguana",
+    "owner": "basa-ai",
+    "signer": "key-ed25519-ling.pem",
+    "mainTask": "Translate English input into contextual Tagalog",
+    "version": "2025-05-17T11:22:00Z",
+    "uri": "doku:agent/linguana@2025-05-17.basa-ai",
+    "tools": ["lang-translator", "context-checker"],
+    "planSteps": ["detect_language", "translate_text", "validate_context"],
+    "criteria": ["must retain meaning", "must match target tone"],
+    "conventions": ["respect cultural idioms", "formal register"]
+  },
+  {
+    // Contract analyzer agent
+    "_doc": "Parses and highlights risk clauses in business contracts.",
+    "agent": "riskscanner",
+    "owner": "legitworks",
+    "signer": "key-ed25519-risk.pem",
+    "mainTask": "Scan uploaded contract and highlight risky clauses",
+    "version": "2025-05-17T12:10:30Z",
+    "uri": "doku:agent/riskscanner@2025-05-17.legitworks",
+    "tools": ["doc-parser", "risk-classifier", "legal-checker"],
+    "planSteps": ["parse_contract", "scan_risks", "annotate_output"],
+    "criteria": ["highlight at least 3 high-risk clauses", "include references"],
+    "conventions": ["plain language summary", "source citations where applicable"]
+  },
+  {
+    // Form filler agent
+    "_doc": "Auto-fills standard forms from user data payloads.",
+    "agent": "autofillr",
+    "owner": "formsmith",
+    "signer": "key-ed25519-fill.pem",
+    "mainTask": "Autofill standard forms using predefined field mappings",
+    "version": "2025-05-17T12:45:00Z",
+    "uri": "doku:agent/autofillr@2025-05-17.formsmith",
+    "tools": ["form-mapper", "field-validator"],
+    "planSteps": ["match_fields", "fill_values", "check_missing"],
+    "criteria": ["all required fields must be present", "flag unknown inputs"],
+    "conventions": ["match official format", "output as JSON schema"]
+  }
+,
+{
+  // Headshot enhancer agent
+  "_doc": "Transforms casual selfies into professional headshots with enhanced lighting, background, and framing.",
+  "agent": "headfixr",
+  "owner": "pixgenie",
+  "signer": "key-ed25519-pix.pem",
+  "mainTask": "Turn casual selfie into formal headshot for ID/profile use",
+  "version": "2025-05-17T13:00:00Z",
+  "uri": "doku:agent/headfixr@2025-05-17.pixgenie",
+  "tools": ["face-aligner", "background-replacer", "lighting-corrector"],
+  "planSteps": ["detect_face", "apply_style_transfer", "enhance_resolution"],
+  "criteria": ["subject must be centered", "lighting must be even", "image must look realistic"],
+  "conventions": ["output format: 4:5", "background: solid neutral color"]
+},
+{
+  // Video editor assistant agent
+  "_doc": "Supports directors by organizing clips, generating shot lists, and summarizing footage for review.",
+  "agent": "clipcurator",
+  "owner": "visionforge",
+  "signer": "key-ed25519-vfx.pem",
+  "mainTask": "Assist in managing and summarizing raw video footage for editors and directors",
+  "version": "2025-05-17T13:15:00Z",
+  "uri": "doku:agent/clipcurator@2025-05-17.visionforge",
+  "tools": ["scene-detector", "transcriber", "highlight-generator"],
+  "planSteps": ["segment_clips", "transcribe_audio", "extract_highlights"],
+  "criteria": ["segment by scene change", "accurate timestamping", "must flag key dialogue"],
+  "conventions": ["output format: SRT + summary.md", "naming by project+timestamp"]
+},
+{
+  // Classroom assistant agent
+  "_doc": "Helps teachers generate quiz questions and class summaries from lecture notes.",
+  "agent": "teachbot",
+  "owner": "lms-sage",
+  "signer": "key-ed25519-ed.pem",
+  "mainTask": "Convert lesson notes into quizzes and student summaries",
+  "version": "2025-05-17T13:30:00Z",
+  "uri": "doku:agent/teachbot@2025-05-17.lms-sage",
+  "tools": ["note-parser", "quiz-generator", "summary-writer"],
+  "planSteps": ["parse_lesson_notes", "generate_quiz", "write_summary"],
+  "criteria": ["5-question minimum", "summary max 150 words"],
+  "conventions": ["use grade-appropriate language", "output format: markdown"]
+},
+{
+  // Dentist assistant agent
+  "_doc": "Drafts post-procedure care instructions based on treatment logs.",
+  "agent": "smilebrief",
+  "owner": "dentalcore",
+  "signer": "key-ed25519-teeth.pem",
+  "mainTask": "Generate personalized post-treatment care instructions for dental patients",
+  "version": "2025-05-17T13:45:00Z",
+  "uri": "doku:agent/smilebrief@2025-05-17.dentalcore",
+  "tools": ["treatment-parser", "instruction-formatter"],
+  "planSteps": ["read_treatment_log", "generate_care_notes"],
+  "criteria": ["include dosage instructions", "must warn of common side effects"],
+  "conventions": ["patient tone: warm and clear", "output format: printable PDF"]
+},
+{
+  // Maritime log assistant agent
+  "_doc": "Helps seafarers format daily ship logs and generate engine reports.",
+  "agent": "logmar",
+  "owner": "oceanfleet",
+  "signer": "key-ed25519-ship.pem",
+  "mainTask": "Assist in daily maritime log formatting and engineering report structuring",
+  "version": "2025-05-17T14:00:00Z",
+  "uri": "doku:agent/logmar@2025-05-17.oceanfleet",
+  "tools": ["log-template", "engine-data-parser"],
+  "planSteps": ["parse_log_input", "apply_format", "generate_engine_summary"],
+  "criteria": ["must follow SOLAS formatting", "unit conversions must be correct"],
+  "conventions": ["use UTC timestamps", "metric units for all measurements"]
+},
+{
+  // DIY crafting assistant agent
+  "_doc": "Helps DIYers turn Pinterest-like ideas into material checklists and step-by-step instructions.",
+  "agent": "craftsy",
+  "owner": "makerlane",
+  "signer": "key-ed25519-gluegun.pem",
+  "mainTask": "Turn creative project idea into a buildable material list with instructions",
+  "version": "2025-05-17T14:20:00Z",
+  "uri": "doku:agent/craftsy@2025-05-17.makerlane",
+  "tools": ["task-breaker", "materials-suggester", "instruction-writer"],
+  "planSteps": ["analyze_idea", "generate_materials", "draft_steps"],
+  "criteria": ["include material quantities", "limit steps to under 10"],
+  "conventions": ["language: casual but clear", "output format: checklist + markdown guide"]
+}
+,
+{
+  // Legal assistant agent
+  "_doc": "Supports lawyers by summarizing case law and generating draft briefs.",
+  "agent": "briefbot",
+  "owner": "lexfirm",
+  "signer": "key-ed25519-lawyer.pem",
+  "mainTask": "Summarize relevant cases and draft initial legal briefs",
+  "version": "2025-05-17T15:10:00Z",
+  "uri": "doku:agent/briefbot@2025-05-17.lexfirm",
+  "tools": ["case-fetcher", "legal-summarizer", "brief-drafter"],
+  "planSteps": ["identify_relevant_cases", "summarize_precedents", "draft_brief"],
+  "criteria": ["include precedent citations", "summary must reflect ruling context"],
+  "conventions": ["use jurisdiction-specific formatting", "tone: formal and objective"]
+},
+{
+  // Fire station report agent
+  "_doc": "Assists fire crews in generating standardized incident reports post-deployment.",
+  "agent": "blazelog",
+  "owner": "station28",
+  "signer": "key-ed25519-fireline.pem",
+  "mainTask": "Generate incident reports from deployment logs and radio transcripts",
+  "version": "2025-05-17T15:20:00Z",
+  "uri": "doku:agent/blazelog@2025-05-17.station28",
+  "tools": ["log-parser", "geo-tagger", "incident-summarizer"],
+  "planSteps": ["parse_response_log", "extract_coordinates", "summarize_incident"],
+  "criteria": ["must timestamp key actions", "must include responder names and durations"],
+  "conventions": ["format: NFIRS-compliant", "use 24-hour time"]
+}
+]

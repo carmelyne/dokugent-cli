@@ -1,0 +1,39 @@
+{
+  "name": "dokugent-cli-v0.1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test:init": "ts-node test/init-yes.test.ts",
+    "test:plan": "ts-node test/plan-wizard.test.ts",
+    "build": "tsc",
+    "dev": "ts-node -r tsconfig-paths/register bin/dokugent.ts",
+    "start": "node dist/index.js"
+  },
+  "bin": {
+    "dokugent": "bin/register.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^22.15.18",
+    "@types/open": "^6.1.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "fs-extra": "^11.3.0",
+    "globby": "^14.1.0",
+    "gpt-tokenizer": "^2.9.0",
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0",
+    "minimist": "^1.2.8",
+    "open": "^10.1.2"
+  }
+}

@@ -1,0 +1,31 @@
+# macOS + editor cruft
+.DS_Store
+.vscode/
+
+# Build output
+dist/
+build/
+
+# Node modules
+node_modules/
+
+# Test cache
+coverage/
+.vitest/
+
+# Local presets or experimental files
+llm-load.yml
+agents.yml
+
+# Backup Chore
+* copy.*
+*/**/* copy.*
+*.bak
+.bak/
+*/**/*bak*
+
+site
+# Prevent tracking mkdocs config edits for CLI site builds
+# (git update-index --assume-unchanged site/mkdocs.yml)
+
+.env

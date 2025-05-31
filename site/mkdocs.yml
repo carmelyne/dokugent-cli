@@ -1,0 +1,211 @@
+# Project information
+site_name: Dokugent CLI
+site_url: https://dokugent.com/
+site_author: Carmelyne Thompson
+site_description: >-
+  Dokugent CLI helps developers and teams plan, certify, and trace agent-driven workflows before they hit production. Built for human-in-the-loop safety, audit trails, and documentation-first development.
+
+# Repository
+repo_name: carmelyne/dokugent-cli
+repo_url: https://github.com/carmelyne/dokugent-cli
+
+# Copyright
+copyright: Copyright &copy; 2025 Carmelyne Thompson | Dokugent CLI
+
+# Configuration
+theme:
+  name: material
+  custom_dir: material/overrides
+  logo: assets/images/logo-dokugent-symbol.svg
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    # - content.code.select
+    # - content.footnote.tooltips
+    # - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    # - navigation.instant
+    # - navigation.instant.prefetch
+    # - navigation.instant.progress
+    # - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    # - toc.integrate
+  palette:
+    - media: none
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+  font:
+    text: DM Sans
+    code: Roboto Mono
+  favicon: assets/images/favicon.png
+  icon:
+    logo: logo
+
+extra_javascript:
+  - https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap
+  - assets/javascripts/particle-agent.js
+extra_css:
+  - assets/stylesheets/extra.css
+
+# Plugins
+plugins:
+  - blog
+  - search:
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+  - include-markdown
+
+# # Hooks
+# hooks:
+#   - material/overrides/hooks/shortcodes.py
+#   - material/overrides/hooks/translations.py
+
+# Additional configuration
+extra:
+  status:
+    new: Recently added
+    deprecated: Deprecated
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/carmelyne
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/carmelyne
+    - icon: fontawesome/brands/threads
+      link: https://threads.com/carmelyne
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/profile/carmelyne.bsky.social
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/carmelyne
+    - icon: fontawesome/brands/mastodon
+      link: https://infosec.exchange/deck/@carmelyne
+  generator: false
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+not_in_nav: |
+  /tutorials/**/*.md
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Init your first Agent: getting-started/init-your-first-agent.md
+    - Plan, Criteria, & Conventions: getting-started/plan-criteria-conventions.md
+    - Learn How Certify Works: getting-started/learn-how-certify-works.md
+  - CLI Reference:
+    - commands/index.md
+    - Init: commands/dokugent-init.md
+    - Agent: commands/dokugent-agent.md
+    - Plan: commands/dokugent-plan.md
+    - Conventions: commands/dokugent-conventions.md
+    - Criteria: commands/dokugent-criteria.md
+    - MCP Schema: commands/dokugent-mcp-schema.md
+    - Compliance: commands/dokugent-compliance.md
+    - I/O: commands/dokugent-io.md
+    - Security: commands/dokugent-security.md
+    - Certify: commands/dokugent-certify.md
+    - Preview: commands/dokugent-preview.md
+    - Dryrun: commands/dokugent-dryrun.md
+    - Compile: commands/dokugent-compile.md
+    - Inspect: commands/dokugent-inspect.md
+    - Trace: commands/dokugent-trace.md
+    - Audit: commands/dokugent-audit.md
+    - Compare: commands/dokugent-compare.md
+    # - Dokudata: commands/dokugent-metadata.md
+    - Keygen: commands/dokugent-keygen.md
+  - Trust:
+    - trust/index.md
+    - Certificate Schema: trust/certificate-schema.md
+    - AI Agent System Comparison: trust/compare.md
+    - Real-World Scenarios: trust/scenarios.md
+  - Plugins:
+    - plugins/index.md
+  - Blog:
+    - blog/index.md

@@ -1,0 +1,13 @@
+
+
+# LLM Load Configuration Overrides
+# This file defines how to manage file inclusion and token budgeting during preview, compile, and dryrun operations.
+
+tokenLimit: 6000         # Maximum tokens allowed per operation
+warnIfExceeds: true      # Warn but do not fail if token limit is exceeded
+
+# List of files or patterns to exclude from LLM input
+excludeFiles:
+  - security/whitelist.txt
+  - drafts/unfinished.md
+  - private-notes.md
