@@ -23,6 +23,7 @@
  */
 
 import { runInitCommand } from '../src/commands/init'; // this will fail if init is empty
+import { runSimulateCommand } from '../src/commands/simulate';
 import { runPlanCommand } from '../src/commands/plan';
 import { runCriteriaCommand } from '../src/commands/criteria';
 import { runConventionsCommand } from '../src/commands/conventions';
@@ -89,6 +90,12 @@ switch (command) {
   case 'dryrun':
     runDryrunCommand?.();
     break;
+  case 'simulate':
+    runSimulateCommand?.();
+    break;
+  case 'simulate':
+    runSimulateCommand?.();
+    break;
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("\n🧠 Usage: dokugent <command>\n");
@@ -108,5 +115,6 @@ switch (command) {
     console.log("   \x1b[34m• keygen\x1b[0m      → Create identity keypairs");
     console.log("   \x1b[34m• owner\x1b[0m       → Set or view project owner metadata");
     console.log("   \x1b[34m• dryrun\x1b[0m      → Simulate plan execution without real actions");
+    console.log("   \x1b[34m• simulate\x1b[0m    → Run simulated agent logic with Mistral + Ollama");
     console.log("\n");
 }

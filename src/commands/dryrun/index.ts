@@ -10,6 +10,7 @@ export async function runDryrunCommand(argv: string[] = []) {
 
   console.log('\n🧪 Dryrun task initialized. No execution will occur.\n');
 
+  // Locate compiled agents directory and read agents
   const compiledDir = path.join('.dokugent/ops/compiled');
   const agents = await fs.readdir(compiledDir);
   if (agents.length === 0) {
@@ -17,6 +18,7 @@ export async function runDryrunCommand(argv: string[] = []) {
     return;
   }
 
+  // Select the first agent found for dryrun
   const agent = agents[0]; // For now, use the first agent found
   const agentPath = path.join(compiledDir, agent);
   const files = await fs.readdir(agentPath);
@@ -34,16 +36,19 @@ export async function runDryrunCommand(argv: string[] = []) {
     return;
   }
 
+  // Load the latest compiled certificate file for the agent
   const latestCertFile = compiledFiles[0];
   const certPath = path.join(agentPath, latestCertFile);
   const certData = JSON.parse(await fs.readFile(certPath, 'utf-8'));
 
+  // Extract plan steps from the certificate data
   const steps = certData?.plan?.steps;
   if (!steps || steps.length === 0) {
     console.error('❌ No steps found in the compiled cert.');
     return;
   }
 
+  // If summary flag is set, print summary of steps and exit
   if (summaryOnly) {
     console.log(`📋 Summary of planned steps for agent '${agent}':\n`);
     steps.forEach((step: any) => {
@@ -52,8 +57,10 @@ export async function runDryrunCommand(argv: string[] = []) {
     return;
   }
 
+  // Holds simulated memory of output file content to track dependencies across steps
   const memory: Record<string, string> = {};
 
+  // Iterate through each step to simulate execution without actual file writes
   for (const step of steps) {
     console.log(`🧩 Step: ${step.id}`);
     console.log(`🔧 Tool: ${step.use}`);
@@ -72,7 +79,7 @@ export async function runDryrunCommand(argv: string[] = []) {
       console.warn(`⚠️ Output '${step.output}' is already in memory. Overwriting.`);
     }
 
-    // Simulate reading input
+    // Simulate reading input file (this would be used by the agent in a real run)
     try {
       const inputPath = path.resolve(AGENT_DIR, step.input);
       await fs.readFile(inputPath, 'utf-8');
@@ -85,10 +92,12 @@ export async function runDryrunCommand(argv: string[] = []) {
     console.log(`🧠 Mock output generated for: ${step.output}\n`);
   }
 
+  // Output mock memory content and confirm simulation is complete
   console.log('📦 Simulated memory contents:');
   Object.entries(memory).forEach(([k, v]) => {
     console.log(`   • ${k} → ${v}`);
   });
 
+  // Output mock memory content and confirm simulation is complete
   console.log('\n✅ Dryrun complete. No files were written or executed.\n');
 }

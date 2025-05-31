@@ -26,6 +26,7 @@ agents.yml
 
 site
 # Prevent tracking mkdocs config edits for CLI site builds
+site/mkdocs.yml
 # (git update-index --assume-unchanged site/mkdocs.yml)
 
 .env
