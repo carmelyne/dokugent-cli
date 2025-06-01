@@ -97,32 +97,32 @@ export async function runCertifyCommand(
   valid?: string,
   argv: string | string[] = ''
 ) {
-  let selectedOwner: string | undefined = id;
+  let selectedSigner: string | undefined = id;
   let validity: string | undefined = valid;
 
   // If ID or validity were not passed directly, try to load from temp file
-  if (!selectedOwner || !validity) {
+  if (!selectedSigner || !validity) {
     const tempCertInfoPath = path.join('.dokugent', 'ops', 'temp', 'cert-info.json');
     if (fsSync.existsSync(tempCertInfoPath)) {
       try {
         const saved = JSON.parse(await fs.readFile(tempCertInfoPath, 'utf8'));
-        selectedOwner = saved.id;
+        selectedSigner = saved.id;
         validity = saved.valid;
       } catch (error) {
         console.error(`Warning: Could not read cert-info.json in runCertifyCommand: ${error}`);
         // Fallback to a default or error if identity cannot be determined
-        selectedOwner = selectedOwner || 'Unknown';
-        validity = validity || 'Unknown';
+        selectedSigner = selectedSigner || 'Signer Unknown';
+        validity = validity || 'Signer Unknown';
       }
     } else {
-      selectedOwner = selectedOwner || 'Not Found';
-      validity = validity || 'Not Found';
+      selectedSigner = selectedSigner || 'Signer Not Found';
+      validity = validity || 'Signer Not Found';
     }
   }
 
-  console.log(`🔐 Using identity: ${selectedOwner}, validity: ${validity}`);
+  console.log(`🔐 Using signer identity: ${selectedSigner}, validity: ${validity}`);
   // You can place cert execution logic here
-  // For example: call an external certification service with selectedOwner and validity
+  // For example: call an external certification service with selectedSigner and validity
 }
 
 export { runCertifyFlow as runDeployCommand };

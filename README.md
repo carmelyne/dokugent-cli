@@ -93,8 +93,9 @@ This project is built by a small but mighty squad:
 Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformproject.org/licenses/shield/1.0.0/).
 
 ✅ Use it for personal projects, client work, or internal tooling
+
 ❌ You can’t use it to build a competing product or service
 
 ---
 
-> 🧠 Structured with agents in mind.
+> 🧠 Structured with AI Agents in mind.

@@ -107,6 +107,10 @@ export async function runCertifyCommand(agentArg?: string) {
 
   console.log(`🔐 Using signing key from: ${selectedKeyPath}`);
 
+  // Load signer.json
+  const signerPath = path.join(keysBasePath, selectedOwner, 'signer.json');
+  const signer = await fs.readJson(signerPath);
+
   // Step 3: Load preview file and validate structure
   const previewJson = await fs.readJson(previewPath);
 
@@ -123,7 +127,9 @@ export async function runCertifyCommand(agentArg?: string) {
     generator: `dokugent@${pkgVersion}`,
     experimental: false,
     uri: agentUri,
-    signingKeyVersion: ownerId,
+    // signingKeyVersion: ownerId,
+    signer_name: selectedOwner,
+    signer_fingerprint: signer.fingerprint || '',
     validFrom,
     validUntil
   };

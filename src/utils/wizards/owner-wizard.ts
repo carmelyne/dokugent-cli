@@ -6,12 +6,12 @@ import { formatRelativePath } from '../format-path';
 import { getTimestamp } from '../timestamp';
 
 export async function promptOwnerWizard(): Promise<{
-  name: string;
+  ownerName: string;
   email?: string;
   organization?: string;
   trustLevel?: string;
 }> {
-  console.log('\n📛 Dokugent Keygen: Create a Signing Identity\n');
+  console.log('\n📛 Dokugent Keygen: Create an Owner Identity\n');
 
   const answers = await inquirer.prompt([
     {
@@ -51,7 +51,7 @@ export async function promptOwnerWizard(): Promise<{
     }
   ]);
 
-  const keysDir = path.resolve('.dokugent/keys/owners');
+  const keysDir = path.resolve('.dokugent/data/owners');
   const allFolders = await fs.readdir(keysDir);
   const keyFolders = [];
 
@@ -62,31 +62,22 @@ export async function promptOwnerWizard(): Promise<{
     }
   }
 
-  const publicKey = null;
-
   const ownerSlug = answers.ownerName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
   const OWNER_PATH = path.resolve(`.dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json`);
 
   if (answers.confirm) {
     const ownerData: any = {
-      name: answers.ownerName,
+      ownerName: answers.ownerName,
       email: answers.email || null,
       organization: answers.organization || null,
-      publicKey: publicKey,
       trustLevel: answers.trustLevel || null,
       createdAt: getTimestamp(),
-      fingerprint: '' // placeholder, will be updated below
     };
-
-    ownerData.fingerprint = crypto.createHash('sha256').update(JSON.stringify(ownerData)).digest('hex');
 
     await fs.ensureDir(path.dirname(OWNER_PATH));
     await fs.writeJson(OWNER_PATH, ownerData, { spaces: 2 });
 
-    console.log(`\n🔐 Keypair generated for "${answers.ownerName}":\n\n` +
-      `  - Public:   .dokugent/keys/owners/${answers.ownerName}/latest/${answers.ownerName}.public.pem\n` +
-      `  - Private:  .dokugent/keys/owners/${answers.ownerName}/latest/${answers.ownerName}.private.pem\n` +
-      `  - Metadata: .dokugent/keys/owners/${answers.ownerName}/latest/${answers.ownerName}.meta.json\n`);
+    console.log(`\n🔐 Owner metadata saved:\n   .dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json\n`);
 
     // console.log(`\n✅ Owner identity saved to .dokugent/data/owners/${ownerSlug}/latest\n`);
 
@@ -95,7 +86,7 @@ export async function promptOwnerWizard(): Promise<{
   }
 
   return {
-    name: answers.ownerName,
+    ownerName: answers.ownerName,
     email: answers.email,
     organization: answers.organization,
     trustLevel: answers.trustLevel

@@ -5,6 +5,7 @@ import { estimateTokensFromText } from '@utils/tokenizer';
 import { runSecurityCheck } from '@utils/security-check';
 import { loadBlacklist } from '@security/loaders';
 import { updateSymlink } from '@utils/symlink-utils';
+import crypto from 'crypto';
 
 export async function runPreviewCommand(): Promise<void> {
   const base = '.dokugent/data';
@@ -28,37 +29,62 @@ export async function runPreviewCommand(): Promise<void> {
   // TODO: Handle multiple convention types
   const conventionsMetaPath = path.join(conventionsDir, 'conventions.meta.json');
 
-  // Resolve owner (multi-owner strategy)
-  const ownerDir = path.join('.dokugent/keys', 'owners');
-  const owners = await fs.readdir(ownerDir);
+  // Resolve signer (multi-signer strategy)
+  const signerDir = path.join('.dokugent/keys', 'signers');
+  const signers = await fs.readdir(signerDir);
 
-  let selectedOwner = owners[0];
-  if (owners.length > 1) {
+  let selectedSigner = signers[0];
+  if (signers.length > 1) {
     const { selected } = await inquirer.prompt([
       {
         type: 'list',
         name: 'selected',
-        message: '❓ Who should be used as signing identity?',
-        choices: owners,
+        message: '❓ Who should be used as signing signer identity?',
+        choices: signers,
+      },
+    ]);
+    selectedSigner = selected;
+  }
+
+  const signerJsonFile = `${selectedSigner}.meta.json`;
+  const signerLatestDir = path.join(signerDir, selectedSigner, 'latest');
+  const signerPath = path.join(signerLatestDir, signerJsonFile);
+
+  const signerExists = await fs.pathExists(signerPath);
+  if (!signerExists) {
+    throw new Error(`❌ Expected signer file '${signerJsonFile}' not found in .dokugent/keys/signers/${selectedSigner}/latest`);
+  }
+
+  // Resolve owner selection
+  const ownerDirs = await fs.readdir(path.join('.dokugent', 'data', 'owners'));
+  let selectedOwner = ownerDirs[0];
+  if (ownerDirs.length > 1) {
+    const { selected } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selected',
+        message: '❓ Who should be used as owner identity?',
+        choices: ownerDirs,
       },
     ]);
     selectedOwner = selected;
   }
 
-  const ownerJsonFile = `${selectedOwner}.meta.json`;
-  const ownerLatestDir = path.join(ownerDir, selectedOwner, 'latest');
-  const ownerPath = path.join(ownerLatestDir, ownerJsonFile);
-
-  const exists = await fs.pathExists(ownerPath);
-  if (!exists) {
-    throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in .dokugent/keys/owners/${selectedOwner}/latest`);
+  // Resolve owner path from .dokugent/data/owners
+  const ownersDataDir = path.join('.dokugent', 'data', 'owners');
+  const ownerJsonFile = `owner.${selectedOwner}.json`;
+  const ownerPath = path.join(ownersDataDir, selectedOwner, ownerJsonFile);
+  const ownerExists = await fs.pathExists(ownerPath);
+  if (!ownerExists) {
+    throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in .dokugent/data/owners/${selectedOwner}`);
   }
 
-  const [agent, planJson, conventionsRaw, owner] = await Promise.all([
+  const [agent, planJson, conventionsRaw, owner, signer] = await Promise.all([
     fs.readJson(agentMetaPath),
     fs.readJson(planPath),
     fs.readJson(conventionsMetaPath),
     fs.readJson(ownerPath),
+    fs.readJson(signerPath),
   ]);
 
   for (const item of conventionsRaw.conventions) {
@@ -67,6 +93,21 @@ export async function runPreviewCommand(): Promise<void> {
   }
 
   const conventions = conventionsRaw;
+
+  const ownerData = {
+    ownerName: owner.owner_name ?? owner.name ?? path.basename(path.dirname(ownerPath)),
+    email: owner.email,
+    trustLevel: owner.trustLevel,
+    organization: owner.organization,
+    createdAt: owner.createdAt
+  };
+
+  const signerData = {
+    signerName: signer.name ?? signer.signerName ?? path.basename(path.dirname(signerPath)),
+    email: signer.email,
+    fingerprint: signer.fingerprint ?? crypto.createHash('sha256').update(signer.publicKey).digest('hex'),
+    signingKeyVersion: path.basename(path.dirname(signerPath))
+  };
 
   const certObject: any = {
     agent: {
@@ -81,9 +122,8 @@ export async function runPreviewCommand(): Promise<void> {
     plan: planJson,
     criteria: undefined,
     conventions: conventions,
-    owner,
-    fingerprint: owner.fingerprint,
-    signingKeyVersion: path.basename(path.dirname(ownerPath))
+    owner: ownerData,
+    signer: signerData,
   };
 
   // Load and parse criteria
@@ -137,7 +177,8 @@ export async function runPreviewCommand(): Promise<void> {
     planDir,
     criteriaDir,
     conventionsDir,
-    ownerDir
+    signerDir,
+    ownersDataDir
   ];
 
   const securityIssues = await runSecurityCheck('preview', {

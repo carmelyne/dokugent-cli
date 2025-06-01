@@ -7,15 +7,18 @@ import fs from 'fs-extra';
 import path from 'path';
 import readline from 'readline';
 import { formatRelativePath } from '../../utils/format-path';
-import { promptOwnerWizard } from '../../utils/wizards/owner-wizard';
+import { promptSignerWizard } from '../../utils/wizards/signer-wizard';
 import { getTimestamp } from '../../utils/timestamp';
 import { runShowKeygen } from './show';
+import inquirer from 'inquirer';
 
-interface OwnerData {
-  name: string;
+interface SignerData {
+  signerName: string;
   email?: string;
   organization?: string;
   trustLevel?: string;
+  fingerprint?: string;
+  publicKey?: string;
 }
 
 function prompt(question: string): Promise<string> {
@@ -54,18 +57,25 @@ export async function runKeygenCommand(args: string[] = []) {
 
   const keysDir = path.join(process.cwd(), '.dokugent', 'keys');
   await fs.ensureDir(keysDir);
+  await fs.ensureDir(path.join(keysDir, 'signers'));
 
-  const ownerData: OwnerData = await promptOwnerWizard();
+  const wizardResult = await promptSignerWizard();
+  const signerData: SignerData = {
+    signerName: wizardResult.signerName,
+    email: wizardResult.email,
+    organization: wizardResult.organization,
+    trustLevel: wizardResult.trustLevel,
+  };
 
-  if (!ownerData?.name) {
-    console.error('❌ No owner name provided. Cannot generate keypair.');
+  if (!signerData?.signerName) {
+    console.error('❌ No signer name provided. Cannot generate keypair.');
     return;
   }
 
-  const name = ownerData.name;
+  const name = signerData.signerName.toLowerCase().replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
 
   const timestamp = getTimestamp();
-  const keyFolder = path.join(keysDir, 'owners', name, timestamp);
+  const keyFolder = path.join(keysDir, 'signers', name, timestamp);
   await fs.ensureDir(keyFolder);
 
   const privateKeyPath = path.join(keyFolder, `${name}.private.pem`);
@@ -82,18 +92,24 @@ export async function runKeygenCommand(args: string[] = []) {
 
   const fingerprint = createHash('sha256').update(publicKey).digest('hex');
   const metadata = {
-    name: ownerData.name,
-    email: ownerData.email || '',
-    organization: ownerData.organization || '',
+    signerName: signerData.signerName,
+    email: signerData.email || '',
+    organization: signerData.organization || '',
     publicKey,
-    trustLevel: ownerData.trustLevel || '',
+    fingerprint,
+    trustLevel: signerData.trustLevel || '',
     createdAt: new Date().toISOString()
   };
+
+  // Removed creation of signerFilePath and writing signer.json directly under signers
 
   await fs.writeJson(metadataPath, metadata, { spaces: 2 });
 
   // Always update latest
-  const symlinkLatest = path.join(keysDir, 'owners', name!, 'latest');
+  const symlinkLatest = path.join(keysDir, 'signers', name!, 'latest');
   await fs.remove(symlinkLatest);
   await fs.ensureSymlink(keyFolder, symlinkLatest, 'dir');
+
+  const relativePath = path.relative(process.cwd(), keyFolder);
+  console.log(`\n🔐 Signer keypair and metadata saved to:\n   ${relativePath}\n`);
 }
