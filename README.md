@@ -18,7 +18,7 @@ While originally designed for developers, Dokugent’s modular structure can als
 - 🧠 Plans and compiles agent behavior from Markdown
 - 🛡️ Enforces conventions and traceable criteria
 - 🔐 Certifies and simulates agent reasoning flows
-- 📦 Supports Claude, Codex, GPT-4, Gemini, LLaMA via `agents.yaml`
+- 📦 Supports Claude, Codex, GPT-4, Gemini, LLaMA, Nvidia via `agent --ecosystem` or `conventions`
 
 ## 🛠 Getting Started
 
@@ -40,9 +40,9 @@ npm install -g dokugent
 - ✅ `dokugent keygen` — generates cryptographic signing keys for certifying agent files & verifying trust
 - ✅ `dokugent certify` — certifies agents or plans against predefined safety protocols
 - ✅ `dokugent compile` — compiles structured files into agent-readable prompts
-- 🔲 `dokugent dryrun` — simulates agent behavior without real LLM calls
-- 🔲 `dokugent simulate` — runs a test session with real or mocked model responses
-- 🔲 `dokugent trace` — logs and inspects a model's step-by-step reasoning
+- ✅ `dokugent dryrun` — simulates agent behavior without real LLM calls
+- ✅ `dokugent simulate` — runs a test session with real or mocked model responses
+- ✅ `dokugent trace` — logs and inspects a model's step-by-step reasoning
 - 🔲 `dokugent review` — checks trace output against expected behavior or goals
 
 ## 🧪 Coming Soon
@@ -92,7 +92,7 @@ This project is built by a small but mighty squad:
 
 Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformproject.org/licenses/shield/1.0.0/).
 
-✅ Use it for personal projects, client work, or internal tooling  
+✅ Use it for personal projects, client work, or internal tooling
 ❌ You can’t use it to build a competing product or service
 
 ---
