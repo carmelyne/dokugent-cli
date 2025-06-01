@@ -21,6 +21,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.15.29",
+    "@types/node-fetch": "^2.6.12",
     "@types/open": "^6.1.0",
     "asciichart": "^1.5.25",
     "ts-node": "^10.9.2",
@@ -35,6 +36,7 @@
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.0",
     "minimist": "^1.2.8",
+    "node-fetch": "^3.3.2",
     "open": "^10.1.2"
   }
 }

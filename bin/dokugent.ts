@@ -22,21 +22,21 @@
  * https://polyformproject.org/licenses/shield/1.0.0
  */
 
-import { runInitCommand } from '../src/commands/init'; // this will fail if init is empty
-import { runSimulateCommand } from '../src/commands/simulate';
-import { runPlanCommand } from '../src/commands/plan';
-import { runCriteriaCommand } from '../src/commands/criteria';
-import { runConventionsCommand } from '../src/commands/conventions';
-import { runSecurity } from '../src/commands/security';
-import { runPreviewCommand } from '../src/commands/preview';
-import { runKeygenCommand } from '../src/commands/keygen';
-import { runCertifyCommand } from '../src/commands/certify';
-import { runCompileCommand } from '../src/commands/compile';
-import { runAgentCommand } from '../src/commands/agent';
-import { runComplianceWizard } from '../src/commands/compliance';
-import { runOwnerCommand } from '../src/commands/owner'; // added at top with other imports
-import { runDeployCommand } from '../src/commands/deploy';
-import { runDryrunCommand } from '../src/commands/dryrun';
+import { runInitCommand } from '@src/commands/init'; // this will fail if init is empty
+import { runSimulateCommand } from '@src/commands/simulate';
+import { runPlanCommand } from '@src/commands/plan';
+import { runCriteriaCommand } from '@src/commands/criteria';
+import { runConventionsCommand } from '@src/commands/conventions';
+import { runSecurity } from '@src/commands/security';
+import { runPreviewCommand } from '@src/commands/preview';
+import { runKeygenCommand } from '@src/commands/keygen';
+import { runCertifyCommand } from '@src/commands/certify';
+import { runCompileCommand } from '@src/commands/compile';
+import { runAgentCommand } from '@src/commands/agent';
+import { runComplianceWizard } from '@src/commands/compliance';
+import { runOwnerCommand } from '@src/commands/owner'; // added at top with other imports
+import { runDeployCommand } from '@src/commands/deploy';
+import { runDryrunCommand } from '@src/commands/dryrun';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -93,9 +93,34 @@ switch (command) {
   case 'simulate':
     runSimulateCommand?.();
     break;
-  case 'simulate':
-    runSimulateCommand?.();
+  case 'trace': {
+    const uriArg = args[1];
+    const tokenArgIndex = args.findIndex(arg => arg === '--token');
+    const tokenArg = tokenArgIndex !== -1 ? args[tokenArgIndex + 1] : undefined;
+
+    if (!uriArg) {
+      console.error('\n❌ Missing required dokuUri.\nUsage: dokugent trace <dokuUri> [--token <your_token>]\n');
+      process.exit(1);
+    }
+
+    import('@domain/trace/runner').then(({ runTraceAgent }) => {
+      runTraceAgent({ dokuUri: uriArg, token: tokenArg }).then((result: any) => {
+        console.log("🔍 Raw trace result:", result);
+        if (!result) {
+          console.error("❌ Trace returned undefined. Possible issues:");
+          console.error("- Agent URI is incorrect or not found.");
+          console.error("- Server is not responding or misconfigured.");
+          console.error("- Authorization headers might be missing.");
+          return;
+        }
+        console.log(JSON.stringify(result, null, 2));
+      }).catch(error => {
+        console.error('Error running trace command:', error);
+        process.exit(1);
+      });
+    });
     break;
+  }
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("\n🧠 Usage: dokugent <command>\n");
@@ -116,5 +141,6 @@ switch (command) {
     console.log("   \x1b[34m• owner\x1b[0m       → Set or view project owner metadata");
     console.log("   \x1b[34m• dryrun\x1b[0m      → Simulate plan execution without real actions");
     console.log("   \x1b[34m• simulate\x1b[0m    → Run simulated agent logic with Mistral + Ollama");
+    console.log("   \x1b[34m• trace\x1b[0m       → Trace an agent's behavior from a dokuUri");
     console.log("\n");
 }

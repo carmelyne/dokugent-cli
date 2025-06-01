@@ -17,7 +17,13 @@
       ],
       "@constants/*": [
         "constants/*"
-      ]
+      ],
+      "@domain/*": [
+        "domain/*"
+      ],
+      "@src/*": [
+        "*"
+      ],
     },
     "resolveJsonModule": true
   },
