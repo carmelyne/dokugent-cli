@@ -22,55 +22,32 @@
  * https://polyformproject.org/licenses/shield/1.0.0
  */
 
-import { runInitCommand } from '@src/commands/init'; // this will fail if init is empty
-import { runSimulateCommand } from '@src/commands/simulate';
-import { runPlanCommand } from '@src/commands/plan';
-import { runCriteriaCommand } from '@src/commands/criteria';
-import { runConventionsCommand } from '@src/commands/conventions';
-import { runSecurity } from '@src/commands/security';
-import { runPreviewCommand } from '@src/commands/preview';
-import { runKeygenCommand } from '@src/commands/keygen';
-import { runCertifyCommand } from '@src/commands/certify';
-import { runCompileCommand } from '@src/commands/compile';
 import { runAgentCommand } from '@src/commands/agent';
+import { runCertifyCommand } from '@src/commands/certify';
 import { runComplianceWizard } from '@src/commands/compliance';
-import { runOwnerCommand } from '@src/commands/owner'; // added at top with other imports
+import { runCompileCommand } from '@src/commands/compile';
+import { runConventionsCommand } from '@src/commands/conventions';
+import { runCriteriaCommand } from '@src/commands/criteria';
 import { runDeployCommand } from '@src/commands/deploy';
 import { runDryrunCommand } from '@src/commands/dryrun';
+import { runInitCommand } from '@src/commands/init'; // this will fail if init is empty
+import { runKeygenCommand } from '@src/commands/keygen';
+import { runOwnerCommand } from '@src/commands/owner';
+import { runPlanCommand } from '@src/commands/plan';
+import { runPreviewCommand } from '@src/commands/preview';
+import { runSecurity } from '@src/commands/security';
+import { runSimulateCommand } from '@src/commands/simulate';
+import { runTraceCommand } from '@src/commands/trace';
 
 const args = process.argv.slice(2);
 const command = args[0];
 
 switch (command) {
-  case 'init':
-    runInitCommand?.();
-    break;
-  case 'plan':
-    runPlanCommand?.(args.slice(1));
-    break;
-  case 'criteria':
-    runCriteriaCommand?.(args.slice(1));
-    break;
-  case 'conventions':
-    runConventionsCommand?.(args.slice(1));
-    break;
-  case 'security':
-    runSecurity?.();
-    break;
-  case 'preview':
-    runPreviewCommand?.();
-    break;
-  case 'keygen':
-    runKeygenCommand?.(process.argv.slice(2));
+  case 'agent':
+    runAgentCommand?.();
     break;
   case 'certify':
     runCertifyCommand?.();
-    break;
-  case 'compile':
-    runCompileCommand?.();
-    break;
-  case 'agent':
-    runAgentCommand?.();
     break;
   case 'compliance': {
     const agentArg = args[1];
@@ -81,8 +58,14 @@ switch (command) {
     runComplianceWizard(agentArg);
     break;
   }
-  case 'owner':
-    runOwnerCommand?.();
+  case 'compile':
+    runCompileCommand?.();
+    break;
+  case 'conventions':
+    runConventionsCommand?.(args.slice(1));
+    break;
+  case 'criteria':
+    runCriteriaCommand?.(args.slice(1));
     break;
   case 'deploy':
     runDeployCommand?.(args.slice(1));
@@ -90,37 +73,30 @@ switch (command) {
   case 'dryrun':
     runDryrunCommand?.();
     break;
+  case 'init':
+    runInitCommand?.();
+    break;
+  case 'keygen':
+    runKeygenCommand?.(process.argv.slice(2));
+    break;
+  case 'owner':
+    runOwnerCommand?.();
+    break;
+  case 'plan':
+    runPlanCommand?.(args.slice(1));
+    break;
+  case 'preview':
+    runPreviewCommand?.();
+    break;
+  case 'security':
+    runSecurity?.();
+    break;
   case 'simulate':
     runSimulateCommand?.();
     break;
-  case 'trace': {
-    const uriArg = args[1];
-    const tokenArgIndex = args.findIndex(arg => arg === '--token');
-    const tokenArg = tokenArgIndex !== -1 ? args[tokenArgIndex + 1] : undefined;
-
-    if (!uriArg) {
-      console.error('\n❌ Missing required dokuUri.\nUsage: dokugent trace <dokuUri> [--token <your_token>]\n');
-      process.exit(1);
-    }
-
-    import('@domain/trace/runner').then(({ runTraceAgent }) => {
-      runTraceAgent({ dokuUri: uriArg, token: tokenArg }).then((result: any) => {
-        console.log("🔍 Raw trace result:", result);
-        if (!result) {
-          console.error("❌ Trace returned undefined. Possible issues:");
-          console.error("- Agent URI is incorrect or not found.");
-          console.error("- Server is not responding or misconfigured.");
-          console.error("- Authorization headers might be missing.");
-          return;
-        }
-        console.log(JSON.stringify(result, null, 2));
-      }).catch(error => {
-        console.error('Error running trace command:', error);
-        process.exit(1);
-      });
-    });
+  case 'trace':
+    runTraceCommand?.(args.slice(1));
     break;
-  }
   default:
     console.log("\n🚀 Dokugent CLI is ready.");
     console.log("\n🧠 Usage: dokugent <command>\n");
