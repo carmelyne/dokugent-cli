@@ -23,6 +23,7 @@
  */
 
 import { runAgentCommand } from '@src/commands/agent';
+import { runByoCommand } from '@src/commands/byo';
 import { runCertifyCommand } from '@src/commands/certify';
 import { runComplianceWizard } from '@src/commands/compliance';
 import { runCompileCommand } from '@src/commands/compile';
@@ -45,6 +46,9 @@ const command = args[0];
 switch (command) {
   case 'agent':
     runAgentCommand?.();
+    break;
+  case 'byo':
+    runByoCommand?.();
     break;
   case 'certify':
     runCertifyCommand?.();
@@ -106,6 +110,7 @@ switch (command) {
     console.log("   \x1b[34m• plan\x1b[0m        → Draft an agent plan");
     console.log("   \x1b[34m• criteria\x1b[0m    → Define evaluation criteria");
     console.log("   \x1b[34m• conventions\x1b[0m → Select AI conventions");
+    console.log("   \x1b[34m• byo\x1b[0m         → Import and validate external BYO metadata");
     console.log("   \x1b[34m• compliance\x1b[0m  → Fill in GDPR and governance metadata");
     console.log("   \x1b[34m• deploy\x1b[0m      → Run full deploy: preview → certify → compile");
     console.log("   \x1b[34m• io\x1b[0m          → Fill in I/O & Rules");
