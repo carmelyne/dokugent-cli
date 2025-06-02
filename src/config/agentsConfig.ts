@@ -1,7 +1,7 @@
 // agentsConfig.ts
 // Agent registry metadata for Dokugent
 
-export const agents = {
+export const agentsConfig = {
   claude: {
     label: "Claude 3",
     maxTokenLoad: 100000,

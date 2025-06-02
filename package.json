@@ -17,13 +17,18 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/boxen": "^2.1.0",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.15.29",
     "@types/node-fetch": "^2.6.12",
     "@types/open": "^6.1.0",
+    "@types/ora": "^3.1.0",
     "asciichart": "^1.5.25",
+    "boxen": "^8.0.1",
+    "chalk": "^4.1.2",
+    "ora": "^8.2.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"

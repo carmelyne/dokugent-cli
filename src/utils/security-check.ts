@@ -94,16 +94,18 @@ export async function runSecurityCheck(context: 'security' | 'preview' | 'compil
     }
   }
 
-  if (scannedFiles.length > 0) {
-    console.log('\n🔍 Files scanned:');
-    scannedFiles.forEach(file => console.log(`  - ${file}`));
-  }
+  // Check if can be removed
+  // if (scannedFiles.length > 0) {
+  //   console.log('\n🔍 Files scanned:');
+  //   scannedFiles.forEach(file => console.log(`   - ${file}`));
+  // }
 
   if (issues.length > 0) {
     console.log('\n🚨 Security Issues Found:');
     issues.forEach((issue) => console.log(`  - ${issue}`));
   } else {
-    console.log('\n✅ No security issues found.\n');
+    // Replace
+    // console.log('\n✅ No security issues found.\n');
   }
 
   return issues;

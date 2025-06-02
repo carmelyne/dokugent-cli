@@ -29,30 +29,30 @@ export async function runPreviewCommand(): Promise<void> {
   // TODO: Handle multiple convention types
   const conventionsMetaPath = path.join(conventionsDir, 'conventions.meta.json');
 
-  // Resolve signer (multi-signer strategy)
-  const signerDir = path.join('.dokugent/keys', 'signers');
-  const signers = await fs.readdir(signerDir);
+  // Resolve previewer (multi-previewer strategy)
+  const previewerDir = path.join('.dokugent/keys', 'signers');
+  const previewers = await fs.readdir(previewerDir);
 
-  let selectedSigner = signers[0];
-  if (signers.length > 1) {
+  let selectedPreviewer = previewers[0];
+  if (previewers.length > 1) {
     const { selected } = await inquirer.prompt([
       {
         type: 'list',
         name: 'selected',
-        message: '❓ Who should be used as signing signer identity?',
-        choices: signers,
+        message: '❓ Who should be used as signing previewer identity?',
+        choices: previewers,
       },
     ]);
-    selectedSigner = selected;
+    selectedPreviewer = selected;
   }
 
-  const signerJsonFile = `${selectedSigner}.meta.json`;
-  const signerLatestDir = path.join(signerDir, selectedSigner, 'latest');
-  const signerPath = path.join(signerLatestDir, signerJsonFile);
+  const previewerJsonFile = `${selectedPreviewer}.meta.json`;
+  const previewerLatestDir = path.join(previewerDir, selectedPreviewer, 'latest');
+  const previewerPath = path.join(previewerLatestDir, previewerJsonFile);
 
-  const signerExists = await fs.pathExists(signerPath);
-  if (!signerExists) {
-    throw new Error(`❌ Expected signer file '${signerJsonFile}' not found in .dokugent/keys/signers/${selectedSigner}/latest`);
+  const previewerExists = await fs.pathExists(previewerPath);
+  if (!previewerExists) {
+    throw new Error(`❌ Expected previewer file '${previewerJsonFile}' not found in .dokugent/keys/signers/${selectedPreviewer}/latest`);
   }
 
   // Resolve owner selection
@@ -79,13 +79,15 @@ export async function runPreviewCommand(): Promise<void> {
     throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in .dokugent/data/owners/${selectedOwner}`);
   }
 
-  const [agent, planJson, conventionsRaw, owner, signer] = await Promise.all([
+  const [agent, planJson, conventionsRaw, owner, previewer] = await Promise.all([
     fs.readJson(agentMetaPath),
     fs.readJson(planPath),
     fs.readJson(conventionsMetaPath),
     fs.readJson(ownerPath),
-    fs.readJson(signerPath),
+    fs.readJson(previewerPath),
   ]);
+  // Inject correct previewer name from folder context
+  previewer.previewerName = selectedPreviewer;
 
   for (const item of conventionsRaw.conventions) {
     const filePath = path.join(conventionsDir, item.file);
@@ -102,11 +104,12 @@ export async function runPreviewCommand(): Promise<void> {
     createdAt: owner.createdAt
   };
 
-  const signerData = {
-    signerName: signer.name ?? signer.signerName ?? path.basename(path.dirname(signerPath)),
-    email: signer.email,
-    fingerprint: signer.fingerprint ?? crypto.createHash('sha256').update(signer.publicKey).digest('hex'),
-    signingKeyVersion: path.basename(path.dirname(signerPath))
+  const previewerData = {
+    previewerName: previewer.previewerName,
+    email: previewer.email,
+    publicKey: previewer.publicKey,
+    fingerprint: previewer.fingerprint ?? crypto.createHash('sha256').update(previewer.publicKey).digest('hex'),
+    previewKeyVersion: path.basename(path.dirname(previewerPath))
   };
 
   const certObject: any = {
@@ -123,7 +126,7 @@ export async function runPreviewCommand(): Promise<void> {
     criteria: undefined,
     conventions: conventions,
     owner: ownerData,
-    signer: signerData,
+    previewer: previewerData,
   };
 
   // Load and parse criteria
@@ -177,7 +180,7 @@ export async function runPreviewCommand(): Promise<void> {
     planDir,
     criteriaDir,
     conventionsDir,
-    signerDir,
+    previewerDir,
     ownersDataDir
   ];
 

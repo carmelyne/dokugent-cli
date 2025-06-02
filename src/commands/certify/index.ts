@@ -57,7 +57,7 @@ export async function runCertifyCommand(agentArg?: string) {
   console.log(`🪪 Detected agent: ${agentId}`);
 
   // Step 2: Prompt for signing key
-  const keysBasePath = path.join('.dokugent', 'keys', 'owners');
+  const keysBasePath = path.join('.dokugent', 'keys', 'signers');
   if (!(await fs.pathExists(keysBasePath))) {
     console.error('❌ No signing keys found. Run `dokugent keygen` first.');
     return;
@@ -108,17 +108,22 @@ export async function runCertifyCommand(agentArg?: string) {
   console.log(`🔐 Using signing key from: ${selectedKeyPath}`);
 
   // Load signer.json
-  const signerPath = path.join(keysBasePath, selectedOwner, 'signer.json');
+  const signerPath = path.join(keysBasePath, selectedOwner, 'latest', `${selectedOwner}.meta.json`);
   const signer = await fs.readJson(signerPath);
 
   // Step 3: Load preview file and validate structure
   const previewJson = await fs.readJson(previewPath);
+  if (!previewJson.previewer || typeof previewJson.previewer !== 'object') {
+    console.error('❌ Cannot certify: missing previewer metadata.');
+    console.error('➡️ Please run `dokugent preview` before certifying.');
+    return;
+  }
 
   // Compose agentUri and ownerId for metadata
   const agentUri = `doku://${selectedOwner}/${agentId}@${birthTimestamp}`;
   const ownerId = selectedOwner;
 
-  // Inject Doku Metadata
+  // Inject Doku Metadata (updated fields)
   const metadata: any = {
     format: 'doku-cert',
     version: 'v1.0.0',
@@ -127,15 +132,24 @@ export async function runCertifyCommand(agentArg?: string) {
     generator: `dokugent@${pkgVersion}`,
     experimental: false,
     uri: agentUri,
-    // signingKeyVersion: ownerId,
-    signer_name: selectedOwner,
-    signer_fingerprint: signer.fingerprint || '',
+    certifierName: selectedOwner,
+    certifierFingerprint: signer.fingerprint || '',
+    certifierKeyVersion: 'latest',
     validFrom,
     validUntil
   };
 
+  // Inject certifier block from loaded signer object
+  const certifier = {
+    certifierName: selectedOwner,
+    email: signer.email,
+    publicKey: signer.publicKey,
+    fingerprint: signer.fingerprint
+  };
+
   const certifiedOutput = {
     ...previewJson,
+    certifier,
     metadata
   };
 
