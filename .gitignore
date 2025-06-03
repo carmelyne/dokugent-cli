@@ -40,3 +40,6 @@ supabase/
 
 # Env files
 .env
+
+# Agent playground
+.playground/

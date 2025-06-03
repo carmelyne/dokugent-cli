@@ -283,6 +283,9 @@ export async function runCompileCommand(agentId?: string) {
         compiledCertPath = path.join(agentCompiledDir, `${baseName}.cert.json`);
         compiledShaPath = path.join(agentCompiledDir, `${baseName}.cert.sha256`);
       }
+      // Ensure internal metadata.version matches the .vX version of the compiled filename
+      if (!previewJson.metadata) previewJson.metadata = {};
+      previewJson.metadata.version = `v${nextVersion || 1}`;
 
       // Track the compiledVersionSuffix for this agent@timestamp
       const compiledKey = `${agentName}@${birthTimestamp}`;
@@ -442,4 +445,19 @@ Log File: SUCCESS
   // console.log('');
   // paddedLog('Compile task queued. Final cert will be saved in certified folder.', '', 12, 'success');
   paddedLog('Finalized', 'Cert saved in certified folder\n', 12, 'success', 'SAVED');
+
+  // Open the latest compiled cert file directly
+  try {
+    const compiledKey = Object.keys(compiledVersionMap).pop();
+    const versionSuffix = compiledVersionMap[compiledKey!] || '';
+    const [agentName, birthTimestamp] = compiledKey!.split('@');
+    const compiledCertPath = path.join(
+      COMPILED_DIR,
+      agentName,
+      `${compiledKey}.compiled${versionSuffix}.cert.json`
+    );
+    require('child_process').execSync(`code "${compiledCertPath}"`);
+  } catch (e) {
+    // Ignore errors opening in VS Code
+  }
 }

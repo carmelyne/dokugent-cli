@@ -32,6 +32,7 @@ import { runCriteriaCommand } from '@src/commands/criteria';
 import { runDeployCommand } from '@src/commands/deploy';
 import { runDryrunCommand } from '@src/commands/dryrun';
 import { runInitCommand } from '@src/commands/init'; // this will fail if init is empty
+import { runInspectCommand } from '@src/commands/inspect';
 import { runKeygenCommand } from '@src/commands/keygen';
 import { runOwnerCommand } from '@src/commands/owner';
 import { runPlanCommand } from '@src/commands/plan';
@@ -80,6 +81,9 @@ switch (command) {
   case 'init':
     runInitCommand?.();
     break;
+  case 'inspect':
+    runInspectCommand?.();
+    break;
   case 'keygen':
     runKeygenCommand?.(process.argv.slice(2));
     break;
@@ -114,6 +118,7 @@ switch (command) {
     console.log("   \x1b[34m• compliance\x1b[0m  → Fill in GDPR and governance metadata");
     console.log("   \x1b[34m• deploy\x1b[0m      → Run full deploy: preview → certify → compile");
     console.log("   \x1b[34m• io\x1b[0m          → Fill in I/O & Rules");
+    console.log("   \x1b[34m• inspect\x1b[0m     → Inspect agent certificate or plan (local or MCP)");
     console.log("   \x1b[34m• security\x1b[0m    → Scan for file-level threats");
     console.log("   \x1b[34m• preview\x1b[0m     → Generate agent spec bundle");
     console.log("   \x1b[34m• certify\x1b[0m     → Sign and freeze validated preview");

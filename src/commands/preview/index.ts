@@ -6,6 +6,7 @@ import { runSecurityCheck } from '@utils/security-check';
 import { loadBlacklist } from '@security/loaders';
 import { updateSymlink } from '@utils/symlink-utils';
 import crypto from 'crypto';
+import { paddedLog, paddedSub } from '@utils/cli/ui';
 
 export async function runPreviewCommand(): Promise<void> {
   const base = '.dokugent/data';
@@ -125,9 +126,17 @@ export async function runPreviewCommand(): Promise<void> {
     plan: planJson,
     criteria: undefined,
     conventions: conventions,
-    owner: ownerData,
-    previewer: previewerData,
+    // owner and previewer will be added below
   };
+  // Load optional BYO file (moved here)
+  const byoDir = path.join(base, 'byo', 'processed', planJson.agentId);
+  const byoPath = path.join(byoDir, 'byo.json');
+  const byoExists = await fs.pathExists(byoPath);
+  if (byoExists) {
+    certObject.byo = await fs.readJson(byoPath);
+  }
+  certObject.owner = ownerData;
+  certObject.previewer = previewerData;
 
   // Load and parse criteria
   const criteriaDir = (await fs.pathExists(path.join(base, 'criteria', 'current')))
@@ -142,11 +151,11 @@ export async function runPreviewCommand(): Promise<void> {
   }
 
   // Count tokens in the certificate object
-  console.log(JSON.stringify(certObject, null, 2));
+  // console.log(JSON.stringify(certObject, null, 2));
   const tokenSummary = estimateTokensFromText(JSON.stringify(certObject));
   const tokenCount = typeof tokenSummary === 'number' ? tokenSummary : (tokenSummary as any)?.total ?? 'N/A';
 
-  console.log('\n🧠 Estimated Token Usage: \x1b[32m%s\x1b[0m\n', tokenCount);
+  // paddedLog('🧠 Estimated Token Usage', `${tokenCount} tokens`);
 
   // Write preview JSON file with agent identity in filename
   const agentName = agent.agentName;
@@ -181,7 +190,8 @@ export async function runPreviewCommand(): Promise<void> {
     criteriaDir,
     conventionsDir,
     previewerDir,
-    ownersDataDir
+    ownersDataDir,
+    path.join(base, 'byo', 'processed')
   ];
 
   const securityIssues = await runSecurityCheck('preview', {
@@ -190,13 +200,13 @@ export async function runPreviewCommand(): Promise<void> {
     scanPaths
   });
 
+  await fs.chmod(previewFile, 0o444);
+
+  paddedSub('📄 Preview JSON Content\n', JSON.stringify(certObject, null, 2));
+
   if (securityIssues.length === 0) {
-    console.log(`\n🔍 Files scanned:`);
-    scanPaths.forEach(file => {
-      console.log(`   - ${file}`);
-    });
-    console.log(`\n`);
+    paddedSub('🔍 Files scanned', scanPaths.map(p => `- ${p}`).join('\n'));
   }
 
-  await fs.chmod(previewFile, 0o444);
+  paddedLog('🧠 Estimated Token Usage', `${tokenCount} tokens\n`);
 }

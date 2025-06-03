@@ -41,8 +41,9 @@ npm install -g dokugent
 - ✅ `dokugent certify` — certifies agents or plans against predefined safety protocols
 - ✅ `dokugent compile` — compiles structured files into agent-readable prompts
 - ✅ `dokugent dryrun` — simulates agent behavior without real LLM calls
-- ✅ `dokugent simulate` — runs a test session with real or mocked model responses
-- ✅ `dokugent trace` — logs and inspects a model's step-by-step reasoning
+- ✅ `dokugent simulate` — runs a test session with a any local LLM on Ollama
+- ✅ `dokugent trace` — audits a previously certified agent to verify using a remote doku:// URI
+- ✅ `dokugent inspect` — fetches and displays certified agent files from local or remote URIs
 - 🔲 `dokugent review` — checks trace output against expected behavior or goals
 
 ## 🧪 Coming Soon
