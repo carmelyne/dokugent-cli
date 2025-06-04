@@ -5,6 +5,8 @@
  */
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
+import { formatRelativePath } from '@utils/format-path';
 
 /**
  * Prompts the user to confirm before overwriting a file, then writes the specified content.
@@ -41,5 +43,5 @@ export async function confirmAndWriteFile(filepath: string, contents: string | B
   }
 
   await fs.outputFile(filepath, contents);
-  console.log(`\n💾 Saved:\n  ${filepath.replace(process.cwd() + '/', '')}\n`);
+  paddedLog('File', formatRelativePath(filepath), PAD_WIDTH, 'success', 'SAVED');
 }

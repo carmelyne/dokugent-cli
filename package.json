@@ -6,7 +6,7 @@
     "test:init": "ts-node test/init-yes.test.ts",
     "test:plan": "ts-node test/plan-wizard.test.ts",
     "build": "tsc",
-    "dev": "ts-node -r tsconfig-paths/register bin/dokugent.ts",
+    "dev": "TS_NODE_PROJECT=tsconfig.json ts-node -r tsconfig-paths/register bin/dokugent.ts",
     "start": "node dist/index.js"
   },
   "bin": {
@@ -28,7 +28,10 @@
     "asciichart": "^1.5.25",
     "boxen": "^8.0.1",
     "chalk": "^4.1.2",
+    "enquirer": "^2.4.1",
+    "enquirer-prompts": "^1.0.0",
     "ora": "^8.2.0",
+    "terminal-link": "^4.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"

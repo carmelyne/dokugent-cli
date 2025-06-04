@@ -12,6 +12,9 @@ import { promptPlanWizard } from '../utils/wizards/plan-wizard';
 // import { planLs } from '../utils/ls-utils';
 // import { updateSymlink } from '../utils/symlink-utils';
 import { formatRelativePath } from '../utils/format-path';
+// import { planLs } from '@utils/ls-utils';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
+import chalk from 'chalk';
 
 /**
  * Executes the `plan` command dispatcher.
@@ -301,20 +304,37 @@ ${path.basename(planPath)}
       }
 
       if (plans.length) {
-        console.log(`\n📦 Plan Versions (${plans.length}):\n`);
+        paddedLog('dokugent plan list', '', PAD_WIDTH, 'info');
+        paddedDefault("Available Plan Versions", `(${plans.length})`, PAD_WIDTH, 'magenta', 'PLANS');
         for (const name of plans) {
-          console.log(`  📂 ${name}`);
+          paddedSub('', `${glyphs.arrowRight} ${name}`);
         }
       } else {
-        console.log('\n📭 No plan versions found.');
+        paddedLog('Uh oh...', 'No plan versions found.', PAD_WIDTH, 'warn');
       }
 
       if (symlinks.length) {
-        console.log(`\n🔗 Symlinks (${symlinks.length}):\n`);
-        for (const name of symlinks) {
-          const target = await fs.readlink(path.join(planDir, name));
-          console.log(`  🌳 ${name} → ${formatRelativePath(target)}\n`);
-        }
+        // paddedDefault("Symlinks", `(${symlinks.length})`, PAD_WIDTH, 'blue', 'PLANS');
+        const symlinkLines = await Promise.all(
+          symlinks.map(async name => {
+            const target = await fs.readlink(path.join(planDir, name));
+            const color = name === 'latest' ? chalk.magenta : name === 'current' ? chalk.green : chalk.gray;
+            const isCurrent = name === 'current';
+            const glyph = isCurrent ? `${glyphs.check} ` : '  ';
+            const labelText = name.padEnd(8);
+            const label = color(labelText);
+            return `${glyph}${label} → ${path.basename(target)}`;
+          })
+        );
+        paddedSub('', symlinkLines.join('\n'));
+        paddedLog(
+          'To assign a version as the current agent',
+          'dokugent plan --use <agent>@<birthstamp>',
+          PAD_WIDTH,
+          'blue',
+          'HELP'
+        );
+        console.log();
       } else {
         console.log('\n📭 No symlinks found.');
       }

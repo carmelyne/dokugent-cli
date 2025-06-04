@@ -5,7 +5,8 @@
  */
 import fs from 'fs-extra';
 import path from 'path';
-
+import chalk from 'chalk';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault } from '@src/utils/cli/ui';
 /**
  * Lists all available plan versions and symlinks in the plan directory.
  *
@@ -31,7 +32,7 @@ export async function planLs() {
     }
   }
   if (!planPath) {
-    console.log('❌ No plan folder found.');
+    paddedLog('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
     return;
   }
 
@@ -46,15 +47,18 @@ export async function planLs() {
     else if (stat.isDirectory()) folders.push(entry);
   }
 
-  console.log(`\n📁 Plan Steps (${folders.length}):\n`);
-  folders.forEach(f => console.log(`  📂 ${f}`));
+  //planLS supposedly
+  paddedDefault("Available Plan Steps", `(${folders.length})`, PAD_WIDTH, 'magenta', 'PLANS');
+  paddedSub('', folders.map(f => `${glyphs.arrowRight} ${f}`).join('\n'));
 
-  console.log(`\n🔗 Symlinks (${symlinks.length}):\n`);
-  for (const name of symlinks) {
-    const target = await fs.readlink(path.join(planPath, name));
-    console.log(`  🌳 ${name} → ${path.basename(target)}`);
-  }
-  console.log(`\n`);
+  paddedDefault("Symlinks", `(${symlinks.length})`, PAD_WIDTH, 'blue', '🔗');
+  const symlinkLines = await Promise.all(
+    symlinks.map(async name => {
+      const target = await fs.readlink(path.join(planPath, name));
+      return `${glyphs.symlink} ${name} → ${target}`;
+    })
+  );
+  paddedSub('', symlinkLines.join('\n'));
 }
 
 /**
@@ -76,7 +80,9 @@ export async function setAgentCurrent(slug: string): Promise<void> {
   } catch { }
 
   await fs.symlink(slug, symlink); // relative path
-  console.log(`\n🟢 Current agent set to: ${slug}\n`);
+  console.log()
+  paddedDefault(`Current agent set to`, `${slug}`, PAD_WIDTH, 'success', 'AGENT');
+  console.log()
 }
 
 /**
@@ -92,7 +98,7 @@ export async function agentLs() {
   const agentPath = path.join(cwd, '.dokugent', 'data', 'agents');
 
   if (!(await fs.pathExists(agentPath))) {
-    console.log('❌ No agents directory found.');
+    paddedLog('Uh oh...', 'No agents directory found.', PAD_WIDTH, 'warn');
     return;
   }
 
@@ -107,15 +113,34 @@ export async function agentLs() {
     else if (stat.isDirectory()) folders.push(entry);
   }
 
-  console.log(`\n🧠 Available Agents (${folders.length}):\n`);
-  folders.forEach(f => console.log(`  📂 ${f}`));
+  console.log();
+  paddedLog('dokugent agent list', '', PAD_WIDTH, 'info');
+  console.log();
+  paddedDefault("Available Agents", `(${folders.length})`, PAD_WIDTH, 'magenta', 'AGENTS');
+  // console.log(`\n🧠 Available Agents (${folders.length}):\n`);
+  paddedSub('', folders.map(f => `${glyphs.arrowRight} ${f}`).join('\n'));
 
-  console.log(`\n🔗 Symlinks (${symlinks.length}):\n`);
-  for (const name of symlinks) {
-    const target = await fs.readlink(path.join(agentPath, name));
-    console.log(`  🌳 ${name} → ${path.basename(target)}`);
-  }
-  console.log(`\n`);
+  const symlinkLines = await Promise.all(
+    symlinks.map(async name => {
+      const target = await fs.readlink(path.join(agentPath, name));
+      const color = name === 'latest' ? chalk.magenta : name === 'current' ? chalk.green : chalk.gray;
+      const isCurrent = name === 'current';
+      const glyph = isCurrent ? `${glyphs.check} ` : '  ';
+      // Pad raw label to fixed width so arrow aligns regardless of glyph or color
+      const labelText = name.padEnd(8);
+      const label = color(labelText);
+      return `${glyph}${label} → ${path.basename(target)}`;
+    })
+  );
+  paddedSub('', symlinkLines.join('\n'));
+  paddedLog(
+    'To assign a version as the current agent',
+    'dokugent agent --use <agent>@<birthstamp>',
+    PAD_WIDTH,
+    'blue',
+    'HELP'
+  );
+  console.log();
 }
 
 /**

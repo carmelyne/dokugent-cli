@@ -1,4 +1,6 @@
+import chalk from 'chalk';
 import { promptAgentWizard } from '@utils/wizards/agent-wizard';
+import { ui, paddedLog, paddedSub } from '@utils/cli/ui';
 import { confirmAndWriteFile } from '@utils/fs-utils';
 import fs from 'fs';
 import path from 'path';
@@ -11,7 +13,6 @@ import {
   resolveAgentSlugFromArgs
 } from '@utils/agent-utils';
 import { agentLs, setAgentCurrent } from '@utils/ls-utils';
-import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault } from '@utils/cli/ui';
 
 export function runAgentCommand() {
   (async () => {
@@ -38,7 +39,7 @@ export function runAgentCommand() {
       };
       const identityPath = path.join(agentDir, 'identity.json');
       fs.writeFileSync(identityPath, JSON.stringify(identity, null, 2));
-      // console.log(`💾 Saved: ${identityPath}`);
+      console.log(`💾 Saved: ${identityPath}`);
 
       if (ecosystem !== 'none') {
         const presetPath = path.resolve('src/presets/ecosystems', ecosystem);
@@ -94,18 +95,35 @@ export function runAgentCommand() {
       await setAgentCurrent(slug);
       return;
     }
-    paddedLog('dokugent agent initialized...', '', PAD_WIDTH, 'info');
-    console.log()
+
     // fallback to wizard
-    const answers = await promptAgentWizard();
-    const typedAnswers = {
-      ...answers,
-      ecosystem: answers.ecosystem,
-      birth: getTimestamp(),
-    };
-    const timestamp = getTimestamp();
-    const agentId = `${typedAnswers.agentName}@${timestamp}`;
-    typedAnswers.birth = timestamp;
-    const targetPath = path.resolve('.dokugent/data/agents', agentId, 'identity.json');
+    paddedLog("Running dokugent agent...", "");
+
+    const docLink = '\x1b]8;;https://dokugent.com/commands/dokugent-agent/\x1b\\View online docs\x1b]8;;\x1b\\';
+    paddedSub("🌐 Docs", docLink);
+
+    paddedLog('🤖 Agent Setup Wizard', '');
+    return await (async () => {
+      const rawAnswers = (await promptAgentWizard()) ?? {};
+      if (typeof rawAnswers !== 'object' || !('agentName' in rawAnswers)) {
+        console.warn("❌ Agent wizard returned invalid or empty result.");
+        return;
+      }
+      const answers = rawAnswers as {
+        agentName: string;
+        description: string;
+        roles: string[];
+        processableTypes: string;
+        avatar: string;
+        mainTask: string;
+        requiresConventions: boolean;
+        ecosystem: string;
+      };
+      console.log('\n✔ Wizard completed\n');
+      const agentId = `${answers.agentName}@${getTimestamp()}`;
+      const targetPath = path.resolve('.dokugent/data/agents', agentId, 'identity.json');
+      await confirmAndWriteFile(targetPath, JSON.stringify(answers, null, 2));
+    })();
+
   })();
 }

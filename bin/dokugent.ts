@@ -22,6 +22,8 @@
  * https://polyformproject.org/licenses/shield/1.0.0
  */
 
+import { paddedLog, paddedSub } from '@utils/cli/ui';
+
 import { runAgentCommand } from '@src/commands/agent';
 import { runByoCommand } from '@src/commands/byo';
 import { runCertifyCommand } from '@src/commands/certify';
@@ -40,6 +42,7 @@ import { runPreviewCommand } from '@src/commands/preview';
 import { runSecurity } from '@src/commands/security';
 import { runSimulateCommand } from '@src/commands/simulate';
 import { runTraceCommand } from '@src/commands/trace';
+// import { runUiCommand } from '@src/commands/ui';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -105,28 +108,53 @@ switch (command) {
   case 'trace':
     runTraceCommand?.(args.slice(1));
     break;
+  case 'ui-demo': {
+    // runUiCommand?.(args.slice(1));
+    require('../src/commands/ui-demo').default?.();
+    break;
+  }
   default:
-    console.log("\n🚀 Dokugent CLI is ready.");
-    console.log("\n🧠 Usage: dokugent <command>\n");
-    console.log("📜 Available commands:\n");
-    console.log("   \x1b[34m• init\x1b[0m        → Scaffold a new project");
-    console.log("   \x1b[34m• agent\x1b[0m       → Create a new agent identity (use --t for a template)");
-    console.log("   \x1b[34m• plan\x1b[0m        → Draft an agent plan");
-    console.log("   \x1b[34m• criteria\x1b[0m    → Define evaluation criteria");
-    console.log("   \x1b[34m• conventions\x1b[0m → Select AI conventions");
-    console.log("   \x1b[34m• byo\x1b[0m         → Import and validate external BYO metadata");
-    console.log("   \x1b[34m• compliance\x1b[0m  → Fill in GDPR and governance metadata");
-    console.log("   \x1b[34m• deploy\x1b[0m      → Run full deploy: preview → certify → compile");
-    console.log("   \x1b[34m• io\x1b[0m          → Fill in I/O & Rules");
-    console.log("   \x1b[34m• inspect\x1b[0m     → Inspect agent certificate or plan (local or MCP)");
-    console.log("   \x1b[34m• security\x1b[0m    → Scan for file-level threats");
-    console.log("   \x1b[34m• preview\x1b[0m     → Generate agent spec bundle");
-    console.log("   \x1b[34m• certify\x1b[0m     → Sign and freeze validated preview");
-    console.log("   \x1b[34m• compile\x1b[0m     → Build deployable agent bundle");
-    console.log("   \x1b[34m• keygen\x1b[0m      → Create identity keypairs");
-    console.log("   \x1b[34m• owner\x1b[0m       → Set or view project owner metadata");
-    console.log("   \x1b[34m• dryrun\x1b[0m      → Simulate plan execution without real actions");
-    console.log("   \x1b[34m• simulate\x1b[0m    → Run simulated agent logic with Mistral + Ollama");
-    console.log("   \x1b[34m• trace\x1b[0m       → Trace an agent's behavior from a dokuUri");
-    console.log("\n");
+    paddedLog("Dokugent CLI is ready", " ");
+    paddedLog('dokugent <command> [flags]', '', 12, 'magenta', 'USAGE');
+
+    paddedLog('Available commands', '', 12, 'blue', 'COMMANDS');
+    // paddedLog('Read error', `Could not read local file: TEST`, 12, 'error');
+    // paddedLog('SHA256 hash saved', '', 12, 'info', 'SHA256');
+
+    paddedSub("setup", [
+      "• init        → Scaffold a new project",
+      "• owner       → Set or view project owner metadata",
+      "• agent       → Create a new agent identity (--t for template)",
+      "• keygen      → Create identity keypairs"
+    ].join("\n"));
+
+    paddedSub("authoring", [
+      "• plan        → Draft an agent plan",
+      "• criteria    → Define evaluation criteria",
+      "• conventions → Select AI conventions",
+      "• io          → Fill in I/O & Rules",
+      "• byo         → Import external agent metadata",
+      "• compliance  → Fill in GDPR & governance metadata"
+    ].join("\n"));
+
+    paddedSub("ops", [
+      "• preview     → Generate agent spec bundle",
+      "• certify     → Sign and freeze validated preview",
+      "• compile     → Build deployable agent bundle",
+      "• deploy      → Run full deploy (preview → certify → compile)"
+    ].join("\n"));
+
+    paddedSub("debug", [
+      "• inspect     → Inspect agent cert or plan (local or MCP)",
+      "• security    → Scan for file-level threats",
+      "• dryrun      → Simulate plan execution without real actions",
+      "• simulate    → Run simulated agent logic with Mistral + Ollama",
+      "• trace       → Trace agent behavior from a dokuUri",
+      "• ui          → Render test output of CLI UI components"
+    ].join("\n"));
+
+    paddedLog('See Examples below', '', 12, 'success', 'REFERENCE');
+    paddedSub("Inspect local", "dokugent trace doku://happybot@2025-05-24_19-15-55-492");
+    paddedSub("Trace remote", "dokugent inspect doku://mybot@2025-01-01 --show metadata");
+    break;
 }
