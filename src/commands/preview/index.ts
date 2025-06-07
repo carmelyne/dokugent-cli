@@ -6,7 +6,10 @@ import { runSecurityCheck } from '@utils/security-check';
 import { loadBlacklist } from '@security/loaders';
 import { updateSymlink } from '@utils/symlink-utils';
 import crypto from 'crypto';
-import { paddedLog, paddedSub } from '@utils/cli/ui';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
+import chalk from 'chalk';
+import ora from 'ora';
+import { slowPrint } from '@utils/cli/slowPrint';
 
 export async function runPreviewCommand(): Promise<void> {
   const base = '.dokugent/data';
@@ -32,7 +35,7 @@ export async function runPreviewCommand(): Promise<void> {
 
   // Resolve previewer (multi-previewer strategy)
   const previewerDir = path.join('.dokugent/keys', 'signers');
-  const previewers = await fs.readdir(previewerDir);
+  const previewers = (await fs.readdir(previewerDir)).filter(name => !name.startsWith('.'));
 
   let selectedPreviewer = previewers[0];
   if (previewers.length > 1) {
@@ -57,7 +60,7 @@ export async function runPreviewCommand(): Promise<void> {
   }
 
   // Resolve owner selection
-  const ownerDirs = await fs.readdir(path.join('.dokugent', 'data', 'owners'));
+  const ownerDirs = (await fs.readdir(path.join('.dokugent', 'data', 'owners'))).filter(name => !name.startsWith('.'));
   let selectedOwner = ownerDirs[0];
   if (ownerDirs.length > 1) {
     const { selected } = await inquirer.prompt([
@@ -90,9 +93,56 @@ export async function runPreviewCommand(): Promise<void> {
   // Inject correct previewer name from folder context
   previewer.previewerName = selectedPreviewer;
 
+  function convertMarkdownToJSON(markdown: string): Record<string, any> {
+    const lines = markdown.split('\n');
+    const result: Record<string, any> = {};
+    const stack: { level: number; key: string; obj: any }[] = [];
+    let currentObj = result;
+    let lastKey = '';
+
+    for (const line of lines) {
+      const headingMatch = line.match(/^(#+)\s+(.*)/);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const key = headingMatch[2].trim();
+        const newObj: any = {};
+        if (level === 1) continue; // Skip top-level title
+
+        while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+          stack.pop();
+        }
+
+        if (stack.length === 0) {
+          result[key] = newObj;
+          currentObj = newObj;
+          stack.push({ level, key, obj: newObj });
+        } else {
+          const parent = stack[stack.length - 1].obj;
+          parent[key] = newObj;
+          currentObj = newObj;
+          stack.push({ level, key, obj: newObj });
+        }
+
+        lastKey = key;
+      } else if (line.trim().startsWith('- ')) {
+        const item = line.trim().substring(2).trim();
+        if (!Array.isArray(currentObj[lastKey])) {
+          currentObj[lastKey] = [];
+        }
+        currentObj[lastKey].push(item);
+      } else if (line.trim()) {
+        // Standalone paragraph, assign as value
+        currentObj[lastKey] = line.trim();
+      }
+    }
+
+    return result;
+  }
+
   for (const item of conventionsRaw.conventions) {
     const filePath = path.join(conventionsDir, item.file);
-    item.content = await fs.readFile(filePath, 'utf-8');
+    const content = await fs.readFile(filePath, 'utf-8');
+    item.content = convertMarkdownToJSON(content);
   }
 
   const conventions = conventionsRaw;
@@ -114,15 +164,7 @@ export async function runPreviewCommand(): Promise<void> {
   };
 
   const certObject: any = {
-    agent: {
-      ...agent,
-      avatar: {
-        imageUrl: '',
-        style: '',
-        voice: '',
-        persona: ''
-      }
-    },
+    agent,
     plan: planJson,
     criteria: undefined,
     conventions: conventions,
@@ -145,7 +187,11 @@ export async function runPreviewCommand(): Promise<void> {
   const criteriaPath = path.join(criteriaDir, 'criteria.json');
   const criteriaExists = await fs.pathExists(criteriaPath);
   if (criteriaExists) {
-    certObject.criteria = await fs.readJson(criteriaPath);
+    try {
+      certObject.criteria = await fs.readJson(criteriaPath);
+    } catch {
+      certObject.criteria = { error: 'Invalid or empty criteria.json at current/latest' };
+    }
   } else {
     certObject.criteria = { error: 'criteria.json not found in current/latest' };
   }
@@ -202,11 +248,28 @@ export async function runPreviewCommand(): Promise<void> {
 
   await fs.chmod(previewFile, 0o444);
 
-  paddedSub('📄 Preview JSON Content\n', JSON.stringify(certObject, null, 2));
-
+  paddedLog('dokugent preview initialized...', '', PAD_WIDTH, 'info');
+  console.log()
   if (securityIssues.length === 0) {
-    paddedSub('🔍 Files scanned', scanPaths.map(p => `- ${p}`).join('\n'));
+    ui.divider();
+    const spinner = ora('          Scanning files...').start();
+    console.log()
+    paddedLog('Scanning agent directory', 'Checking for required files, validating metadata, and applying blacklist filters', PAD_WIDTH, 'blue', 'SCAN');
+    paddedSub('Files scanned', scanPaths.map(p => `- ${p}`).join('\n'));
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    spinner.succeed('          Scan complete');
+    ui.divider();
   }
-
-  paddedLog('🧠 Estimated Token Usage', `${tokenCount} tokens\n`);
+  paddedLog('Preview JSON Content\n', "", PAD_WIDTH, 'magenta', 'JSON');
+  // paddedSub('', JSON.stringify(certObject, null, 2));
+  const certJson = JSON.stringify(certObject, null, 2);
+  await slowPrint(certJson, 1); // you can tweak the delay
+  // paddedSub('', certJson);
+  console.log()
+  paddedLog('File', `${previewFile}`, PAD_WIDTH, 'success', 'SAVED');
+  paddedLog('Estimated Token Usage', `${tokenCount} tokens\n`, PAD_WIDTH, 'pink', 'TOKENS');
+  const bts = agentId.split('@')[1];
+  const certHint = `${agentName}@${bts}`;
+  paddedLog(`To certify agent: ${certHint} next, run`, `dokugent certify`, PAD_WIDTH, 'blue', 'HELP');
+  console.log()
 }

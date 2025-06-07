@@ -94,7 +94,7 @@ export function runAgentCommand() {
       await setAgentCurrent(slug);
       return;
     }
-    paddedLog('dokugent agent initialized...', '', PAD_WIDTH, 'info');
+    paddedCompact('dokugent agent initialized...', '', PAD_WIDTH, 'info');
     console.log()
     // fallback to wizard
     const answers = await promptAgentWizard();

@@ -76,6 +76,9 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
         choices: [
           { name: 'summarizer', message: padQuestion('summarizer') },
           { name: 'formatter', message: padQuestion('formatter') },
+          { name: 'validator', message: padQuestion('validator') },
+          { name: 'router', message: padQuestion('router') },
+          { name: 'wizard', message: padQuestion('wizard') },
           { name: 'other', message: padQuestion('other') }
         ],
         validate: (value: any) =>
@@ -208,7 +211,7 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       paddedLog('To see a list available agents', `dokugent agent --ls`, PAD_WIDTH, 'blue', 'HELP');
     }
     console.log()
-    console.log(padMsg(`Agent ${typedAnswers.agentName} initialized with ${tokenCount} tokens.`));
+    console.log(padMsg(`Agent ${typedAnswers.agentName} initialized with ${tokenCount} tokens.`)); 
     console.log()
     return typedAnswers;
   } catch (error: any) {

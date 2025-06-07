@@ -40,6 +40,19 @@ export async function runPlanCommand(args: string[]) {
         return;
       }
 
+      // Dynamically determine agentId from agent metadata
+      const agentMetaPath = path.resolve('.dokugent/data/agents/current/identity.json');
+      let agentId: string | null = null;
+      if (await fs.pathExists(agentMetaPath)) {
+        try {
+          const agentRaw = await fs.readFile(agentMetaPath, 'utf-8');
+          const agent = JSON.parse(agentRaw);
+          if (agent.agentName && agent.birth) {
+            agentId = agent.agentName + '@' + agent.birth;
+          }
+        } catch {}
+      }
+
       const indexPath = path.join(planPath, 'plan.index.md');
       const stepFolder = path.join(planPath, 'steps');
       const outputPath = path.join(planPath, 'plan.md');
@@ -80,7 +93,12 @@ export async function runPlanCommand(args: string[]) {
 
       const compiled = files.filter(Boolean).join('\n\n---\n\n');
       await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
-      console.log(`✅ plan.md compiled with ${linkedSteps.length} steps.`);
+      // Optionally show which agentId was used for this compile
+      if (agentId) {
+        console.log(`✅ plan.md compiled for agent: ${agentId} with ${linkedSteps.length} steps.`);
+      } else {
+        console.log(`✅ plan.md compiled with ${linkedSteps.length} steps.`);
+      }
       return;
     }
     case '--show': {
@@ -717,17 +735,37 @@ ${path.basename(planPath)}
     case undefined:
     default: {
       const agentSymlink = path.resolve('.dokugent/data/agents/current');
+      // Dynamically determine agentId from agent metadata
+      let agentId: string | null = null;
+      const agentMetaPath = path.resolve('.dokugent/data/agents/current/identity.json');
+      if (await fs.pathExists(agentMetaPath)) {
+        try {
+          const agentRaw = await fs.readFile(agentMetaPath, 'utf-8');
+          const agent = JSON.parse(agentRaw);
+          if (agent.agentName && agent.birth) {
+            agentId = agent.agentName + '@' + agent.birth;
+          }
+        } catch {}
+      }
       try {
-        const agentId = await fs.readlink(agentSymlink);
+        // If agentId couldn't be determined from metadata, fallback to symlink
+        let fallbackAgentId = agentId;
+        if (!fallbackAgentId) {
+          fallbackAgentId = await fs.readlink(agentSymlink);
+        }
         const activeLabel = agentSymlink.endsWith('latest') ? 'latest' : 'current';
-        console.log(`\n📌 Using agent assigned as ${activeLabel}:\n   \x1b[32m${agentId}\x1b[0m`);
-        const planCurrentSymlink = path.resolve('.dokugent/data/plans', agentId, 'current');
+        if (fallbackAgentId) {
+          console.log(`\n📌 Using agent assigned as ${activeLabel}:\n   \x1b[32m${fallbackAgentId}\x1b[0m`);
+        }
+        const planCurrentSymlink = fallbackAgentId
+          ? path.resolve('.dokugent/data/plans', fallbackAgentId, 'current')
+          : null;
         let resolvedPlanPath: string | null = null;
 
-        if (await fs.pathExists(planCurrentSymlink)) {
+        if (planCurrentSymlink && await fs.pathExists(planCurrentSymlink)) {
           try {
             resolvedPlanPath = await fs.readlink(planCurrentSymlink);
-            const planPath = path.resolve('.dokugent/data/plans', agentId, resolvedPlanPath);
+            const planPath = path.resolve('.dokugent/data/plans', fallbackAgentId, resolvedPlanPath);
             console.log(`📂 Active plan: ${planPath}`);
           } catch {
             resolvedPlanPath = null;

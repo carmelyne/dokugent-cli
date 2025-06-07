@@ -10,7 +10,8 @@ import { resolveActivePath } from '@utils/ls-utils';
 import { formatRelativePath } from '@utils/format-path';
 import { estimateTokensFromText } from '@utils/tokenizer';
 import getActiveAgentInfo from '@utils/agent-info';
-
+import chalk from 'chalk';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault } from '@utils/cli/ui';
 /**
  * Executes the `conventions` command dispatcher.
  *
@@ -167,6 +168,10 @@ export async function runConventionsCommand(args: string[]) {
     }
 
     default: {
+
+      paddedLog('dokugent conventions initialized...', '', PAD_WIDTH, 'info');
+      console.log()
+
       if (!args.length) {
         await promptConventionsWizard();
 

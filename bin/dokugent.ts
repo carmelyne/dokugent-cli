@@ -113,13 +113,11 @@ switch (command) {
     require('../src/commands/ui-demo').default?.();
     break;
   }
-  default:
+  default: {
     paddedLog("Dokugent CLI is ready", " ");
     paddedLog('dokugent <command> [flags]', '', 12, 'magenta', 'USAGE');
 
     paddedLog('Available commands', '', 12, 'blue', 'COMMANDS');
-    // paddedLog('Read error', `Could not read local file: TEST`, 12, 'error');
-    // paddedLog('SHA256 hash saved', '', 12, 'info', 'SHA256');
 
     paddedSub("setup", [
       "• init        → Scaffold a new project",
@@ -156,5 +154,17 @@ switch (command) {
     paddedLog('See Examples below', '', 12, 'success', 'REFERENCE');
     paddedSub("Inspect local", "dokugent trace doku://happybot@2025-05-24_19-15-55-492");
     paddedSub("Trace remote", "dokugent inspect doku://mybot@2025-01-01 --show metadata");
+
+    const input = command ?? '(none)';
+    paddedLog(`Unknown command: ${input}`, '', 12, 'warn', 'INVALID');
+
+    const knownCommands = [
+      'agent', 'byo', 'certify', 'compliance', 'compile', 'conventions', 'criteria',
+      'deploy', 'dryrun', 'init', 'inspect', 'keygen', 'owner', 'plan',
+      'preview', 'security', 'simulate', 'trace', 'ui-demo'
+    ];
+    const suggestion = knownCommands.find(cmd => cmd.startsWith(input));
+    if (suggestion) paddedLog(`Did you mean '${suggestion}'?`, '', 12, 'info', 'HINT');
     break;
+  }
 }

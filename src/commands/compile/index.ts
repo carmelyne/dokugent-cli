@@ -1,6 +1,5 @@
-// dokugent compile
-// Generates final cert bundle from previewed components and BYO files
-
+// Fixed agent identity validation logic
+// Replace the problematic section in your runCompileCommand function
 import fs from 'fs';
 import path from 'path';
 import { ui, paddedLog, paddedSub } from '@utils/cli/ui';
@@ -12,51 +11,166 @@ import dotenv from 'dotenv';
 import { agentsConfig } from '@config/agentsConfig';
 import inquirer from 'inquirer';
 dotenv.config();
+// Debug script to find where 492 is coming from
+// Add this debugging code to your runCompileCommand function
 
-const COMPILED_BY = process.env.DOKUGENT_COMPILED_BY;
-if (!COMPILED_BY) {
-  paddedLog('DOKUGENT_COMPILED_BY is not set in your environment. Set it in .env to track who compiled the cert.', '', 12, 'warn');
-}
+export async function debugIdentityMismatch() {
+  console.log('\n=== DEBUGGING IDENTITY MISMATCH ===\n');
 
-/**
- * Executes the Dokugent compile command.
- * This command finalizes the agent certification process by:
- * - Validating metadata
- * - Collecting user-supplied JSON objects (BYO)
- * - Performing a final tokenization and security check
- * - Writing the final compiled.cert.json and SHA digest
- * - Generating logs and audit trails
- *
- * @param agentId Optional agent identifier to use; defaults to latest symlink if not provided.
- */
-export async function runCompileCommand(agentId?: string) {
-
-  paddedLog('Iniatiate', 'Running dokugent compile...', 12, 'info', 'START');
-
-  // STEP 1: Resolve agent context and load latest certified preview
-
-  const agentFolders = fs.existsSync(CERT_DIR)
-    ? fs.readdirSync(CERT_DIR, { withFileTypes: true }).filter(dirent => dirent.isDirectory())
-    : [];
-
-  for (const dir of agentFolders) {
-    const agentName = dir.name;
-    const certFiles = fs.readdirSync(path.join(CERT_DIR, agentName))
-      .filter(file => file.endsWith('.cert.json'));
-
-    const matchingCerts = certFiles.filter(file =>
-      file.startsWith(agentName + '@') && file.endsWith('.cert.json')
-    );
-
-    if (matchingCerts.length === 0) {
-      paddedLog(`No valid cert files found for agent ${agentName}`, '', 12, 'warn');
-      continue;
-    }
-
-    paddedLog(`Found ${matchingCerts.length} cert file(s) for agent ${agentName}`, '', 0, 'info', '📦');
+  const currentIdentityPath = '.dokugent/data/agents/current/identity.json';
+  let currentIdentity: any = null;
+  if (fs.existsSync(currentIdentityPath)) {
+    currentIdentity = JSON.parse(fs.readFileSync(currentIdentityPath, 'utf-8'));
+  } else {
+    console.log('🔴 Current identity not found at:', currentIdentityPath);
+    return;
   }
 
-  // STEP 2: Load and validate all user-provided JSON files from BYO_DIR
+  // Check current identity
+  if (currentIdentity) {
+    console.log('🟢 Current Identity:');
+    console.log(`   File: ${currentIdentityPath}`);
+    console.log(`   Agent: ${currentIdentity.agentName}`);
+    console.log(`   Birth: ${currentIdentity.birth}`);
+    console.log(`   Full ID: ${currentIdentity.agentName}@${currentIdentity.birth}`);
+    console.log('');
+  }
+
+  // Check latest identity
+  const latestIdentityPath = '.dokugent/data/agents/latest/identity.json';
+  if (fs.existsSync(latestIdentityPath)) {
+    const latestIdentity = JSON.parse(fs.readFileSync(latestIdentityPath, 'utf-8'));
+    console.log('🟡 Latest Identity:');
+    console.log(`   File: ${latestIdentityPath}`);
+    console.log(`   Agent: ${latestIdentity.agentName}`);
+    console.log(`   Birth: ${latestIdentity.birth}`);
+    console.log(`   Full ID: ${latestIdentity.agentName}@${latestIdentity.birth}`);
+    console.log('');
+  } else {
+    console.log('🔴 Latest identity not found at:', latestIdentityPath);
+  }
+
+  // Dynamically check preview file for current agent
+  const previewPath = path.join('.dokugent/ops/previews', currentIdentity.agentName, `${currentIdentity.agentName}@${currentIdentity.birth}_preview.json`);
+  if (fs.existsSync(previewPath)) {
+    const previewJson = JSON.parse(fs.readFileSync(previewPath, 'utf-8'));
+    console.log('📄 Preview File:');
+    console.log(`   File: ${previewPath}`);
+    console.log(`   Plan Agent ID: ${previewJson.plan?.agentId || 'NOT FOUND'}`);
+    console.log('');
+
+    // Placeholder: Insert pattern-based scanning logic here if needed in future (e.g., via --find flag)
+  } else {
+    console.log('🔴 Preview file not found at:', previewPath);
+  }
+
+  // Dynamically scan certs for target substring
+  // scanCertFilesForIdentity(currentIdentity.agentName, 'your-pattern-here');
+
+  // Search for any files containing pattern in common directories
+  const searchDirs = [
+    '.dokugent/data/agents',
+    '.dokugent/ops/previews',
+    '.dokugent/ops/certified'
+  ];
+
+  console.log('🔍 Searching for files containing pattern:');
+  searchDirs.forEach(dir => {
+    if (fs.existsSync(dir)) {
+      // searchForPattern(dir, 'your-pattern-here');
+    }
+  });
+
+  // TODO: This function should take a user-defined pattern or be removed if no longer used.
+}
+
+function searchForPattern(dirPath: string, pattern: string, depth = 0) {
+  if (depth > 3) return; // Prevent infinite recursion
+
+  try {
+    const items = fs.readdirSync(dirPath, { withFileTypes: true });
+
+    items.forEach(item => {
+      const fullPath = path.join(dirPath, item.name);
+
+      if (item.isDirectory()) {
+        searchForPattern(fullPath, pattern, depth + 1);
+      } else if (item.name.endsWith('.json')) {
+        try {
+          const content = fs.readFileSync(fullPath, 'utf-8');
+          if (content.includes(pattern)) {
+            console.log(`   🎯 Found "${pattern}" in: ${fullPath}`);
+
+            // Show the specific lines containing the pattern
+            const lines = content.split('\n');
+            lines.forEach((line, index) => {
+              if (line.includes(pattern)) {
+                console.log(`      Line ${index + 1}: ${line.trim()}`);
+              }
+            });
+          }
+        } catch (err) {
+          // Ignore files that can't be read
+        }
+      }
+    });
+  } catch (err) {
+    // Ignore directories that can't be read
+  }
+}
+
+// Call this function at the beginning of your runCompileCommand
+// debugIdentityMismatch();
+export async function runCompileCommand(agentId?: string) {
+  paddedLog('Iniatiate', 'Running dokugent compile...', 12, 'info', 'START');
+
+  // Parse --find option from command line arguments
+
+  // STEP 1: Load current/latest agent identity first
+  let currentIdentity: any = null;
+  let identitySource: string = '';
+
+  // Try to load current identity first
+  const currentIdentityPath = '.dokugent/data/agents/current/identity.json';
+  const latestIdentityPath = '.dokugent/data/agents/latest/identity.json';
+
+  if (fs.existsSync(currentIdentityPath)) {
+    currentIdentity = JSON.parse(fs.readFileSync(currentIdentityPath, 'utf-8'));
+    identitySource = 'current';
+    paddedLog('Using current agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`, 12, 'info', 'IDENTITY');
+  } else if (fs.existsSync(latestIdentityPath)) {
+    currentIdentity = JSON.parse(fs.readFileSync(latestIdentityPath, 'utf-8'));
+    identitySource = 'latest';
+    paddedLog('Current identity not found. Using latest agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`, 12, 'warn', 'IDENTITY');
+  } else {
+    throw new Error('❌ Neither "current" nor "latest" identity.json found in .dokugent/data/agents/');
+  }
+
+  const expectedAgentId = `${currentIdentity.agentName}@${currentIdentity.birth}`;
+  paddedLog('Expected agent ID for compilation', expectedAgentId, 12, 'info', 'VALIDATION');
+
+  // STEP 2: Find and validate cert files for the current agent only
+  const targetAgentName = currentIdentity.agentName;
+  const targetAgentCertDir = path.join(CERT_DIR, targetAgentName);
+
+  if (!fs.existsSync(targetAgentCertDir)) {
+    throw new Error(`❌ No cert directory found for agent ${targetAgentName} at ${targetAgentCertDir}`);
+  }
+
+  const certFiles = fs.readdirSync(targetAgentCertDir)
+    .filter(file => file.endsWith('.cert.json') && file.includes('@'));
+
+  const matchingCerts = certFiles.filter(file =>
+    file.startsWith(targetAgentName + '@') && file.endsWith('.cert.json')
+  );
+
+  if (matchingCerts.length === 0) {
+    throw new Error(`❌ No valid cert files found for agent ${targetAgentName} in ${targetAgentCertDir}`);
+  }
+
+  paddedLog(`Found ${matchingCerts.length} cert file(s) for agent ${targetAgentName}`, '', 0, 'info', '📦');
+
+  // STEP 3: Load and validate BYO files (your existing logic)
   const byoFiles = fs.readdirSync(BYO_DIR).filter(file => file.endsWith('.json'));
 
   if (byoFiles.length === 0) {
@@ -78,386 +192,163 @@ export async function runCompileCommand(agentId?: string) {
 
   paddedLog(`Loaded ${Object.keys(byoBundle).length} BYO file(s) into global-byo bundle.`, '', 0, 'info', '📦');
 
-  // STEP 3: Append BYO files under 'global-byo' key in compiled object
+  // STEP 4: Process only the matching cert files for the current agent
+  for (const certFile of matchingCerts) {
+    const match = certFile.match(/@(.*?)\.cert\.json$/);
+    if (!match) continue;
+    const birthTimestamp = match[1];
 
-  // Step 3 is effectively done by collecting byoBundle above and using it in compiledData below.
+    const previewPath = path.join(targetAgentCertDir, certFile);
+    const previewJson = JSON.parse(fs.readFileSync(previewPath, 'utf-8'));
 
-  // STEP 4: Recalculate token estimate and trigger warnings if exceeding threshold
-  const fullBundleText = JSON.stringify(byoBundle, null, 2);
-  const tokenEstimate = estimateTokensFromText(fullBundleText);
-  paddedLog(`Estimated tokens for final BYO bundle: ${tokenEstimate.toLocaleString()}`, '', 0, 'info', '🧮');
+    // STEP 5: Validate that the preview matches the current agent identity
+    if (!previewJson.plan || !previewJson.plan.agentId) {
+      throw new Error(`❌ Preview file ${certFile} is missing plan.agentId`);
+    }
 
-  // STEP 5: Perform security validations on final structure (optional)
-  // Removed scan path for .dokugent/data/tool-lists as per instructions
-  const scanPaths = [BYO_DIR, ...agentFolders.map(f => path.join(CERT_DIR, f.name))];
-  // Use BYO_DIR for scanPath, requireApprovals: false
-  const denyList: string[] = []; // You may want to load a denyList if needed
-  const byoIssues: string[] = await runSecurityCheck('compile', {
-    denyList,
-    requireApprovals: false,
-    scanPaths: [BYO_DIR]
-  });
+    if (previewJson.plan.agentId !== expectedAgentId) {
+      throw new Error(`❌ Agent ID mismatch:
+        Preview file: ${previewJson.plan.agentId}
+        Expected (from ${identitySource}): ${expectedAgentId}
 
-  // After cert save, output scanned files
-  // Replace legacy log with paddedLog and paddedSub
-  paddedLog('INFO', 'Scanned');
-  paddedSub('Scanned Paths', [
-    '.dokugent/data/byo/processed/...',
-    '.dokugent/data/byo/raw/...',
-    '.dokugent/ops/certified/...',
-    '.dokugent/ops/certified/...'
-  ].join('\n'));
+        Please ensure you're compiling the correct agent or update your current/latest identity.`);
+    }
 
-  paddedLog('SECURITY', 'No security issues found.', 12, 'success');
+    paddedLog('Agent ID validation passed', `${previewJson.plan.agentId} ✓`, 12, 'success', 'VALIDATED');
 
-  // STEP 6: Write compiled.cert.json and generate SHA256 digest
+    // === CERTIFIER METADATA VALIDATION ===
+    let certifierPath = '';
+    try {
+      const certifier = previewJson.certifier ?? previewJson.metadata?.certifier;
+      const certifierName =
+        previewJson.certifier?.certifierName ||
+        previewJson.metadata?.certifierName;
+      const certifierKeyVersion =
+        previewJson.metadata?.certifierKeyVersion;
+      if (!certifier || typeof certifier !== 'object' || !certifierName || !certifierKeyVersion) {
+        paddedLog("Certifier metadata not found or incomplete.", '', 12, 'warn');
+        throw new Error(`❌ Certifier metadata missing. Please re-run 'dokugent preview' and select a certifier.`);
+      }
 
-  // Track compiled version suffixes per agent@timestamp
-  const compiledVersionMap: Record<string, string> = {};
-
-  for (const dir of agentFolders) {
-    const agentName = dir.name;
-    const certFiles = fs.readdirSync(path.join(CERT_DIR, agentName))
-      .filter(file => file.endsWith('.cert.json') && file.includes('@'));
-
-    for (const certFile of certFiles) {
-      const match = certFile.match(/@(.*?)\.cert\.json$/);
-      if (!match) continue;
-      const birthTimestamp = match[1];
-
-      const previewPath = path.join(CERT_DIR, agentName, certFile);
-      const previewJson = JSON.parse(fs.readFileSync(previewPath, 'utf-8'));
-
-      // Debugging previewJson load
-      // Optionally, keep these logs for debugging, or remove for production
-      // paddedLog('Raw previewJson loaded from', previewPath, 12, 'info', '📤');
-      // paddedLog('Preview JSON keys', JSON.stringify(Object.keys(previewJson)), 12, 'info', '🔍');
-      // paddedLog('Raw previewJson contents', JSON.stringify(previewJson, null, 2), 12, 'info', '📄');
-
-      // === CERTIFICATION VALIDATION: Ensure previewJson is certified ===
-      const isCertified = Boolean(
-        previewJson.certifier &&
-        typeof previewJson.certifier === 'object' &&
-        previewJson.certifier.certifierName &&
-        previewJson.metadata?.certifierKeyVersion
+      certifierPath = path.join(
+        '.dokugent/keys/signers',
+        certifierName,
+        certifierKeyVersion,
+        `${certifierName}.meta.json`
       );
 
-      if (!isCertified) {
-        paddedLog('Cannot compile: this file has not been certified.', '', 12, 'error');
-        paddedLog(`Please run 'dokugent certify' first to finalize the preview.`, '', 12, 'error');
-        process.exit(1);
+      paddedLog('Looking for certifier file at', `${certifierPath}`, 12, 'info', 'CHECKING');
+      if (!fs.existsSync(certifierPath)) {
+        throw new Error(`❌ Missing certifier file at ${certifierPath}`);
       }
-
-      if (!previewJson.owner || !previewJson.previewer || !previewJson.certifier) {
-        throw new Error(`❌ Missing one or more required roles (owner, previewer, certifier). Cannot proceed with compilation.`);
-      }
-
-      let planFolder: string;
-      try {
-        planFolder = fs.readlinkSync('.dokugent/data/plans/current');
-      } catch {
-        try {
-          planFolder = fs.readlinkSync('.dokugent/data/plans/latest');
-          paddedLog('"current" symlink not found. Falling back to "latest".', '', 12, 'warn');
-        } catch {
-          throw new Error('❌ Neither "current" nor "latest" symlink found in .dokugent/data/plans/');
-        }
-      }
-
-      if (!planFolder.includes(previewJson.plan.agentId)) {
-        throw new Error(`❌ Mismatch: preview used agentId ${previewJson.plan.agentId}, but 'current' points to ${planFolder}`);
-      }
-
-      // Enhanced certifier metadata validation
-      let certifierPath = '';
-      try {
-        const certifier = previewJson.certifier ?? previewJson.metadata?.certifier;
-        const certifierName =
-          previewJson.certifier?.certifierName ||
-          previewJson.metadata?.certifierName;
-        const certifierKeyVersion =
-          previewJson.metadata?.certifierKeyVersion;
-        if (!certifier || typeof certifier !== 'object' || !certifierName || !certifierKeyVersion) {
-          paddedLog("Certifier metadata not found in expected locations or missing required fields.", '', 12, 'warn');
-          paddedLog("Available keys", JSON.stringify(Object.keys(previewJson)), 12, 'info');
-          throw new Error(`❌ Certifier metadata missing or incomplete in preview file. Please re-run 'dokugent preview' and select a certifier.`);
-        }
-
-        certifierPath = path.join(
-          '.dokugent/keys/signers',
-          certifierName,
-          certifierKeyVersion,
-          `${certifierName}.meta.json`
-        );
-
-        paddedLog('Looking for certifier file at', `${certifierPath}`, 12, 'info', 'CHECKING');
-        console.log('');
-        if (!fs.existsSync(certifierPath)) {
-          throw new Error(`❌ Missing certifier file at ${certifierPath}`);
-        }
-      } catch (error: any) {
-        paddedLog(error.message || error, '', 12, 'error');
-        process.exit(1);
-      }
-
-      const ownerPath = path.join('.dokugent/data/owners', previewJson.owner.ownerName, `owner.${previewJson.owner.ownerName}.json`);
-      if (!fs.existsSync(ownerPath)) {
-        throw new Error(`❌ Missing owner file at ${ownerPath}`);
-      }
-
-      // Prompt user to select compiler identity from available signer keys
-      const signersDir = path.join('.dokugent/keys/signers');
-      const availableSigners = fs.existsSync(signersDir) ? fs.readdirSync(signersDir).filter(name => {
-        const metaPath = path.join(signersDir, name, 'latest', `${name}.meta.json`);
-        return fs.existsSync(metaPath);
-      }) : [];
-
-      if (availableSigners.length === 0) {
-        throw new Error('❌ No available signer keys found in .dokugent/keys/signers. Cannot proceed with compilation.');
-      }
-
-      const { selectedCompiler } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'selectedCompiler',
-          message: 'Select compiler identity for signing the compiled cert:',
-          choices: availableSigners,
-        }
-      ]);
-
-      paddedLog('Compiler selected', selectedCompiler, 12, 'magenta', 'COMPILER');
-
-      const compilerMetaPath = path.join('.dokugent/keys/signers', selectedCompiler, 'latest', `${selectedCompiler}.meta.json`);
-      if (!fs.existsSync(compilerMetaPath)) {
-        throw new Error(`❌ Missing compiler metadata file at ${compilerMetaPath}`);
-      }
-      const compiler = JSON.parse(fs.readFileSync(compilerMetaPath, 'utf-8'));
-
-      const llmName = previewJson?.conventions?.conventions?.[0]?.llmName?.toLowerCase();
-      const agentSpec = agentsConfig[llmName as keyof typeof agentsConfig];
-      const idealLimit = agentSpec && 'idealBriefingSize' in agentSpec
-        ? (agentSpec as { idealBriefingSize: number }).idealBriefingSize
-        : 16000;
-
-      if (tokenEstimate > idealLimit) {
-        warnIfExceedsLimit(tokenEstimate.toString(), idealLimit);
-      }
-
-      // Append compiler info to metadata
-      if (!previewJson.metadata) previewJson.metadata = {};
-      previewJson.metadata.compilerName = selectedCompiler;
-      previewJson.metadata.compilerFingerprint = compiler.fingerprint;
-      previewJson.metadata.compilerKeyVersion = 'latest';
-
-      // Reordered: compiler before metadata, metadata last
-      const compiledData = {
-        ...previewJson,
-        compiledAt: new Date().toISOString(),
-        fromPreview: certFile,
-        globalByo: byoBundle,
-        compiledBy: COMPILED_BY || 'unknown',
-        compiler: {
-          compilerName: selectedCompiler,
-          email: compiler.email,
-          publicKey: compiler.publicKey,
-          fingerprint: compiler.fingerprint
-        },
-        metadata: previewJson.metadata // must be last
-      };
-
-      // Versioned compiled cert/sha logic
-      const agentCompiledDir = path.join(COMPILED_DIR, agentName);
-      fs.mkdirSync(agentCompiledDir, { recursive: true });
-
-      let baseName = `${agentName}@${birthTimestamp}.compiled`;
-      let nextVersion: number | null = null;
-      let compiledVersionSuffix = '';
-      let compiledCertPath = path.join(agentCompiledDir, `${baseName}.cert.json`);
-      let compiledShaPath = path.join(agentCompiledDir, `${baseName}.cert.sha256`);
-      if (fs.existsSync(compiledCertPath)) {
-        const existingVersions = fs.readdirSync(agentCompiledDir)
-          .filter(f => f.startsWith(baseName + '.v') && f.endsWith('.cert.json'));
-        nextVersion = existingVersions.length + 1;
-        baseName += `.v${nextVersion}`;
-        compiledVersionSuffix = `.v${nextVersion}`;
-        compiledCertPath = path.join(agentCompiledDir, `${baseName}.cert.json`);
-        compiledShaPath = path.join(agentCompiledDir, `${baseName}.cert.sha256`);
-      }
-      // Ensure internal metadata.version matches the .vX version of the compiled filename
-      if (!previewJson.metadata) previewJson.metadata = {};
-      previewJson.metadata.version = `v${nextVersion || 1}`;
-
-      // Track the compiledVersionSuffix for this agent@timestamp
-      const compiledKey = `${agentName}@${birthTimestamp}`;
-      compiledVersionMap[compiledKey] = compiledVersionSuffix;
-
-      try {
-        const jsonString = JSON.stringify(compiledData, null, 2);
-        const crypto = await import('crypto');
-        const hash = crypto.createHash('sha256').update(jsonString).digest('hex');
-
-        // Reordered: compiler before metadata, metadata last
-        const compiledCert = {
-          ...previewJson,
-          compiledAt: new Date().toISOString(),
-          compiledBy: "dokugent v0.1",
-          certHash: hash,
-          compiler: {
-            compilerName: selectedCompiler,
-            email: compiler.email,
-            publicKey: compiler.publicKey,
-            fingerprint: compiler.fingerprint
-          },
-          metadata: previewJson.metadata // must be last
-        };
-
-        fs.writeFileSync(compiledCertPath, JSON.stringify(compiledCert, null, 2), 'utf-8');
-        fs.writeFileSync(compiledShaPath, hash, 'utf-8');
-        // Logging moved to after report stub output
-      } catch (err: any) {
-        paddedLog(`Failed to save compiled cert for ${agentName}`, err.message, 12, 'error');
-      }
+    } catch (error: any) {
+      paddedLog(error.message || error, '', 12, 'error');
+      process.exit(1);
     }
-  }
 
-  // STEP 7: Create audit logs and write to compiled logs directory
-  for (const dir of agentFolders) {
-    const agentName = dir.name;
-    const certFiles = fs.readdirSync(path.join(COMPILED_DIR, agentName))
-      .filter(file => file.endsWith('.compiled.cert.json'));
+    // === SELECT COMPILER IDENTITY ===
+    const signersDir = path.join('.dokugent/keys/signers');
+    const availableSigners = fs.readdirSync(signersDir)
+      .filter(name => fs.existsSync(path.join(signersDir, name, 'latest', `${name}.meta.json`)));
 
-    for (const certFile of certFiles) {
-      const match = certFile.match(/@(.*?)\.compiled\.cert\.json$/);
-      if (!match) continue;
-      const birthTimestamp = match[1];
-
-      const logDir = path.join(LOG_DIR, agentName, `${agentName}@${birthTimestamp}`);
-      fs.mkdirSync(logDir, { recursive: true });
-
-      const compiledCertPath = path.join(COMPILED_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.json`);
-      const compiledShaPath = path.join(COMPILED_DIR, agentName, `${agentName}@${birthTimestamp}.compiled.cert.sha256`);
-      const shaContent = fs.existsSync(compiledShaPath) ? fs.readFileSync(compiledShaPath, 'utf-8') : 'N/A';
-
-      const byoFilesIncluded = Object.keys(byoBundle).join(', ') || 'None';
-      const byoFileCount = Object.keys(byoBundle).length;
-      const llmName = agentName.toLowerCase();
-      const agentSpec = agentsConfig[llmName as keyof typeof agentsConfig];
-      const idealLimit = agentSpec && 'idealBriefingSize' in agentSpec
-        ? (agentSpec as { idealBriefingSize: number }).idealBriefingSize
-        : 16000;
-      const tokenStatus = tokenEstimate > idealLimit ? 'Warning: Exceeded ideal limit' : 'OK';
-
-      // Use BYO_DIR for scanPaths, requireApprovals: false
-      const byoIssuesForLog: string[] = await runSecurityCheck('compile', {
-        denyList,
-        requireApprovals: false,
-        scanPaths: [BYO_DIR]
-      });
-
-      const logContent = `# Compile Log for ${agentName}
-Birth Timestamp: ${birthTimestamp}
-Compiled At: ${new Date().toISOString()}
-
-[✓] From Preview: ${certFile}
-[✓] Compiled Cert Path: ${compiledCertPath}
-[✓] SHA256 Path: ${compiledShaPath}
-[✓] Compiled By: ${COMPILED_BY || 'unknown'}
-
---- BYO Bundle ---
-Files Included: ${byoFilesIncluded}
-Total BYO Files: ${byoFileCount}
-Token Estimate: ${tokenEstimate.toLocaleString()}
-Token Limit: ${idealLimit}
-Status: See console output for any warnings or issues
-
---- Security Check ---
-Status: See console output for any warnings or issues
-
---- Save Status ---
-Compiled Cert: SUCCESS
-SHA256: SUCCESS
-Log File: SUCCESS
-`;
-
-      const logPath = path.join(logDir, 'log.txt');
-
-      try {
-        fs.writeFileSync(logPath, logContent, 'utf-8');
-        // Logging moved to after report stub output
-      } catch (err: any) {
-        paddedLog(`Failed to save compile log for ${agentName}`, err.message, 12, 'error');
+    const { selectedCompiler } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selectedCompiler',
+        message: 'Select compiler identity:',
+        choices: availableSigners,
       }
+    ]);
+
+    // Load compiler metadata and set COMPILED_BY for use below
+    const compilerMetaPath = path.join(signersDir, selectedCompiler, 'latest', `${selectedCompiler}.meta.json`);
+    const compiler = JSON.parse(fs.readFileSync(compilerMetaPath, 'utf-8'));
+    const COMPILED_BY = process.env.DOKUGENT_COMPILED_BY || 'unknown';
+
+    // === COMPILE ===
+    if (!previewJson.metadata) previewJson.metadata = {};
+    previewJson.metadata.compilerName = selectedCompiler;
+    previewJson.metadata.compilerFingerprint = compiler.fingerprint;
+    previewJson.metadata.compilerKeyVersion = 'latest';
+
+    const compiledData = {
+      ...previewJson,
+      compiledAt: new Date().toISOString(),
+      fromPreview: certFile,
+      globalByo: byoBundle,
+      compiledBy: COMPILED_BY || 'unknown',
+      compiler: {
+        compilerName: selectedCompiler,
+        email: compiler.email,
+        publicKey: compiler.publicKey,
+        fingerprint: compiler.fingerprint
+      },
+      metadata: previewJson.metadata // must be last
+    };
+
+    // === VERSIONING ===
+    // Save compiled files under .dokugent/ops/compiled/{agentId}/...
+    const agentCompiledDir = path.join(COMPILED_DIR, expectedAgentId);
+    fs.mkdirSync(agentCompiledDir, { recursive: true });
+
+    let baseName = `${expectedAgentId}.compiled`;
+    let nextVersion: number | null = null;
+    let compiledVersionSuffix = '';
+    let compiledCertPath = path.join(agentCompiledDir, `${baseName}.cert.json`);
+    let compiledShaPath = path.join(agentCompiledDir, `${baseName}.cert.sha256`);
+    if (fs.existsSync(compiledCertPath)) {
+      const existingVersions = fs.readdirSync(agentCompiledDir)
+        .filter(f => f.startsWith(baseName + '.v') && f.endsWith('.cert.json'));
+      nextVersion = existingVersions.length + 1;
+      baseName += `.v${nextVersion}`;
+      compiledVersionSuffix = `.v${nextVersion}`;
+      compiledCertPath = path.join(agentCompiledDir, `${baseName}.cert.json`);
+      compiledShaPath = path.join(agentCompiledDir, `${baseName}.cert.sha256`);
     }
+    previewJson.metadata.version = `v${nextVersion || 1}`;
+
+    // === HASH + WRITE ===
+    const crypto = await import('crypto');
+    const jsonString = JSON.stringify(compiledData, null, 2);
+    const hash = crypto.createHash('sha256').update(jsonString).digest('hex');
+
+    const compiledCert = {
+      ...previewJson,
+      compiledAt: new Date().toISOString(),
+      compiledBy: "dokugent v0.1",
+      certHash: hash,
+      compiler: {
+        compilerName: selectedCompiler,
+        email: compiler.email,
+        publicKey: compiler.publicKey,
+        fingerprint: compiler.fingerprint
+      },
+      metadata: previewJson.metadata
+    };
+
+    fs.writeFileSync(compiledCertPath, JSON.stringify(compiledCert, null, 2), 'utf-8');
+    fs.writeFileSync(compiledShaPath, hash, 'utf-8');
+
+    paddedLog('Saved compiled cert', compiledCertPath, 12, 'success', 'CERT');
+    paddedLog('SHA256 hash saved', compiledShaPath, 12, 'info', 'SHA256');
   }
+}
 
-  // STEP 8: Save compile report and show summary to user
-  for (const dir of agentFolders) {
-    const agentName = dir.name;
-    const agentCompiledDir = path.join(COMPILED_DIR, agentName);
-    const compiledFiles = fs.readdirSync(agentCompiledDir)
-      .filter(file => file.endsWith('.compiled.cert.json'));
 
-    for (const certFile of compiledFiles) {
-      const match = certFile.match(/@(.*?)\.compiled(?:\.v(\d+))?\.cert\.json$/);
-      if (!match) continue;
-      const birthTimestamp = match[1];
-      const versionSuffix = match[2] ? `.v${match[2]}` : '';
-
-      const reportDir = path.join(REPORTS_DIR, agentName, `${agentName}@${birthTimestamp}`);
-      fs.mkdirSync(reportDir, { recursive: true });
-
-      const reportPath = path.join(reportDir, 'report.json');
-      const reportStub = {
-        agent: agentName,
-        birth: birthTimestamp,
-        compiledAt: new Date().toISOString(),
-        summary: 'Report stub - implement details as needed'
-      };
-
-      try {
-        fs.writeFileSync(reportPath, JSON.stringify(reportStub, null, 2), 'utf-8');
-        // Grouped output for final file locations
-        paddedLog('Report stub saved at', reportPath, 12, 'info', 'REPORT');
-        // Use compiledVersionMap to get the correct version suffix
-        const compiledKey = `${agentName}@${birthTimestamp}`;
-        const compiledCertFileName = `${compiledKey}.compiled${compiledVersionMap[compiledKey] || ''}.cert.json`;
-        const compiledCertPath = path.join(COMPILED_DIR, agentName, compiledCertFileName);
-        const compiledShaPath = path.join(COMPILED_DIR, agentName, `${compiledKey}.compiled${compiledVersionMap[compiledKey] || ''}.cert.sha256`);
-        const logPath = path.join(LOG_DIR, agentName, `${agentName}@${birthTimestamp}`, 'log.txt');
-        // Add blank line before the compile task queued summary for visual separation
-        // console.log('');
-        // Add version-aware output for compiled cert
-        if (compiledVersionMap[compiledKey]) {
-          const compiledCertFileName = `${compiledKey}.compiled${compiledVersionMap[compiledKey]}.cert.json`;
-          paddedLog('Existing compiled cert found. Writing new version:', compiledCertFileName, 12, 'warn');
-        }
-
-        // Use paddedLog for all output in this block
-        paddedLog('Saved as', compiledCertFileName, 12, 'success');
-        paddedLog('SHA256 hash saved', compiledShaPath, 12, 'info', 'SHA256');
-        paddedLog('Compile log saved', logPath, 12, 'info', 'LOG');
-      } catch (err: any) {
-        paddedLog(`Failed to save report`, err.message, 12, 'error');
-        ui.info('Loading agent profile...');
-      }
-    }
-  }
-  // console.log('');
-  // paddedLog('Compile task queued. Final cert will be saved in certified folder.', '', 12, 'success');
-  paddedLog('Finalized', 'Cert saved in certified folder\n', 12, 'success', 'SAVED');
-
-  // Open the latest compiled cert file directly
-  try {
-    const compiledKey = Object.keys(compiledVersionMap).pop();
-    const versionSuffix = compiledVersionMap[compiledKey!] || '';
-    const [agentName, birthTimestamp] = compiledKey!.split('@');
-    const compiledCertPath = path.join(
-      COMPILED_DIR,
-      agentName,
-      `${compiledKey}.compiled${versionSuffix}.cert.json`
-    );
-    require('child_process').execSync(`code "${compiledCertPath}"`);
-  } catch (e) {
-    // Ignore errors opening in VS Code
+// Helper function to scan cert files for a specific substring in their filenames
+function scanCertFilesForIdentity(agentName: string, targetSubstring: string) {
+  const certDir = path.join('.dokugent/ops/certified', agentName);
+  if (fs.existsSync(certDir)) {
+    const certFiles = fs.readdirSync(certDir);
+    console.log(`📁 Cert Directory Files for ${agentName}:`);
+    certFiles.forEach(file => {
+      console.log(`   ${file}`);
+      // if (file.includes(targetSubstring)) {
+      //   console.log(`     ⚠️  This file contains "${targetSubstring}"`);
+      // }
+    });
+    console.log('');
+  } else {
+    console.log(`🔴 Cert directory does not exist for agent ${agentName}: ${certDir}`);
   }
 }

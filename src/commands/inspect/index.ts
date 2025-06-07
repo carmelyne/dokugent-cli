@@ -7,6 +7,7 @@ import { AGENT_DIR, CERT_DIR, BYO_DIR, LOG_DIR, REPORTS_DIR, AGENTS_CONFIG_DIR, 
 import { runTraceAgent } from "@domain/trace/runner";
 import { resolveDokuUriToUrl } from "@utils/resolve-doku-uri";
 import { isDokuUri } from '@utils/is-doku-uri'
+import { slowPrint } from '@utils/cli/slowPrint';
 
 export async function runInspectCommand() {
   const flagIndex = process.argv.indexOf('--show');
@@ -29,24 +30,18 @@ export async function runInspectCommand() {
   // -- TODO 2 —
   // Load and parse file contents from local disk or fetch from remote MCP
   if (isDokuUri(input)) {
-    const [_, dokuPath] = input.split('doku://');
-    const [agentName, birthTimestamp] = dokuPath.split('@');
-    const compiledDir = path.join(COMPILED_DIR, agentName);
-    const matchingFiles = readdirSync(compiledDir)
-      .filter(f => f.startsWith(`${agentName}@${birthTimestamp}.compiled.v`) && f.endsWith('.cert.json'))
-      .sort((a, b) => {
-        const versionA = parseInt(a.match(/\.v(\d+)\.cert\.json$/)?.[1] || '0');
-        const versionB = parseInt(b.match(/\.v(\d+)\.cert\.json$/)?.[1] || '0');
-        return versionB - versionA;
-      });
-    const latestCertFile = matchingFiles.at(0);
-    const remoteUrl = `https://nldhwmukqkkwauqbbcjm.supabase.co/storage/v1/object/public/dokus/${agentName}/${latestCertFile}`;
-    const response = await fetch(remoteUrl);
-    if (!response.ok) {
-      paddedLog('Fetch failed', `Unable to fetch ${remoteUrl} (status ${response.status})`, 12, 'error');
+    try {
+      const remoteUrl = resolveDokuUriToUrl(input);
+      const response = await fetch(remoteUrl);
+      if (!response.ok) {
+        paddedLog('Fetch failed', `Unable to fetch ${remoteUrl} (status ${response.status})`, 12, 'error');
+        process.exit(1);
+      }
+      certContent = await response.text();
+    } catch (err: any) {
+      paddedLog('Error resolving URI', err.message || String(err), 12, 'error');
       process.exit(1);
     }
-    certContent = await response.text();
   } else {
     try {
       certContent = fs.readFileSync(path.resolve(input), 'utf-8');
@@ -79,11 +74,19 @@ export async function runInspectCommand() {
   if (showSection && cert) {
     const sectionData = cert[showSection] || cert.metadata?.[showSection];
     if (sectionData) {
-      paddedSub(`📍 ${showSection}`, JSON.stringify(sectionData, null, 2));
+      paddedSub(`📍 ${showSection}`, '');
+      const sectionJson = JSON.stringify(sectionData, null, 2);
+      const jsonFlag = process.argv.includes('--json');
+      if (jsonFlag) {
+        sectionJson.split('\n').forEach(line => console.log(' '.repeat(12) + line));
+      } else {
+        await slowPrint(sectionJson, 2); // you can adjust the speed
+      }
     } else {
       paddedSub('⚠️ Not found', `Section '${showSection}' not found in certificate.`);
     }
   }
 
   paddedLog('Inspect completed', '', 12, 'success');
+  paddedSub(`Details you can query via dokugent inspect ${input} --show <section>`, 'Available sections: agent, conventions, criteria, metadata, owner, plan');
 }

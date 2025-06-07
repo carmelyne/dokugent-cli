@@ -1,4 +1,6 @@
 import { runTraceAgent } from "@domain/trace/runner";
+import { slowPrint } from '@utils/cli/slowPrint';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault } from '@utils/cli/ui';
 
 export async function runTraceCommand(args: string[]) {
   const dokuUri = args[0];
@@ -20,8 +22,17 @@ export async function runTraceCommand(args: string[]) {
       return;
     }
 
-    console.log("🔍 Raw trace result:");
-    console.log(JSON.stringify(result, null, 2));
+    console.log()
+    paddedCompact('dokugent trace initialized...', '', PAD_WIDTH, 'blue');
+    if (result) {
+      const pretty = JSON.stringify(result, null, 1);
+      paddedSub('', 'Trace Result');
+      await slowPrint(pretty, 1); //slowPrint Speed Set
+      paddedLog('Trace Completed.', '', 12, 'success', 'TRACE');
+      const agentNameAtBTS = dokuUri.split('/').pop()?.split('.').shift() || 'agent@timestamp';
+      paddedCompact('To inspect the agent', `dokugent inspect doku://${agentNameAtBTS}  --show owner `, PAD_WIDTH, 'blue', 'HELP');
+      paddedSub('Details you can query via --show', 'agent, conventions, criteria, metadata, owner, plan',); //indented white text
+    }
   } catch (error: any) {
     console.error("❌ Error tracing agent:", error.message);
     console.error("🔍 Full error:", error);

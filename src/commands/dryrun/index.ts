@@ -12,7 +12,8 @@ export async function runDryrunCommand(argv: string[] = []) {
 
   // Locate compiled agents directory and read agents
   const compiledDir = path.join('.dokugent/ops/compiled');
-  const agents = await fs.readdir(compiledDir);
+  let agents = await fs.readdir(compiledDir);
+  agents = agents.filter(name => !name.startsWith('.')); // Skip system files like .DS_Store
   if (agents.length === 0) {
     console.error('❌ No compiled agents found.');
     return;
@@ -40,6 +41,11 @@ export async function runDryrunCommand(argv: string[] = []) {
   const latestCertFile = compiledFiles[0];
   const certPath = path.join(agentPath, latestCertFile);
   const certData = JSON.parse(await fs.readFile(certPath, 'utf-8'));
+  console.log(`📄 Certificate file used: ${latestCertFile}`);
+
+  console.log(`🧠 Running dryrun for agent: ${agent}`);
+  const birthTime = certData?.agent?.birth || (certData?.agent?.agentName?.match(/@(.+)$/) || [])[1] || 'unknown';
+  console.log(`📅 Certificate generated at: ${birthTime}\n`);
 
   // Extract plan steps from the certificate data
   const steps = certData?.plan?.steps;

@@ -29,6 +29,21 @@ import { formatRelativePath } from '@utils/format-path';
  * @returns {Promise<void>}
  */
 export async function promptConventionsWizard(force = false) {
+  async function getAllMarkdownFiles(dir: string): Promise<string[]> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(entries.map(async entry => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return await getAllMarkdownFiles(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        return [fullPath];
+      } else {
+        return [];
+      }
+    }));
+    return files.flat();
+  }
+
   try {
     const baseTemplatePath = fs.existsSync(path.resolve(__dirname, '../../../presets/templates/conventions'))
       ? path.resolve(__dirname, '../../../presets/templates/conventions')
@@ -53,7 +68,7 @@ export async function promptConventionsWizard(force = false) {
     });
     availableTypes.push('custom');
 
-    const { selectedType } = await prompt<{ selectedType: string }>([
+    let { selectedType } = await prompt<{ selectedType: string }>([
       {
         type: 'select',
         name: 'selectedType',
@@ -78,10 +93,9 @@ export async function promptConventionsWizard(force = false) {
           name: 'base',
           message: padQuestion('Start your custom convention from:'),
           choices: [
-            padQuestion('Blank'),
-            padQuestion('dev'),
-            padQuestion('writing'),
-            padQuestion('research')
+            { name: 'Blank', message: padQuestion('Blank') },
+            { name: 'writing', message: padQuestion('writing') },
+            { name: 'research', message: padQuestion('research') }
           ],
           initial: 0,
         }
@@ -91,45 +105,46 @@ export async function promptConventionsWizard(force = false) {
 
       if (await fs.pathExists(targetPath) && !force) {
         console.log(`⚠️ ${path.relative(process.cwd(), targetPath)} already exists. Use --force to overwrite.`);
-        return;
-      }
-
-      if (base === 'Blank') {
-        await fs.ensureDir(targetPath);
-        const readmePath = path.join(targetPath, 'README.md');
-        await fs.outputFile(readmePath, `# ${customName} Conventions\n\nDescribe your conventions here.\n`);
+        // Skip return so we continue with final logging
+        selectedType = customName;
       } else {
-        const source = path.join(baseTemplatePath, base);
-        await fs.ensureDir(targetPath);
-        if (await fs.pathExists(source)) {
-          await fs.copy(source, targetPath);
-        } else {
-          console.log(`⚠️ Template not found for base "${base}". Created blank folder.`);
+        if (base === 'Blank') {
+          await fs.ensureDir(targetPath);
           const readmePath = path.join(targetPath, 'README.md');
           await fs.outputFile(readmePath, `# ${customName} Conventions\n\nDescribe your conventions here.\n`);
+        } else {
+          const source = path.join(baseTemplatePath, base);
+          await fs.ensureDir(targetPath);
+          if (await fs.pathExists(source)) {
+            await fs.copy(source, targetPath);
+          } else {
+            console.log(`⚠️ Template not found for base "${base}". Created blank folder.`);
+            const readmePath = path.join(targetPath, 'README.md');
+            await fs.outputFile(readmePath, `# ${customName} Conventions\n\nDescribe your conventions here.\n`);
+          }
         }
+
+        await fs.ensureDir(targetPath);
+        // Create/replace symlink for latest custom convention
+        const symlinkPath = path.join(conventionsBase, customName, 'latest');
+        try {
+          await fs.remove(symlinkPath);
+        } catch { }
+        await fs.symlink(targetPath, symlinkPath, 'dir');
+
+        const metaPath = path.join(targetPath, 'conventions.meta.json');
+        const meta = {
+          by: 'wizard',
+          type: customName,
+          agentId,
+          createdAt: new Date().toISOString(),
+          files: [],
+          conventions: [],
+        };
+        await fs.writeJson(metaPath, meta, { spaces: 2 });
+        // Skip return so we continue with final logging
+        selectedType = customName;
       }
-
-      await fs.ensureDir(targetPath);
-      // Create/replace symlink for latest custom convention
-      const symlinkPath = path.join(conventionsBase, customName, 'latest');
-      try {
-        await fs.remove(symlinkPath);
-      } catch { }
-      await fs.symlink(targetPath, symlinkPath, 'dir');
-
-      const metaPath = path.join(targetPath, 'conventions.meta.json');
-      const meta = {
-        by: 'wizard',
-        type: customName,
-        agentId,
-        createdAt: new Date().toISOString(),
-        files: [],
-        conventions: [],
-      };
-      await fs.writeJson(metaPath, meta, { spaces: 2 });
-
-      return;
     }
 
     let selectedAgents: string[] = [];
@@ -139,17 +154,16 @@ export async function promptConventionsWizard(force = false) {
       await fs.ensureDir(devTargetPath);
       const existingFiles = (await fs.readdir(devTargetPath)).filter(f => f.endsWith('.md'));
 
-      const allChoices = [
-        padQuestion('CLAUDE.md'),
-        padQuestion('CODEX.md'),
-        padQuestion('GEMINI.md'),
-        padQuestion('GPT4.md'),
-        padQuestion('GROK.md'),
-        padQuestion('LLM-CORE.md'),
-        padQuestion('MISTRAL.md'),
+      const baseFilenames = [
+        'CLAUDE.md',
+        'CODEX.md',
+        'GEMINI.md',
+        'GPT4.md',
+        'GROK.md',
+        'LLM-CORE.md',
+        'MISTRAL.md',
       ];
-
-      const remainingChoices = allChoices.filter(choice => !existingFiles.includes(choice));
+      const remainingChoices = baseFilenames.filter(f => !existingFiles.includes(f));
 
       if (remainingChoices.length === 0) {
         console.log('All default profiles already added. Showing only custom option.');
@@ -161,8 +175,16 @@ export async function promptConventionsWizard(force = false) {
           name: 'selectedAgents',
           message: padQuestion('Select agent profiles to include:'),
           choices: [
-            ...remainingChoices,
-            padQuestion('✏️ Custom (type filenames manually)')
+            ...remainingChoices.map(f => ({
+              name: f,
+              message: padQuestion(f),
+              initial: false
+            })),
+            {
+              name: 'custom-file-mode',
+              message: padQuestion('✏️ Custom (type filenames manually)'),
+              initial: false
+            }
           ]
         }
       ]);
@@ -170,13 +192,19 @@ export async function promptConventionsWizard(force = false) {
 
       let manualList: string[] = [];
 
-      if (selectedAgents.includes('Custom (type filenames manually)')) {
+      if (selectedAgents.includes('custom-file-mode')) {
         const { customFiles } = await prompt<{ customFiles: string }>([
           {
             type: 'input',
             name: 'customFiles',
-            message: padQuestion('Enter file names (comma-separated):'),
-            validate: (input: string) => input.trim() !== '' || 'Please enter at least one filename'
+            message: padQuestion('Enter file names (comma-separated, e.g., notes.md, summary.md):'),
+            validate: (input: string) => {
+              const files = input.split(',').map(f => f.trim());
+              if (files.length === 0 || files.some(f => !f.endsWith('.md'))) {
+                return 'All filenames must end in .md (e.g., myfile.md)';
+              }
+              return true;
+            }
           }
         ]);
 
@@ -188,7 +216,9 @@ export async function promptConventionsWizard(force = false) {
 
       // Finalize selectedAgents list
       selectedAgents = selectedAgents
-        .filter(f => f !== 'Custom (type filenames manually)')
+        .filter(f => f !== 'custom-file-mode')
+        .map(f => f.trim())
+        .filter(f => Boolean(f) && !f.toLowerCase().includes('custom (type filenames manually)'))
         .concat(manualList);
 
       if (selectedAgents.length === 0) {
@@ -199,8 +229,14 @@ export async function promptConventionsWizard(force = false) {
           {
             type: 'input',
             name: 'customFiles',
-            message: padQuestion('Enter file names (comma-separated):'),
-            validate: (input: string) => input.trim() !== '' || 'Please enter at least one filename'
+            message: padQuestion('Enter file names (comma-separated, e.g., deepseek.md, qwen.md, xwin.md):'),
+            validate: (input: string) => {
+              const files = input.split(',').map(f => f.trim());
+              if (files.length === 0 || files.some(f => !f.endsWith('.md'))) {
+                return 'All filenames must end in .md (e.g., myfile.md)';
+              }
+              return true;
+            }
           }
         ]);
 
@@ -218,9 +254,9 @@ export async function promptConventionsWizard(force = false) {
 
     const targetPath = path.join(conventionsBase, selectedType, agentId);
 
-    if (await fs.pathExists(targetPath) && !force) {
-      console.log(`📂 Adding to existing folder: ${path.relative(process.cwd(), targetPath)}`);
-    }
+    // if (await fs.pathExists(targetPath) && !force) {
+    //   console.log(`📂 Adding to existing folder: ${path.relative(process.cwd(), targetPath)}`);
+    // }
 
     if (selectedType === 'dev') {
       await fs.ensureDir(targetPath);
@@ -228,13 +264,12 @@ export async function promptConventionsWizard(force = false) {
       for (const agentFile of selectedAgents) {
         const srcPath = path.join(baseTemplatePath, 'dev', agentFile);
         const destPath = path.join(targetPath, agentFile);
-        console.log(`🛠️ ${agentFile} → ${path.relative(process.cwd(), destPath)}`);
-
+        // console.log(`🛠️ ${agentFile} → ${path.relative(process.cwd(), destPath)}`);
         try {
           if (await fs.pathExists(srcPath)) {
             await fs.copy(srcPath, destPath);
           } else {
-            console.log(`⚠️ Template not found for ${agentFile}. Creating placeholder.`);
+            console.log(chalk.hex('#FFA500')(`${glyphs.warning} ${padQuestion(`Template not found for ${agentFile}. Creating placeholder..`)}`));
             await fs.outputFile(destPath, `# ${agentFile}\n\nAdd your conventions here.\n`);
           }
         } catch (err) {
@@ -285,12 +320,10 @@ export async function promptConventionsWizard(force = false) {
       const source = path.join(baseTemplatePath, selectedType);
       if (await fs.pathExists(source)) {
         await fs.copy(source, targetPath);
-        console.log(`✅ Convention template copied from: ${source}`);
       } else {
         await fs.ensureDir(targetPath);
         const readmePath = path.join(targetPath, 'README.md');
         await fs.outputFile(readmePath, `# ${selectedType} Conventions\n\nAdd files to this folder as needed.\n`);
-        console.log(`⚠️ No template found for "${selectedType}". Created empty folder with README at ${targetPath}`);
       }
     }
 
@@ -303,8 +336,7 @@ export async function promptConventionsWizard(force = false) {
     await fs.symlink(targetPath, symlinkPath, 'dir');
     const metaPath = path.join(targetPath, 'conventions.meta.json');
     // Gather markdown files in the targetPath
-    const markdowns = (await fs.readdir(targetPath))
-      .filter(f => f.endsWith('.md'));
+    const markdowns = await getAllMarkdownFiles(targetPath);
     let meta;
     if (selectedType === 'dev') {
       meta = {
@@ -314,7 +346,7 @@ export async function promptConventionsWizard(force = false) {
         createdAt: new Date().toISOString(),
         conventions: markdowns.map(f => ({
           llmName: path.basename(f, '.md'),
-          file: f,
+          file: path.basename(f),
           content: ''
         }))
       };
@@ -324,31 +356,40 @@ export async function promptConventionsWizard(force = false) {
         type: selectedType,
         agentId,
         createdAt: new Date().toISOString(),
-        files: markdowns
+        files: markdowns.map(f => path.basename(f))
       };
     }
     // Write meta JSON to conventions.meta.json
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
     // FINAL LOGS
-    paddedLog('Convention.wizard', ''); // Title
-    // paddedSub('What is the convention type?', selectedType, PAD_WIDTH);
-    // paddedSub('What agent is this for?', agentId, PAD_WIDTH);
+    paddedLog('What is the convention type?', selectedType, PAD_WIDTH, 'magenta', 'CONV');
+    paddedSub('What agent is this for?', agentId);
 
-    // if (selectedAgents && selectedAgents.length > 0) {
-    //   paddedSub('Selected agent files', selectedAgents.join(', '), PAD_WIDTH);
-    // }
-    // paddedLog('Dimmed label', 'the bida text in white', PAD_WIDTH, 'info', 'LEFT_TITLE');
-    paddedLog('SAVED', '');
-    paddedSub('Meta', formatRelativePath(metaPath));
-    for (const file of markdowns) {
-      paddedSub('File', formatRelativePath(path.join(targetPath, file)));
+    if (selectedAgents && selectedAgents.length > 0) {
+      paddedSub('Selected convention files', selectedAgents.join(', '));
     }
+    paddedDefault("Convention folder contents", `(${markdowns.length})`, PAD_WIDTH, 'success', 'SAVED');
+    const sortedFiles = [...markdowns].sort((a, b) => a.localeCompare(b));
+    const renderedList = sortedFiles.map(f => {
+      const line = `${glyphs.arrowRight} ${formatRelativePath(f)}`;
+      if (selectedType === 'dev' && selectedAgents?.includes(path.basename(f))) {
+        return chalk.green(line);
+      }
+      return line;
+    }).join('\n');
+    paddedSub('', renderedList);
+    paddedSub('Conventions Json File', formatRelativePath(metaPath));
 
-    paddedLog('HELP', '');
-    paddedSub('To edit your conventions file', `dokugent conventions --edit ${selectedAgents && selectedAgents.length > 0 ? selectedAgents[0] : (markdowns[0] || '')}`);
+    paddedLog(
+      'To assign a version as the current agent',
+      `dokugent conventions --edit ${selectedAgents && selectedAgents.length > 0 ? selectedAgents[0] : (path.basename(markdowns[0]) || '')}`,
+      PAD_WIDTH,
+      'blue',
+      'HELP'
+    );
+    console.log();
 
-    paddedLog('conventions ✔ initialized', `with ${markdowns.length} ${markdowns.length === 1 ? 'file' : 'files'}.`, PAD_WIDTH, 'success', 'LEFT_TITLE');
   } catch (error: any) {
     if (error === '' || error === null || error?.message === 'cancelled' || error?.message === 'Prompt cancelled') {
       paddedLog('Bye...', 'Convention wizard was cancelled.', PAD_WIDTH, 'warn');

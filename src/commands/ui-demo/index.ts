@@ -1,5 +1,26 @@
-import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText } from '@utils/cli/ui';
+import { wrapWithHangingIndent } from '@utils/cli/wrap-utils';
 import chalk from 'chalk';
+
+// Helper log object for consistent UI demo logging
+const log = {
+  sectionTitle: (title: string) => {
+    console.log();
+    console.log(chalk.bold.underline(title));
+    console.log();
+  },
+  divider: () => {
+    console.log();
+    ui.divider();
+    console.log();
+  },
+  example: (label: string, content: string) => {
+    paddedLog(label, content, PAD_WIDTH, 'info');
+  },
+  bulletList: (items: string[]) => {
+    items.forEach(item => console.log(`• ${item}`));
+  }
+};
 
 export default function runUiDemo() {
   console.log()
@@ -147,10 +168,33 @@ export default function runUiDemo() {
   paddedCompact("Single line paddedCompact", "");
   console.log()
   // Example usage of paddedDefault (no dim label +wrapping)
-  paddedDefault("Single line paddedDefault", "Clean line");
-  paddedDefault("Single line paddedDefault", "Another one");
-  // Example usage of paddedDefault (no label)
+  paddedDefault("Single line paddedDefault:", "Clean line");
+  paddedDefault("Single line paddedDefault:", "Another one");
+  // Example usage of paddedDefault (no label) and no colon
   paddedDefault("", "No dimming here");
+
+  //   In paddedLog(label, value, width, color, tag), the color parameter (in this case 'info') acts as the ANSI color anchor or symbolic cue for visual formatting—like:
+  // 	•	'info' → cyan or white (neutral)
+  // 	•	'warn' → yellow
+  // 	•	'error' → red
+  // 	•	'success' → green
+
+  // This tells the log formatter which color scheme to apply to the label and/or value. It’s not just for styling; it gives instant feedback at-a-glance about the message type
+  // colorMap = {
+  //   info: chalk.dim,
+  //   warn: chalk.yellow,
+  //   error: chalk.red,
+  //   success: chalk.green,
+  // };
+  //
+  // paddedLog('Dimmed label', 'the bida text in white', PAD_WIDTH, 'info', 'LEFT_TITLE');
+  // Will:
+  // 	•	Dim the "Dimmed label"
+  // 	•	Keep "the bida text in white" bold or unstyled
+  // 	•	Align and format it properly
+  // 	•	Color tag 'LEFT_TITLE' based on the same theme
+
+
   // Example usage of padMsg
   console.log(padMsg(`Agent initialized with XX tokens.`));
   console.log()
@@ -273,4 +317,33 @@ export default function runUiDemo() {
   const spinner = ui.spinner('Loading...');
   setTimeout(() => spinner.succeed('Done'), 2000);
   console.log()
+
+  console.log()
+  paddedCompact('dokugent agent initialized...', '', PAD_WIDTH, 'info');
+
+  paddedLog('Trace Completed.', '', 12, 'warn', 'TRACE');
+  paddedSub('', 'Trace Result'); //indented white text
+  paddedLog('To see a list available agents', `dokugent agent --ls`, PAD_WIDTH, 'blue', 'HELP');
+
+  console.log()
+  const PAD_WIDTH_INDENT = 12; // left margin/padding
+
+  const longValue = `This is a long string meant to demonstrate a hanging indent inside a terminal. It wraps across multiple lines and each continuation line should align nicely under the value.This is a long string meant to demonstrate a hanging indent inside a terminal. It wraps across multiple lines and each continuation line should align nicely under the value.This is a long string meant to demonstrate a hanging indent inside a terminal. It wraps across multiple lines and each continuation line should align nicely under the value.This is a long string meant to demonstrate a hanging indent inside a terminal. It wraps across multiple lines and each continuation line should align nicely under the value.`;
+
+  const keyLabel = '"description": ';
+
+  // Include ANSI color codes if needed (optional)
+  const prefix = `\x1b[32m${keyLabel}"`;
+
+  const wrapped = wrapWithHangingIndent(longValue, prefix, undefined, PAD_WIDTH_INDENT)
+
+  // Print it
+  console.log(`${wrapped}"\x1b[0m`);
+  console.log()
+
+  paddedLongText('"description"', longValue, PAD_WIDTH, 'magenta');
+  console.log()
+
+  phaseHeader('1', 'Agent Identity Verification');
+  phaseHeader('2', 'Security Checks', '#FFA500'); // uses orange hex
 }

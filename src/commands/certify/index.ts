@@ -162,6 +162,10 @@ export async function runCertifyCommand(agentArg?: string) {
 
   // Step 4: Save to .dokugent/ops/certified/
   const certOutputDir = path.join('.dokugent', 'ops', 'certified', agentId);
+  // Clean the certified output directory before saving new cert
+  if (await fs.pathExists(certOutputDir)) {
+    await fs.emptyDir(certOutputDir);
+  }
   const certOutputPath = path.join(certOutputDir, `${agentId}@${birthTimestamp}.cert.json`);
 
   await fs.ensureDir(certOutputDir);

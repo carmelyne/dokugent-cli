@@ -1,7 +1,7 @@
 // Placeholder: Setup core directories
-export const AGENT_DIR = '';
+export const AGENT_DIR = '.dokugent/data/agents';
 //.dokugent/data/agents/current or .dokugent/data/agents/latest,
-// can get the coorect agentID and @birthtimestamp from the symlink
+// can get the correct agentID and @birthtimestamp from the symlink
 
 export const CERT_DIR = '.dokugent/ops/certified'; // Folder for certified outputs
 // Files inside follow pattern:
@@ -10,7 +10,7 @@ export const CERT_DIR = '.dokugent/ops/certified'; // Folder for certified outpu
 
 export const COMPILED_DIR = '.dokugent/ops/compiled'; // src/config/agentsConfig.ts
 
-export const AGENTS_CONFIG_DIR = '.dokugent/config/agents'; // src/config/agentsConfig.ts export const AGENTS_CONFIG_DIR = '.dokugent/config/agents'; // src/config/agentsConfig.ts
+export const AGENTS_CONFIG_DIR = '.dokugent/config/agents'; // src/config/agentsConfig.ts
 
 export const BYO_DIR = '.dokugent/data/byo'; // .dokugent/data/byo
 

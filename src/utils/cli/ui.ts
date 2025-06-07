@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import boxen from 'boxen';
 import ora, { Ora } from 'ora';
 import wrapAnsi from 'wrap-ansi';
+import stripAnsi from 'strip-ansi';
 
 // Define shared types and constants for padded logging functions
 type LogLevel = 'success' | 'info' | 'warn' | 'error' | 'blue' | 'orange' | 'pink' | 'purple' | 'magenta';
@@ -234,6 +235,21 @@ export function paddedSub(label: string, value: string): void {
   verticalSpace(); // bottom margin
 }
 
+/**
+ * phaseHeader — Renders a phase header with optional color styling.
+ * @param id - The phase identifier (e.g., "1", "2A").
+ * @param label - The phase label/title.
+ * @param style - Optional chalk style function or hex string for color.
+ */
+export function phaseHeader(
+  id: string,
+  label: string,
+  style: ((txt: string) => string) | string = chalk.bold.cyan
+): void {
+  const styled = typeof style === 'string' ? chalk.hex(style) : style;
+  paddedSub(styled(`PHASE ${id}`), label);
+}
+
 // Formats a padded message (label + value) as a string, with optional color and prefix.
 export const PAD_WIDTH = 12;
 
@@ -291,3 +307,26 @@ export function terminalLink(label: string, url: string): string {
  * @param pad - default horizontal indent (12 spaces)
  */
 export const padQuestion = (msg: string, pad = 10): string => ' '.repeat(pad) + msg;
+
+/**
+ * paddedLongText — hanging indent printer for long strings with a label
+ */
+export function paddedLongText(
+  label: string,
+  value: string,
+  width = PAD_WIDTH,
+  color: string = 'blue'
+): void {
+  const pad = ' '.repeat(width);
+  const labelColorFn = (chalk as any)[color];
+  const labelStyled = typeof labelColorFn === 'function' ? labelColorFn(label) : label;
+  const prefix = `${pad}${labelStyled}: "`;
+  const continuationIndent = ' '.repeat(stripAnsi(prefix).length);
+
+  const wrapped = wrapAnsi(value, process.stdout.columns - continuationIndent.length, { hard: false })
+    .split('\n')
+    .map((line, idx) => (idx === 0 ? `${prefix}${line}` : `${continuationIndent}${line}`))
+    .join('\n');
+
+  console.log(`${wrapped}"`);
+}

@@ -46,7 +46,12 @@ export async function promptCriteriaWizard(force = false) {
   let criteriaData: any = {};
   if (await fs.pathExists(jsonPath)) {
     const raw = await fs.readFile(jsonPath, 'utf-8');
-    criteriaData = JSON.parse(raw);
+    try {
+      criteriaData = raw.trim() === '' ? {} : JSON.parse(raw);
+    } catch (err) {
+      console.warn('⚠️ Could not parse criteria.json. Starting fresh.');
+      criteriaData = {};
+    }
   }
   const existingSuccessConditions = criteriaData['Success Conditions'] || [];
   const existingFailureConditions = criteriaData['Failure Conditions'] || [];
