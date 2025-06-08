@@ -4,6 +4,9 @@ import ora, { Ora } from 'ora';
 import wrapAnsi from 'wrap-ansi';
 import stripAnsi from 'strip-ansi';
 
+// Formats a padded message (label + value) as a string, with optional color and prefix.
+export const PAD_WIDTH = 12;
+
 // Define shared types and constants for padded logging functions
 type LogLevel = 'success' | 'info' | 'warn' | 'error' | 'blue' | 'orange' | 'pink' | 'purple' | 'magenta';
 
@@ -18,40 +21,6 @@ const PADDED_LOG_COLOR_MAP: Record<LogLevel, chalk.Chalk> = {
   purple: chalk.hex('#8A2BE2'),
   magenta: chalk.magenta,
 };
-
-// Like paddedCompact, but omits dim text (no dim indent for value line)
-// Supports both 2-argument shorthand and full-argument signature with smart fallbacks.
-export function paddedDefault(
-  label: string,
-  value: string,
-  arg3?: number | LogLevel | string,
-  arg4?: LogLevel | string,
-  arg5?: string
-): void {
-  let width: number = PAD_WIDTH;
-  let level: LogLevel = 'info';
-  let labelPrefix: string | undefined;
-
-  if (typeof arg3 === 'number') {
-    width = arg3;
-    if (typeof arg4 === 'string' && PADDED_LOG_COLOR_MAP[arg4 as LogLevel]) {
-      level = arg4 as LogLevel;
-      labelPrefix = arg5;
-    }
-  } else if (typeof arg3 === 'string') {
-    if (PADDED_LOG_COLOR_MAP[arg3 as LogLevel]) {
-      level = arg3 as LogLevel;
-      labelPrefix = arg4 as string;
-    } else {
-      labelPrefix = arg3;
-    }
-  }
-
-  const prefixText = labelPrefix ? labelPrefix.padEnd(width) : level.toUpperCase().padEnd(width);
-  const prefix = PADDED_LOG_COLOR_MAP[level](prefixText);
-  const colon = label.trim() !== '' ? ': ' : '';
-  console.log(`${prefix}${label}${colon}${chalk.white(value)}`);
-}
 
 function verticalSpace(lines = 1): void {
   process.stdout.write('\n'.repeat(lines));
@@ -173,7 +142,67 @@ export function menuList(items: { id: string; name: string; org: string; region:
   console.log(chalk.gray.dim('\n↑/k up • ↓/j down • / filter • q quit • ? more\n'));
 }
 
-// Usage
+/**
+ * paddedCompact — Logs a label and value in a compact two-line format.
+ * First line includes a level-colored prefix and the label.
+ * Second line is a dimmed indent followed by the value.
+ *
+ * @param label - The label to display.
+ * @param value - The value to display.
+ * @param width - Width reserved for the prefix and indentation (default: 12).
+ * @param level - Log level determining color (default: 'info').
+ * @param labelPrefix - Optional custom prefix to override default level label.
+ */
+export function paddedCompact(
+  label: string,
+  value: string,
+  width: number = 12,
+  level: LogLevel = 'info',
+  labelPrefix?: string
+): void {
+  const prefixText = labelPrefix ? labelPrefix.padEnd(width) : level.toUpperCase().padEnd(width);
+  const prefix = PADDED_LOG_COLOR_MAP[level](prefixText);
+  const indent = chalk.dim(''.padEnd(width));
+
+  console.log(`${prefix}${label}`);
+  console.log(`${indent}${chalk.white(value)}`);
+}
+
+// Like paddedCompact, but omits dim text (no dim indent for value line)
+// Supports both 2-argument shorthand and full-argument signature with smart fallbacks.
+export function paddedDefault(
+  label: string,
+  value: string,
+  arg3?: number | LogLevel | string,
+  arg4?: LogLevel | string,
+  arg5?: string
+): void {
+  let width: number = PAD_WIDTH;
+  let level: LogLevel = 'info';
+  let labelPrefix: string | undefined;
+
+  if (typeof arg3 === 'number') {
+    width = arg3;
+    if (typeof arg4 === 'string' && PADDED_LOG_COLOR_MAP[arg4 as LogLevel]) {
+      level = arg4 as LogLevel;
+      labelPrefix = arg5;
+    }
+  } else if (typeof arg3 === 'string') {
+    if (PADDED_LOG_COLOR_MAP[arg3 as LogLevel]) {
+      level = arg3 as LogLevel;
+      labelPrefix = arg4 as string;
+    } else {
+      labelPrefix = arg3;
+    }
+  }
+
+  const prefixText = labelPrefix ? labelPrefix.padEnd(width) : level.toUpperCase().padEnd(width);
+  const prefix = PADDED_LOG_COLOR_MAP[level](prefixText);
+  const colon = label.trim() !== '' ? ': ' : '';
+  console.log(`${prefix}${label}${colon}${chalk.white(value)}`);
+}
+
+// Usage paddedLog
 // paddedLog('hash saved', shaPath, 'info', 'SHA256');
 // paddedLog('Compile log saved', logPath, 'info', '📝');
 // paddedLog('Saved as', certPath, 'success', '💾');
@@ -193,25 +222,10 @@ export function paddedLog(
   const lines = wrapped.split('\n');
 
   verticalSpace(1);
-  console.log(`${prefix}${label}`);
+  if (label.trim()) console.log(`${prefix}${label}`);
   for (const line of lines) {
     console.log(`${indent}${chalk.white(line)}`);
   }
-}
-
-export function paddedCompact(
-  label: string,
-  value: string,
-  width: number = 12,
-  level: LogLevel = 'info',
-  labelPrefix?: string
-): void {
-  const prefixText = labelPrefix ? labelPrefix.padEnd(width) : level.toUpperCase().padEnd(width);
-  const prefix = PADDED_LOG_COLOR_MAP[level](prefixText);
-  const indent = chalk.dim(''.padEnd(width));
-
-  console.log(`${prefix}${label}`);
-  console.log(`${indent}${chalk.white(value)}`);
 }
 
 export function paddedSub(label: string, value: string): void {
@@ -247,11 +261,21 @@ export function phaseHeader(
   style: ((txt: string) => string) | string = chalk.bold.cyan
 ): void {
   const styled = typeof style === 'string' ? chalk.hex(style) : style;
-  paddedSub(styled(`PHASE ${id}`), label);
+  paddedSub(styled(`${glyphs.arrowRight} ${id}`), label);
 }
 
-// Formats a padded message (label + value) as a string, with optional color and prefix.
-export const PAD_WIDTH = 12;
+/**
+ * phaseHeaderCompact — Prints the phase title and subtitle without a blank line after.
+ * @param id - The phase identifier (e.g., "1", "2A").
+ * @param label - The phase label/title.
+ */
+export function phaseHeaderCompact(id: string, label: string) {
+  const width = PAD_WIDTH;
+  const prefix = chalk.dim(''.padEnd(width));
+  console.log(`${prefix}${chalk.bold.cyan(`${glyphs.arrowRight} ${id}`)}`);
+  console.log(`${prefix}${chalk.white(label)}`);
+}
+
 
 export function padMsg(
   msg: string,
@@ -260,6 +284,36 @@ export function padMsg(
 ): string {
   const char = useNonBreakingSpace ? '\u00A0' : ' ';
   return char.repeat(width) + msg;
+}
+
+/**
+ * padQuestion — for indenting Enquirer questions
+ * @param msg - the question to indent
+ * @param pad - default horizontal indent (12 spaces)
+ */
+export const padQuestion = (msg: string, pad = 10): string => ' '.repeat(pad) + msg;
+
+/**
+ * paddedLongText — hanging indent printer for long strings with a label
+ */
+export function paddedLongText(
+  label: string,
+  value: string,
+  width = PAD_WIDTH,
+  color: string = 'blue'
+): void {
+  const pad = ' '.repeat(width);
+  const labelColorFn = (chalk as any)[color];
+  const labelStyled = typeof labelColorFn === 'function' ? labelColorFn(label) : label;
+  const prefix = `${pad}${labelStyled}: "`;
+  const continuationIndent = ' '.repeat(stripAnsi(prefix).length);
+
+  const wrapped = wrapAnsi(value, process.stdout.columns - continuationIndent.length, { hard: false })
+    .split('\n')
+    .map((line, idx) => (idx === 0 ? `${prefix}${line}` : `${continuationIndent}${line}`))
+    .join('\n');
+
+  console.log(`${wrapped}"`);
 }
 
 // Common glyphs/characters for semantic CLI UI
@@ -298,35 +352,4 @@ export const glyphs = {
 export function terminalLink(label: string, url: string): string {
   return `\u001b]8;;${url}\u0007${label}\u001b]8;;\u0007`;
 }
-
 // Usage: console.log(terminalLink("Open Docs", "https://example.com"));
-
-/**
- * padQuestion — for indenting Enquirer questions
- * @param msg - the question to indent
- * @param pad - default horizontal indent (12 spaces)
- */
-export const padQuestion = (msg: string, pad = 10): string => ' '.repeat(pad) + msg;
-
-/**
- * paddedLongText — hanging indent printer for long strings with a label
- */
-export function paddedLongText(
-  label: string,
-  value: string,
-  width = PAD_WIDTH,
-  color: string = 'blue'
-): void {
-  const pad = ' '.repeat(width);
-  const labelColorFn = (chalk as any)[color];
-  const labelStyled = typeof labelColorFn === 'function' ? labelColorFn(label) : label;
-  const prefix = `${pad}${labelStyled}: "`;
-  const continuationIndent = ' '.repeat(stripAnsi(prefix).length);
-
-  const wrapped = wrapAnsi(value, process.stdout.columns - continuationIndent.length, { hard: false })
-    .split('\n')
-    .map((line, idx) => (idx === 0 ? `${prefix}${line}` : `${continuationIndent}${line}`))
-    .join('\n');
-
-  console.log(`${wrapped}"`);
-}

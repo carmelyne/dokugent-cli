@@ -65,13 +65,17 @@ export async function promptOwnerWizard(): Promise<{
   const ownerSlug = answers.ownerName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
   const OWNER_PATH = path.resolve(`.dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json`);
 
+  // Get current time for creation fields
+  const now = new Date();
+
   if (answers.confirm) {
     const ownerData: any = {
       ownerName: answers.ownerName,
       email: answers.email || null,
       organization: answers.organization || null,
       trustLevel: answers.trustLevel || null,
-      createdAt: getTimestamp(),
+      createdAt: now.toISOString(), // ISO 8601 string for data reliability
+      createdAtDisplay: now.toLocaleString() // Human-friendly format
     };
 
     await fs.ensureDir(path.dirname(OWNER_PATH));

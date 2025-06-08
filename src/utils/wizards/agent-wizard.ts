@@ -24,6 +24,8 @@ export interface InitAnswers {
   ecosystem: string;
   avatar?: string;
   birth: string;
+  createdAt: string;
+  createdAtDisplay: string;
 }
 
 /**
@@ -41,6 +43,7 @@ export interface InitAnswers {
 export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAnswers> {
   try {
     if (useDefaultsOnly) {
+      const now = new Date();
       const defaults: InitAnswers = {
         agentName: 'default-agent',
         description: 'An AI agent scaffolded with default settings.',
@@ -50,7 +53,9 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
         requiresConventions: false,
         ecosystem: 'none',
         avatar: '',
-        birth: getTimestamp()
+        birth: getTimestamp(),
+        createdAt: now.toISOString(), // ISO 8601 string for data reliability
+        createdAtDisplay: now.toLocaleString() // Human-friendly format
       };
 
       return defaults;
@@ -154,6 +159,7 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     answers.processableTypes = answers.processableTypes.split(',').map((s: string) => s.trim()).filter(Boolean);
 
     const timestamp = getTimestamp();
+    const now = new Date();
     const typedAnswers: InitAnswers = {
       agentName: answers.agentName,
       description: answers.description,
@@ -164,6 +170,8 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       ecosystem: answers.ecosystem,
       avatar: answers.avatar || '',
       birth: timestamp,
+      createdAt: now.toISOString(),
+      createdAtDisplay: now.toLocaleString(),
     };
 
     const agentId = `${typedAnswers.agentName}@${timestamp}`;
@@ -211,7 +219,7 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       paddedLog('To see a list available agents', `dokugent agent --ls`, PAD_WIDTH, 'blue', 'HELP');
     }
     console.log()
-    console.log(padMsg(`Agent ${typedAnswers.agentName} initialized with ${tokenCount} tokens.`)); 
+    console.log(padMsg(`Agent ${typedAnswers.agentName} initialized with ${tokenCount} tokens.`));
     console.log()
     return typedAnswers;
   } catch (error: any) {

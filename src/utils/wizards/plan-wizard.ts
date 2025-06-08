@@ -119,9 +119,15 @@ export async function promptPlanWizard(): Promise<void> {
   }
 
   // Write plan.json as a twin of plan.md, with backup if exists, and merge with existing if present
+  const now = new Date();
   const jsonPath = path.join(baseFolder, 'plan.json');
   const jsonData = {
     agentId,
+    createdAt: now.toISOString(),
+    createdAtDisplay: now.toLocaleString(),
+    lastModifiedAt: now.toISOString(),
+    lastModifiedAtDisplay: now.toLocaleString(),
+    estimatedTokens: 0, // placeholder, will be overwritten below
     steps: steps.map(step => ({
       id: step.id,
       use: step.use,
@@ -149,9 +155,10 @@ export async function promptPlanWizard(): Promise<void> {
 
     jsonData.steps = mergedSteps;
   }
+  const tokenCount = estimateTokensFromText(JSON.stringify(jsonData, null, 2));
+  jsonData.estimatedTokens = tokenCount;
   await fs.outputJson(jsonPath, jsonData, { spaces: 2 });
 
-  const tokenCount = estimateTokensFromText(JSON.stringify(jsonData, null, 2));
   console.log(`\n✅ plan.json updated inside:\n   .dokugent/data/plans/${agentId}/\n`);
   console.log(`🧮 Estimated agent plan step tokens: \x1b[32m~${tokenCount} tokens\x1b[0m\n`);
 

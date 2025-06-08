@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import { writeWithBackup } from '../file-writer';
 import { resolveActivePath } from '../ls-utils';
 import { formatRelativePath } from '../format-path';
+import { estimateTokensFromText } from '../tokenizer';
 /**
  * Launches an interactive CLI wizard to define criteria for evaluating agent outputs.
  * Captures success conditions, failure conditions, and performance metrics.
@@ -190,12 +191,22 @@ export async function promptCriteriaWizard(force = false) {
   // Build clean output (removed mdContent and writing criteria.md)
   await fs.ensureDir(versionedFolder);
 
+  const now = new Date();
+
   // Write criteria.json alongside criteria.md with backup
   const jsonContent = {
+    createdAt: now.toISOString(),
+    createdAtDisplay: now.toLocaleString(),
+    lastModifiedAt: now.toISOString(),
+    lastModifiedAtDisplay: now.toLocaleString(),
+    estimatedTokens: 0, // will be updated below
     "Success Conditions": mergedSuccess,
     "Failure Conditions": mergedFailure,
     "Evaluation Metrics": mergedMetrics,
   };
+  const estimatedTokens = estimateTokensFromText(JSON.stringify(jsonContent, null, 2));
+  jsonContent.estimatedTokens = estimatedTokens;
+
   await writeWithBackup(jsonPath, JSON.stringify(jsonContent, null, 2));
   console.log(`\n📄 criteria.json created at\n   ${formatRelativePath(jsonPath)}\n`);
 

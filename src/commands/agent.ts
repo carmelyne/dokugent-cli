@@ -11,7 +11,7 @@ import {
   resolveAgentSlugFromArgs
 } from '@utils/agent-utils';
 import { agentLs, setAgentCurrent } from '@utils/ls-utils';
-import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault } from '@utils/cli/ui';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, phaseHeader } from '@utils/cli/ui';
 
 export function runAgentCommand() {
   (async () => {

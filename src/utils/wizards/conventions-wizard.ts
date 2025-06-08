@@ -337,13 +337,30 @@ export async function promptConventionsWizard(force = false) {
     const metaPath = path.join(targetPath, 'conventions.meta.json');
     // Gather markdown files in the targetPath
     const markdowns = await getAllMarkdownFiles(targetPath);
+    // --- Begin: Token estimation and timestamp ---
+    const now = new Date();
+    let estimatedTokens = 0;
+    try {
+      const allText = (
+        await Promise.all(markdowns.map(async f => fs.readFile(f, 'utf-8')))
+      ).join('\n\n');
+      const { estimateTokensFromText } = await import('../tokenizer');
+      estimatedTokens = estimateTokensFromText(allText);
+    } catch {
+      estimatedTokens = 0;
+    }
+    // --- End: Token estimation and timestamp ---
     let meta;
     if (selectedType === 'dev') {
       meta = {
         by: 'wizard',
         type: selectedType,
         agentId,
-        createdAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
+        createdAtDisplay: now.toLocaleString(),
+        lastModifiedAt: now.toISOString(),
+        lastModifiedAtDisplay: now.toLocaleString(),
+        estimatedTokens,
         conventions: markdowns.map(f => ({
           llmName: path.basename(f, '.md'),
           file: path.basename(f),
@@ -355,7 +372,11 @@ export async function promptConventionsWizard(force = false) {
         by: 'wizard',
         type: selectedType,
         agentId,
-        createdAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
+        createdAtDisplay: now.toLocaleString(),
+        lastModifiedAt: now.toISOString(),
+        lastModifiedAtDisplay: now.toLocaleString(),
+        estimatedTokens,
         files: markdowns.map(f => path.basename(f))
       };
     }

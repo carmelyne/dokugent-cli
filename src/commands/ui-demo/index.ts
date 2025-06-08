@@ -1,4 +1,4 @@
-import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText } from '@utils/cli/ui';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
 import { wrapWithHangingIndent } from '@utils/cli/wrap-utils';
 import chalk from 'chalk';
 
@@ -148,7 +148,7 @@ export default function runUiDemo() {
   });
 
   // Example: using a glyph in a paddedLog
-  paddedLog('Favorite', 'summarybot', PAD_WIDTH, 'info', glyphs.starFilled);
+  paddedLog('Favorite', 'summarybot', PAD_WIDTH, 'info', glyphs.starFilled + '1');
 
   // Example usage of padMsg and PAD_WIDTH
   paddedLog('padMsg', padMsg('Message aligned using padMsg()'), PAD_WIDTH, 'info');
@@ -347,3 +347,24 @@ export default function runUiDemo() {
   phaseHeader('1', 'Agent Identity Verification');
   phaseHeader('2', 'Security Checks', '#FFA500'); // uses orange hex
 }
+
+// --- ADDED: Write UI demo sample log file ---
+import fs from 'fs-extra';
+import path from 'path';
+import { estimateTokensFromText } from '@utils/tokenizer';
+
+const sample = {
+  agentId: 'demo@2025-06-08_00-00-00-000',
+  previewTimestamp: new Date().toISOString(),
+  plan: {
+    estimatedTokens: estimateTokensFromText('{}')
+  },
+  criteria: {
+    estimatedTokens: estimateTokensFromText('{}')
+  },
+  conventions: {
+    estimatedTokens: estimateTokensFromText('{}')
+  }
+};
+
+fs.outputJsonSync(path.join('.omnimodal/ui-demo/uiPath.log.json'), sample, { spaces: 2 });

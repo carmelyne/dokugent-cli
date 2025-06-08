@@ -2,7 +2,7 @@
 // Replace the problematic section in your runCompileCommand function
 import fs from 'fs';
 import path from 'path';
-import { ui, paddedLog, paddedSub } from '@utils/cli/ui';
+import * as ui from '@utils/cli/ui';
 import { estimateTokensFromText, warnIfExceedsLimit } from '@utils/tokenizer';
 import { runSecurityCheck } from '@utils/security-check';
 import { AGENT_DIR, CERT_DIR, BYO_DIR, LOG_DIR, REPORTS_DIR, AGENTS_CONFIG_DIR, COMPILED_DIR } from '@constants/paths';
@@ -10,6 +10,7 @@ import { AGENT_DIR, CERT_DIR, BYO_DIR, LOG_DIR, REPORTS_DIR, AGENTS_CONFIG_DIR, 
 import dotenv from 'dotenv';
 import { agentsConfig } from '@config/agentsConfig';
 import inquirer from 'inquirer';
+import { compileStatusLog } from '../../utils/cli/compile';
 dotenv.config();
 // Debug script to find where 492 is coming from
 // Add this debugging code to your runCompileCommand function
@@ -122,8 +123,9 @@ function searchForPattern(dirPath: string, pattern: string, depth = 0) {
 // Call this function at the beginning of your runCompileCommand
 // debugIdentityMismatch();
 export async function runCompileCommand(agentId?: string) {
-  paddedLog('Iniatiate', 'Running dokugent compile...', 12, 'info', 'START');
 
+  console.log()
+  ui.paddedCompact('dokugent compile initialized...', '', ui.PAD_WIDTH, 'info');
   // Parse --find option from command line arguments
 
   // STEP 1: Load current/latest agent identity first
@@ -137,23 +139,31 @@ export async function runCompileCommand(agentId?: string) {
   if (fs.existsSync(currentIdentityPath)) {
     currentIdentity = JSON.parse(fs.readFileSync(currentIdentityPath, 'utf-8'));
     identitySource = 'current';
-    paddedLog('Using current agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`, 12, 'info', 'IDENTITY');
+    // ui.paddedSub('Agent loaded...', `${currentIdentity.agentName}@${currentIdentity.birth}`); //indented white text
+    compileStatusLog('Passed', 'Agent Identity Verification', 'pass');
+    // ui.paddedLog("Agent Identity Verification", `${ui.glyphs.arrowRight} Checking current agent identity`, ui.PAD_WIDTH, 'magenta', 'STEP 1');
+    // ui.phaseHeaderCompact('Checking current agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`);
+
   } else if (fs.existsSync(latestIdentityPath)) {
     currentIdentity = JSON.parse(fs.readFileSync(latestIdentityPath, 'utf-8'));
     identitySource = 'latest';
-    paddedLog('Current identity not found. Using latest agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`, 12, 'warn', 'IDENTITY');
+    ui.phaseHeaderCompact('Current identity not found. Checking latest agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`);
   } else {
+    compileStatusLog('✖ Failed', 'Agent Identity Verification', 'fail');
     throw new Error('❌ Neither "current" nor "latest" identity.json found in .dokugent/data/agents/');
   }
 
   const expectedAgentId = `${currentIdentity.agentName}@${currentIdentity.birth}`;
-  paddedLog('Expected agent ID for compilation', expectedAgentId, 12, 'info', 'VALIDATION');
-
+  // ui.paddedLog('Expected agent ID for compilation', expectedAgentId, 12, 'info', 'VALIDATION');
+  compileStatusLog('Passed', 'Confirm match with the preview & certified files', 'pass');
+  // ui.phaseHeaderCompact('Agent Identity match confirmed with the preview & certified files', expectedAgentId);
   // STEP 2: Find and validate cert files for the current agent only
+  // ui.phaseHeader('2', 'Certificate Validation');
   const targetAgentName = currentIdentity.agentName;
   const targetAgentCertDir = path.join(CERT_DIR, targetAgentName);
 
   if (!fs.existsSync(targetAgentCertDir)) {
+    compileStatusLog('Failed', 'Mismatched preview & certified files', 'fail');
     throw new Error(`❌ No cert directory found for agent ${targetAgentName} at ${targetAgentCertDir}`);
   }
 
@@ -165,16 +175,19 @@ export async function runCompileCommand(agentId?: string) {
   );
 
   if (matchingCerts.length === 0) {
+    compileStatusLog('Failed', 'Mismatched preview & certified files', 'fail');
     throw new Error(`❌ No valid cert files found for agent ${targetAgentName} in ${targetAgentCertDir}`);
   }
 
-  paddedLog(`Found ${matchingCerts.length} cert file(s) for agent ${targetAgentName}`, '', 0, 'info', '📦');
+  // ui.paddedLog(`Found ${matchingCerts.length} cert file(s) for agent ${targetAgentName}`, '', 0, 'info', '📦');
 
   // STEP 3: Load and validate BYO files (your existing logic)
+  compileStatusLog('Passed', 'Security Checks', 'pass');
+  // ui.phaseHeaderCompact('passed the security check', expectedAgentId);
   const byoFiles = fs.readdirSync(BYO_DIR).filter(file => file.endsWith('.json'));
 
   if (byoFiles.length === 0) {
-    paddedLog('No BYO JSON files found in', BYO_DIR, 12, 'warn');
+    compileStatusLog('Warn', 'No BYO JSON included', 'warn');
   }
 
   const byoBundle: Record<string, any> = {};
@@ -186,13 +199,15 @@ export async function runCompileCommand(agentId?: string) {
       const parsed = JSON.parse(content);
       byoBundle[file] = parsed;
     } catch (err: any) {
-      paddedLog(`Error parsing ${file}`, err.message, 12, 'error');
+      compileStatusLog('Failed', 'Security Checks', 'fail', [err.message, err.message]);
     }
   }
 
-  paddedLog(`Loaded ${Object.keys(byoBundle).length} BYO file(s) into global-byo bundle.`, '', 0, 'info', '📦');
+  compileStatusLog('Included', 'BYO JSON', 'info');
+  // ui.paddedLog(`Loaded ${Object.keys(byoBundle).length} BYO file(s) into global-byo bundle.`, '', 0, 'info', '📦');
 
   // STEP 4: Process only the matching cert files for the current agent
+  // ui.phaseHeader('4', 'Compilation & Signing');
   for (const certFile of matchingCerts) {
     const match = certFile.match(/@(.*?)\.cert\.json$/);
     if (!match) continue;
@@ -203,10 +218,12 @@ export async function runCompileCommand(agentId?: string) {
 
     // STEP 5: Validate that the preview matches the current agent identity
     if (!previewJson.plan || !previewJson.plan.agentId) {
+      compileStatusLog('Failed', 'Agent Identity Verification', 'fail');
       throw new Error(`❌ Preview file ${certFile} is missing plan.agentId`);
     }
 
     if (previewJson.plan.agentId !== expectedAgentId) {
+      compileStatusLog('Failed', 'Mismatched preview & certified files', 'fail');
       throw new Error(`❌ Agent ID mismatch:
         Preview file: ${previewJson.plan.agentId}
         Expected (from ${identitySource}): ${expectedAgentId}
@@ -214,8 +231,7 @@ export async function runCompileCommand(agentId?: string) {
         Please ensure you're compiling the correct agent or update your current/latest identity.`);
     }
 
-    paddedLog('Agent ID validation passed', `${previewJson.plan.agentId} ✓`, 12, 'success', 'VALIDATED');
-
+    // compileStatusLog('Passed', 'Agent Identity Verification', 'pass');
     // === CERTIFIER METADATA VALIDATION ===
     let certifierPath = '';
     try {
@@ -226,7 +242,7 @@ export async function runCompileCommand(agentId?: string) {
       const certifierKeyVersion =
         previewJson.metadata?.certifierKeyVersion;
       if (!certifier || typeof certifier !== 'object' || !certifierName || !certifierKeyVersion) {
-        paddedLog("Certifier metadata not found or incomplete.", '', 12, 'warn');
+        compileStatusLog('Warn', 'Certifier metadata incomplete', 'warn');
         throw new Error(`❌ Certifier metadata missing. Please re-run 'dokugent preview' and select a certifier.`);
       }
 
@@ -236,13 +252,17 @@ export async function runCompileCommand(agentId?: string) {
         certifierKeyVersion,
         `${certifierName}.meta.json`
       );
-
-      paddedLog('Looking for certifier file at', `${certifierPath}`, 12, 'info', 'CHECKING');
+      compileStatusLog('Previewer', previewJson.metadata?.previewer || 'unknown', 'info');
+      compileStatusLog('Signed', previewJson.metadata?.previewedAt || 'unknown', 'info');
+      compileStatusLog('Certifier', certifierName, 'info');
+      compileStatusLog('Signed', new Date().toLocaleString(), 'info');
+      // ui.paddedLog('Looking for certifier file at', `${certifierPath}`, 12, 'info', 'CHECKING');
       if (!fs.existsSync(certifierPath)) {
+        compileStatusLog('Failed', 'Certifier file missing', 'fail');
         throw new Error(`❌ Missing certifier file at ${certifierPath}`);
       }
     } catch (error: any) {
-      paddedLog(error.message || error, '', 12, 'error');
+      compileStatusLog('Failed', 'Certifier validation', 'fail', [error.message || error]);
       process.exit(1);
     }
 
@@ -329,8 +349,8 @@ export async function runCompileCommand(agentId?: string) {
     fs.writeFileSync(compiledCertPath, JSON.stringify(compiledCert, null, 2), 'utf-8');
     fs.writeFileSync(compiledShaPath, hash, 'utf-8');
 
-    paddedLog('Saved compiled cert', compiledCertPath, 12, 'success', 'CERT');
-    paddedLog('SHA256 hash saved', compiledShaPath, 12, 'info', 'SHA256');
+    ui.paddedLog('Saved compiled cert', compiledCertPath, 12, 'success', 'CERT');
+    ui.paddedLog('SHA256 hash saved', compiledShaPath, 12, 'info', 'SHA256');
   }
 }
 

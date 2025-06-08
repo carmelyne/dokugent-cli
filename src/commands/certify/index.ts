@@ -95,8 +95,8 @@ export async function runCertifyCommand(agentArg?: string) {
 
   // Removed previous validFrom and validUntil assignments
   // Assign validFrom and validUntil as per instructions
-  const validFrom = new Date().toISOString();
-  const validUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString(); // 1 year
+  const validFrom = new Date().toLocaleString();
+  const validUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toLocaleString(); // 1 year
 
   const selectedKeyPath = path.join(keysBasePath, selectedOwner, 'latest');
   const exists = await fs.pathExists(selectedKeyPath);
@@ -123,28 +123,29 @@ export async function runCertifyCommand(agentArg?: string) {
   const agentUri = `doku://${selectedOwner}/${agentId}@${birthTimestamp}`;
   const ownerId = selectedOwner;
 
+  // Inject certifier block from loaded signer object (updated fields)
+  const certifier = {
+    certifierName: selectedOwner,
+    certifiedAt: new Date().toLocaleString(),
+    email: signer.email,
+    publicKey: signer.publicKey,
+    fingerprint: signer.fingerprint,
+    keyVersion: 'latest'
+  };
+
   // Inject Doku Metadata (updated fields)
   const metadata: any = {
     format: 'doku-cert',
     version: 'v1.0.0',
     schema: 'https://dokugent.org/schema/v1.json',
-    generatedAt: new Date().toISOString(),
+    generatedAt: new Date().toLocaleString(),
     generator: `dokugent@${pkgVersion}`,
     experimental: false,
     uri: agentUri,
-    certifierName: selectedOwner,
     certifierFingerprint: signer.fingerprint || '',
     certifierKeyVersion: 'latest',
     validFrom,
-    validUntil
-  };
-
-  // Inject certifier block from loaded signer object
-  const certifier = {
-    certifierName: selectedOwner,
-    email: signer.email,
-    publicKey: signer.publicKey,
-    fingerprint: signer.fingerprint
+    validUntil,
   };
 
   const certifiedOutput = {

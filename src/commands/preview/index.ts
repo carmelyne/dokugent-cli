@@ -12,6 +12,27 @@ import ora from 'ora';
 import { slowPrint } from '@utils/cli/slowPrint';
 
 export async function runPreviewCommand(): Promise<void> {
+  function ensureTimestampsAndTokens(obj: any, now: Date): void {
+    // This logic uses token count as a lightweight tamper signal.
+    // If the estimatedTokens value differs from the saved version,
+    // we assume the file was modified after its initial creation.
+    // We then update lastModifiedAt to now. This is not a cryptographic
+    // hash, but a practical checksum until stricter integrity features
+    // like file hashing or version locking are introduced.
+    if (!obj.createdAt) obj.createdAt = now.toISOString();
+    if (!obj.createdAtDisplay) obj.createdAtDisplay = now.toLocaleString();
+
+    const estimatedToken = estimateTokensFromText(JSON.stringify(obj, null, 2));
+
+    if (typeof obj.estimatedTokens !== 'number' || obj.estimatedTokens !== estimatedToken) {
+      obj.lastModifiedAt = now.toISOString();
+      obj.lastModifiedAtDisplay = now.toLocaleString();
+      obj.estimatedTokens = estimatedToken;
+    } else {
+      obj.lastModifiedAt ??= obj.createdAt;
+      obj.lastModifiedAtDisplay ??= obj.createdAtDisplay;
+    }
+  }
   const base = '.dokugent/data';
 
   // Resolve agent
@@ -147,16 +168,21 @@ export async function runPreviewCommand(): Promise<void> {
 
   const conventions = conventionsRaw;
 
+  const now = new Date();
+
   const ownerData = {
     ownerName: owner.owner_name ?? owner.name ?? path.basename(path.dirname(ownerPath)),
     email: owner.email,
     trustLevel: owner.trustLevel,
     organization: owner.organization,
-    createdAt: owner.createdAt
+    createdAt: now.toISOString(),
+    createdAtDisplay: now.toLocaleString()
   };
 
   const previewerData = {
     previewerName: previewer.previewerName,
+    previewedAt: now.toISOString(),
+    previewedAtDisplay: now.toLocaleString(),
     email: previewer.email,
     publicKey: previewer.publicKey,
     fingerprint: previewer.fingerprint ?? crypto.createHash('sha256').update(previewer.publicKey).digest('hex'),
@@ -170,6 +196,13 @@ export async function runPreviewCommand(): Promise<void> {
     conventions: conventions,
     // owner and previewer will be added below
   };
+
+  ensureTimestampsAndTokens(planJson, now);
+  // Only call if criteria is defined
+  if (certObject.criteria) {
+    ensureTimestampsAndTokens(certObject.criteria, now);
+  }
+  ensureTimestampsAndTokens(conventions, now);
   // Load optional BYO file (moved here)
   const byoDir = path.join(base, 'byo', 'processed', planJson.agentId);
   const byoPath = path.join(byoDir, 'byo.json');

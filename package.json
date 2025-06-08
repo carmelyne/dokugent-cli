@@ -7,7 +7,8 @@
     "test:plan": "ts-node test/plan-wizard.test.ts",
     "build": "tsc",
     "dev": "TS_NODE_PROJECT=tsconfig.json ts-node -r tsconfig-paths/register bin/dokugent.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "release": "standard-version"
   },
   "bin": {
     "dokugent": "bin/register.ts"
@@ -31,6 +32,7 @@
     "enquirer": "^2.4.1",
     "enquirer-prompts": "^1.0.0",
     "ora": "^8.2.0",
+    "standard-version": "^9.5.0",
     "terminal-link": "^4.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
