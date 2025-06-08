@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/carmelyne/dokugent-cli/compare/v1.0.0...v1.1.0) (2025-06-08)
+
+
+### Features
+
+* add timestamp + token metadata to plan, criteria, conventions, and preview ([29717f2](https://github.com/carmelyne/dokugent-cli/commit/29717f2fc9279333bbab948ce3402f0e833553cd))
+
 ## 1.0.0 (2025-06-07)
 
 
