@@ -43,24 +43,26 @@ export const ui = {
     msg: string,
     color: string = 'green',
     align: 'left' | 'center' | 'right' = 'center',
-    borderStyle: 'single' | 'round' = 'round'
+    borderStyle: 'single' | 'round' = 'round',
+    padLeft: number = PAD_WIDTH
   ) => {
-    // Map custom color names to hex codes for boxen
     const colorMap: Record<string, string> = {
       blue: '#1E90FF',
       orange: '#FFA500',
       pink: '#FF69B4',
       purple: '#8A2BE2',
-      magenta: '#FF00FF',
+      magenta: '#d2a8ff',
     };
-    return console.log(
-      boxen(msg, {
-        padding: 1,
-        borderColor: (colorMap[color] ? colorMap[color] : color),
-        align,
-        borderStyle,
-      })
-    );
+
+    const boxed = boxen(msg, {
+      padding: 1,
+      borderColor: colorMap[color] ?? color,
+      align,
+      borderStyle,
+    });
+
+    const indent = ' '.repeat(padLeft);
+    console.log(boxed.split('\n').map(line => indent + line).join('\n'));
   },
 
   spinner: (text: string) => ora(text).start(),
@@ -196,8 +198,10 @@ export function paddedDefault(
     }
   }
 
-  const prefixText = labelPrefix ? labelPrefix.padEnd(width) : level.toUpperCase().padEnd(width);
-  const prefix = PADDED_LOG_COLOR_MAP[level](prefixText);
+  const prefix =
+    labelPrefix === ''
+      ? ''.padEnd(width)
+      : PADDED_LOG_COLOR_MAP[level]((labelPrefix || level.toUpperCase()).padEnd(width));
   const colon = label.trim() !== '' ? ': ' : '';
   console.log(`${prefix}${label}${colon}${chalk.white(value)}`);
 }
@@ -268,11 +272,17 @@ export function phaseHeader(
  * phaseHeaderCompact — Prints the phase title and subtitle without a blank line after.
  * @param id - The phase identifier (e.g., "1", "2A").
  * @param label - The phase label/title.
+ * @param style - Optional chalk style function or hex string for color.
  */
-export function phaseHeaderCompact(id: string, label: string) {
+export function phaseHeaderCompact(
+  id: string,
+  label: string,
+  style: ((txt: string) => string) | string = chalk.bold.cyan
+): void {
+  const styled = typeof style === 'string' ? chalk.hex(style) : style;
   const width = PAD_WIDTH;
   const prefix = chalk.dim(''.padEnd(width));
-  console.log(`${prefix}${chalk.bold.cyan(`${glyphs.arrowRight} ${id}`)}`);
+  console.log(`${prefix}${styled(`${glyphs.arrowRight} ${id}`)}`);
   console.log(`${prefix}${chalk.white(label)}`);
 }
 
@@ -353,3 +363,26 @@ export function terminalLink(label: string, url: string): string {
   return `\u001b]8;;${url}\u0007${label}\u001b]8;;\u0007`;
 }
 // Usage: console.log(terminalLink("Open Docs", "https://example.com"));
+
+/**
+ * narrateDryrunStep — Structured narrator for dryrun CLI output.
+ */
+export function narrateDryrunStep(
+  stepId: string,
+  tool: string,
+  input: string,
+  output: string,
+  goal?: string,
+  constraints?: string[]
+): void {
+  console.log();
+  paddedDefault('', `${chalk.blue('→ STEP SUMMARY')}: ${stepId}`, '');
+  console.log();
+  paddedDefault("Simulating step", stepId + ' using tool ' + tool, PAD_WIDTH, 'blue', 'STEP')
+  paddedDefault('Needs file', input, PAD_WIDTH, 'blue', 'INPUT');
+  paddedDefault('Output file', output, PAD_WIDTH, 'blue', 'OUTPUT');
+  if (goal) paddedDefault('', goal, PAD_WIDTH, 'success', 'GOAL');
+  if (constraints && constraints.length > 0) {
+    paddedDefault('', constraints.join(', '), PAD_WIDTH, 'orange', 'CONSTRAINTS');
+  }
+}

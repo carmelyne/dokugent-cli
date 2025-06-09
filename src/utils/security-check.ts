@@ -14,7 +14,8 @@ import path from 'path';
 interface ScanOptions {
   denyList?: string[];
   requireApprovals?: boolean;
-  scanPaths?: string[]; // ✅ Must be added if you're using scanPaths
+  scanPaths?: string[];
+  certifiedJson?: Record<string, any>; // ✅ Allow for compile-mode checks
 }
 
 export async function runSecurityCheck(context: 'security' | 'preview' | 'compile', options: ScanOptions): Promise<string[]> {

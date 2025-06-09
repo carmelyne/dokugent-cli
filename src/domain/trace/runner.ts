@@ -37,7 +37,7 @@ export async function postToMcpServer(dokuUri: string, intent: string, input?: a
 }
 
 export async function runTraceAgent({ dokuUri, token }: { dokuUri: string; token?: string }): Promise<any> {
-  const resolvedUrl = resolveDokuUriToUrl(dokuUri);
+  const resolvedUrl = await resolveDokuUriToUrl(dokuUri);
   const jwt = token || SUPABASE_SERVICE_ROLE_KEY;
   if (!jwt) {
     throw new Error("Missing authorization token. Please set SUPABASE_SERVICE_ROLE_KEY in your env.");

@@ -3,7 +3,7 @@ import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, padd
 
 export const COMPILE_PAD_WIDTH = 12;
 
-export function compileStatusLog(label: string, description: string, status: 'info' | 'warn' | 'pass' | 'fail' | undefined, reasons?: string[]) {
+export function compileStatusLog(label: string, description: string, status: 'info' | 'warn' | 'pass' | 'fail' | 'blue' | 'magenta' | undefined, reasons?: string[]) {
   const PAD_WIDTH = 12;
 
   let symbol = '';
@@ -16,7 +16,7 @@ export function compileStatusLog(label: string, description: string, status: 'in
       break;
     case 'warn':
       symbol = glyphs.warning;
-      color = chalk.yellow;
+      color = chalk.hex('#FFA500');
       break;
     case 'pass':
       symbol = glyphs.check;
@@ -25,6 +25,14 @@ export function compileStatusLog(label: string, description: string, status: 'in
     case 'fail':
       symbol = glyphs.cross;
       color = chalk.red;
+      break;
+    case 'blue':
+      symbol = glyphs.info;
+      color = chalk.blue;
+      break;
+    case 'magenta':
+      symbol = glyphs.info;
+      color = chalk.magenta;
       break;
     default:
       symbol = '';

@@ -52,3 +52,12 @@ export function resolveAgentSlugFromArgs(args: string[]): string {
   }
   throw new Error(`❌ Please provide an agent using --agent <slug>`);
 }
+
+export function getCurrentAgentSlug(): string {
+  const symlinkPath = path.resolve('.dokugent/data/agents/current');
+  if (!fs.existsSync(symlinkPath)) {
+    throw new Error(`❌ No 'current' symlink found.`);
+  }
+  const realPath = fs.realpathSync(symlinkPath);
+  return path.basename(realPath); // Extracts the slug from the resolved path
+}

@@ -31,7 +31,7 @@ export async function runInspectCommand() {
   // Load and parse file contents from local disk or fetch from remote MCP
   if (isDokuUri(input)) {
     try {
-      const remoteUrl = resolveDokuUriToUrl(input);
+      const remoteUrl = await resolveDokuUriToUrl(input);
       const response = await fetch(remoteUrl);
       if (!response.ok) {
         paddedLog('Fetch failed', `Unable to fetch ${remoteUrl} (status ${response.status})`, 12, 'error');
