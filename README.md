@@ -10,6 +10,8 @@ AI agents need more than raw code—they need context, structure, and guidance.
 
 Instead of bloated repos or scattered prompts, Dokugent gives your AI teammates a clean, token-efficient folder of structured instructions, ready to reuse across projects.
 
+Dokugent also helps teams save significantly on development costs by letting them simulate agents locally using Ollama before making any API calls. You can test variations, debug behaviors, and explore edge cases without burning tokens — governance and traceability become natural side-effects of good development hygiene.
+
 While originally designed for developers, Dokugent’s modular structure can also support structured thinking in content planning, education, research, and more.
 
 ## 🚀 Features
@@ -19,6 +21,20 @@ While originally designed for developers, Dokugent’s modular structure can als
 - 🛡️ Enforces conventions and traceable criteria
 - 🔐 Certifies and simulates agent reasoning flows
 - 📦 Supports Claude, Codex, GPT-4, Gemini, LLaMA, Nvidia via `agent --ecosystem` or `conventions`
+
+## 🧠 Why Dokugent?
+
+**Test smarter. Spend less. Ship safer.**
+
+Dokugent helps developers design and test AI agents locally — using Ollama — before committing to expensive API calls. It’s a dev stack for agent builders who want to:
+
+- 🏠 Run full agent simulations offline with no API cost
+- 💸 Save 60–80% of LLM spend by testing with Ollama before calling expensive APIs
+- 🔏 Sign, certify, and trace agent decisions with governance built-in
+- 📜 Deploy with audit trails, signer identities, and Doku URIs
+- ⚖️ Governance becomes an emergent property, not a tax on your workflow
+
+Start local. Scale safely. Pay only when it matters.
 
 ## 🛠 Getting Started
 
