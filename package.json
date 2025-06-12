@@ -1,6 +1,6 @@
 {
   "name": "dokugent-cli-v0.1",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "main": "index.js",
   "scripts": {
     "test:init": "ts-node test/init-yes.test.ts",
