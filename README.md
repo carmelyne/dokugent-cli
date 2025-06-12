@@ -46,21 +46,36 @@ npm install -g dokugent
 
 ## 🔧 CLI Commands
 
-- ✅ `dokugent init` — scaffolds `.dokugent` folder structure and default files
-- ✅ `dokugent wizard` — interactively configures agent or app type, tools, and sets up project files
-- ✅ `dokugent plan` — defines the agent’s high-level steps or capabilities
-- ✅ `dokugent conventions` — describes and enforces documentation structure
-- ✅ `dokugent criteria` — defines validation rules, safety thresholds, and constraints
-- ✅ `dokugent security` — validates against unsafe actions, tools, or behavior
-- ✅ `dokugent preview` — renders plan, conventions, and criteria for human review before compiling
-- ✅ `dokugent keygen` — generates cryptographic signing keys for certifying agent files & verifying trust
-- ✅ `dokugent certify` — certifies agents or plans against predefined safety protocols
-- ✅ `dokugent compile` — compiles structured files into agent-readable prompts
-- ✅ `dokugent dryrun` — simulates agent behavior without real LLM calls
-- ✅ `dokugent simulate` — runs a test session with a any local LLM on Ollama
-- ✅ `dokugent trace` — audits a previously certified agent to verify using a remote doku:// URI
-- ✅ `dokugent inspect` — fetches and displays certified agent files from local or remote URIs
-- 🔲 `dokugent review` — checks trace output against expected behavior or goals
+### setup
+
+- ✅ [`dokugent init`](https://dokugent.com/commands/dokugent-init/){:target="_blank"}        — Scaffold a new project
+- ✅ [`dokugent owner`](https://dokugent.com/commands/dokugent-owner/){:target="_blank"}       — Set or view project owner metadata
+- ✅ [`dokugent agent`](https://dokugent.com/commands/dokugent-agent/){:target="_blank"}       — Create a new agent identity (--t for template)
+- ✅ [`dokugent keygen`](https://dokugent.com/commands/dokugent-keygen/){:target="_blank"}      — Create identity keypairs
+
+### authoring
+
+- ✅ [`dokugent plan`](https://dokugent.com/commands/dokugent-plan/){:target="_blank"}        — Draft an agent plan
+- ✅ [`dokugent criteria`](https://dokugent.com/commands/dokugent-criteria/){:target="_blank"}    — Define evaluation criteria
+- ✅ [`dokugent conventions`](https://dokugent.com/commands/dokugent-conventions/){:target="_blank"} — Select AI conventions
+- ✅ [`dokugent byo`](https://dokugent.com/commands/dokugent-byo/){:target="_blank"}         — Import external agent JSON payload
+- 🔲 [`dokugent compliance`](https://dokugent.com/commands/dokugent-compliance/){:target="_blank"}  — Fill in GDPR & governance metadata
+- 🔲 [`dokugent io`](https://dokugent.com/commands/dokugent-io/){:target="_blank"}          — Fill in I/O & Rules
+
+### ops
+
+- ✅ [`dokugent preview`](https://dokugent.com/commands/dokugent-preview/){:target="_blank"}     — Generate agent spec bundle
+- ✅ [`dokugent certify`](https://dokugent.com/commands/dokugent-certify/){:target="_blank"}     — Sign and freeze validated preview
+- ✅ [`dokugent compile`](https://dokugent.com/commands/dokugent-compile/){:target="_blank"}     — Build deployable agent bundle
+- ✅ [`dokugent deploy`](https://dokugent.com/commands/dokugent-deploy/){:target="_blank"}      — Run full deploy (preview → certify → compile)
+
+### debug
+
+- ✅ [`dokugent dryrun`](https://dokugent.com/commands/dokugent-dryrun/){:target="_blank"}      — Simulate plan execution without real actions
+- ✅ [`dokugent inspect`](https://dokugent.com/commands/dokugent-inspect/){:target="_blank"}     — Inspect agent cert or plan (local or MCP)
+- ✅ [`dokugent security`](https://dokugent.com/commands/dokugent-security/){:target="_blank"}    — Scan for file-level threats
+- ✅ [`dokugent simulate`](https://dokugent.com/commands/dokugent-simulate/){:target="_blank"}    — Run simulated agent logic with any LLM on your Ollama
+- ✅ [`dokugent trace`](https://dokugent.com/commands/dokugent-trace/){:target="_blank"}       — Trace agent behavior from a dokuUri
 
 ## 🧪 Coming Soon
 

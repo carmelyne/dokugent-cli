@@ -6,7 +6,7 @@
 import { runSecurityCheck } from '@utils/security-check';
 import { loadBlacklist, loadWhitelist } from './loaders';
 export { loadBlacklist, loadWhitelist } from './loaders';
-
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
 /**
  * Runs a standalone security scan on the workspace using loaded blacklist and whitelist rules.
  * For complete validation (security + spec + plan checks), use `dokugent preview` instead.
@@ -22,6 +22,7 @@ export async function runSecurity() {
     requireApprovals: true
   });
 
-  console.log('\n🔒 For a complete security + validation workflow, run `dokugent preview`.');
-  console.log('   It includes automated security scans before generating output artifacts.\n');
+  paddedLog('For a complete security + validation workflow,', 'run dokugent preview', PAD_WIDTH, 'blue', 'HELP');
+  console.log()
+  paddedDefault('', 'It includes automated security scans before generating output artifacts.\n', '', '');
 }

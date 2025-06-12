@@ -12,6 +12,18 @@ import ora from 'ora';
 import { slowPrint } from '@utils/cli/slowPrint';
 
 export async function runPreviewCommand(): Promise<void> {
+  let DOKUGENT_CLI_VERSION = '0.0.0';
+  let DOKUGENT_SCHEMA_VERSION = '0.0';
+  let DOKUGENT_CREATED_VIA = 'unknown';
+
+  try {
+    const schemaConstants = await import('@constants/schema');
+    DOKUGENT_CLI_VERSION = schemaConstants.DOKUGENT_CLI_VERSION ?? DOKUGENT_CLI_VERSION;
+    DOKUGENT_SCHEMA_VERSION = schemaConstants.DOKUGENT_SCHEMA_VERSION ?? DOKUGENT_SCHEMA_VERSION;
+    DOKUGENT_CREATED_VIA = schemaConstants.DOKUGENT_CREATED_VIA ?? DOKUGENT_CREATED_VIA;
+  } catch (e) {
+    console.warn('⚠️  Could not load schema constants, using fallback values.');
+  }
   function ensureTimestampsAndTokens(obj: any, now: Date): void {
     // This logic uses token count as a lightweight tamper signal.
     // If the estimatedTokens value differs from the saved version,
@@ -114,6 +126,49 @@ export async function runPreviewCommand(): Promise<void> {
   // Inject correct previewer name from folder context
   previewer.previewerName = selectedPreviewer;
 
+  // --- Source Version Metadata Extraction and Cleanup ---
+  const sourceVersions: any = {
+    agent: {
+      cliVersion: agent.cliVersion,
+      schemaVersion: agent.schemaVersion,
+      createdVia: agent.createdVia
+    },
+    plan: {
+      cliVersion: planJson.cliVersion,
+      schemaVersion: planJson.schemaVersion,
+      createdVia: planJson.createdVia
+    },
+    criteria: undefined, // will be populated later if criteria exists
+    conventions: {
+      cliVersion: conventionsRaw.cliVersion,
+      schemaVersion: conventionsRaw.schemaVersion,
+      createdVia: conventionsRaw.createdVia
+    },
+    owner: {
+      cliVersion: owner.cliVersion,
+      schemaVersion: owner.schemaVersion,
+      createdVia: owner.createdVia
+    },
+    byo: undefined // will populate below if exists
+  };
+
+  // Clean up versioning metadata from sub-objects
+  delete agent.cliVersion;
+  delete agent.schemaVersion;
+  delete agent.createdVia;
+
+  delete planJson.cliVersion;
+  delete planJson.schemaVersion;
+  delete planJson.createdVia;
+
+  delete conventionsRaw.cliVersion;
+  delete conventionsRaw.schemaVersion;
+  delete conventionsRaw.createdVia;
+
+  delete owner.cliVersion;
+  delete owner.schemaVersion;
+  delete owner.createdVia;
+
   function convertMarkdownToJSON(markdown: string): Record<string, any> {
     const lines = markdown.split('\n');
     const result: Record<string, any> = {};
@@ -170,14 +225,6 @@ export async function runPreviewCommand(): Promise<void> {
 
   const now = new Date();
 
-  const ownerData = {
-    ownerName: owner.owner_name ?? owner.name ?? path.basename(path.dirname(ownerPath)),
-    email: owner.email,
-    trustLevel: owner.trustLevel,
-    organization: owner.organization,
-    createdAt: now.toISOString(),
-    createdAtDisplay: now.toLocaleString()
-  };
 
   const previewerData = {
     previewerName: previewer.previewerName,
@@ -194,6 +241,10 @@ export async function runPreviewCommand(): Promise<void> {
     plan: planJson,
     criteria: undefined,
     conventions: conventions,
+    cliVersion: DOKUGENT_CLI_VERSION,
+    schemaVersion: DOKUGENT_SCHEMA_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA,
+    sourceVersions, // <- add here
     // owner and previewer will be added below
   };
 
@@ -202,15 +253,36 @@ export async function runPreviewCommand(): Promise<void> {
   if (certObject.criteria) {
     ensureTimestampsAndTokens(certObject.criteria, now);
   }
+  // After assigning certObject.criteria, update sourceVersions if criteria exists
+  if (certObject.criteria) {
+    sourceVersions.criteria = {
+      cliVersion: certObject.criteria.cliVersion,
+      schemaVersion: certObject.criteria.schemaVersion,
+      createdVia: certObject.criteria.createdVia
+    };
+
+    delete certObject.criteria.cliVersion;
+    delete certObject.criteria.schemaVersion;
+    delete certObject.criteria.createdVia;
+  }
   ensureTimestampsAndTokens(conventions, now);
   // Load optional BYO file (moved here)
   const byoDir = path.join(base, 'byo', 'processed', planJson.agentId);
   const byoPath = path.join(byoDir, 'byo.json');
   const byoExists = await fs.pathExists(byoPath);
   if (byoExists) {
-    certObject.byo = await fs.readJson(byoPath);
+    const byo = await fs.readJson(byoPath);
+    sourceVersions.byo = {
+      cliVersion: byo.cliVersion,
+      schemaVersion: byo.schemaVersion,
+      createdVia: byo.createdVia
+    };
+    delete byo.cliVersion;
+    delete byo.schemaVersion;
+    delete byo.createdVia;
+    certObject.byo = byo;
   }
-  certObject.owner = ownerData;
+  certObject.owner = owner;
   certObject.previewer = previewerData;
 
   // Load and parse criteria

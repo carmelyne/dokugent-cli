@@ -17,5 +17,5 @@ export async function getPlanStepsDir(agentPlanPath: string): Promise<string> {
 }
 
 export async function getPlanStepFile(agentPlanPath: string, stepId: string): Promise<string> {
-  return path.join(agentPlanPath, 'steps', `${stepId}.md`);
+  return path.join(agentPlanPath, 'steps', `${stepId}.json`);
 }

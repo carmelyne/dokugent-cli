@@ -13,6 +13,7 @@ import { estimateTokensFromText } from '../tokenizer';
 import chalk from 'chalk';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
 import { formatRelativePath } from '@utils/format-path';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 
 export interface InitAnswers {
   agentName: string;
@@ -160,7 +161,11 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
 
     const timestamp = getTimestamp();
     const now = new Date();
-    const typedAnswers: InitAnswers = {
+    const typedAnswers: InitAnswers & {
+      cliVersion: string;
+      schemaVersion: string;
+      createdVia: string;
+    } = {
       agentName: answers.agentName,
       description: answers.description,
       roles: answers.roles,
@@ -172,6 +177,9 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       birth: timestamp,
       createdAt: now.toISOString(),
       createdAtDisplay: now.toLocaleString(),
+      cliVersion: DOKUGENT_CLI_VERSION,
+      schemaVersion: DOKUGENT_SCHEMA_VERSION,
+      createdVia: DOKUGENT_CREATED_VIA,
     };
 
     const agentId = `${typedAnswers.agentName}@${timestamp}`;
@@ -224,12 +232,12 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     return typedAnswers;
   } catch (error: any) {
     if (error === '' || error === null || error?.message === 'cancelled' || error?.message === 'Prompt cancelled') {
-      paddedLog('Bye...', 'Agent wizard was cancelled.', PAD_WIDTH, 'warn');
+      paddedLog('Bye...', 'Agent identity prompt cancelled or failed', PAD_WIDTH, 'warn', 'EXITED');
       console.log()
       process.exit(0);
     }
 
-    paddedLog('Agent wizard error', `${error.message || error}`, PAD_WIDTH, 'error', 'FAILED');
+    paddedLog('Agent identity error', `${error.message || error}`, PAD_WIDTH, 'error', 'FAILED');
     console.log()
     process.exit(1);
   }

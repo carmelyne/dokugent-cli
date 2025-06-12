@@ -130,9 +130,9 @@ switch (command) {
       "• plan        → Draft an agent plan",
       "• criteria    → Define evaluation criteria",
       "• conventions → Select AI conventions",
-      "• io          → Fill in I/O & Rules",
-      "• byo         → Import external agent metadata",
-      "• compliance  → Fill in GDPR & governance metadata"
+      "• byo         → Import external agent JSON payload",
+      "• compliance  → Fill in GDPR & governance metadata",
+      "• io          → Fill in I/O & Rules"
     ].join("\n"));
 
     paddedSub("ops", [
@@ -143,12 +143,11 @@ switch (command) {
     ].join("\n"));
 
     paddedSub("debug", [
+      "• dryrun      → Simulate plan execution without real actions",
       "• inspect     → Inspect agent cert or plan (local or MCP)",
       "• security    → Scan for file-level threats",
-      "• dryrun      → Simulate plan execution without real actions",
-      "• simulate    → Run simulated agent logic with Mistral + Ollama",
+      "• simulate    → Run simulated agent logic with any LLM on your Ollama",
       "• trace       → Trace agent behavior from a dokuUri",
-      "• ui          → Render test output of CLI UI components"
     ].join("\n"));
 
     paddedLog('See Examples below', '', 12, 'success', 'REFERENCE');

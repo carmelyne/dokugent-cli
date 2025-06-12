@@ -1,9 +1,12 @@
-import inquirer from 'inquirer';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
+import { prompt } from 'enquirer';
 import fs from 'fs-extra';
 import path from 'path';
-import crypto from 'crypto';
+import { createHash } from 'crypto';
 import { formatRelativePath } from '../format-path';
 import { getTimestamp } from '../timestamp';
+
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
 
 export async function promptOwnerWizard(): Promise<{
   ownerName: string;
@@ -13,43 +16,106 @@ export async function promptOwnerWizard(): Promise<{
 }> {
   console.log('\n📛 Dokugent Keygen: Create an Owner Identity\n');
 
-  const answers = await inquirer.prompt([
+  const questions = [
     {
       type: 'input',
       name: 'ownerName',
-      message: '👤 Enter the owner\'s name:',
-      validate: (input) => input.trim() !== '' || 'Name is required.',
+      message: padQuestion('👤 Enter the owner\'s name:'),
+      validate: (input: string) => input.trim() !== '' ? true : 'Name is required.',
     },
     {
       type: 'input',
       name: 'email',
-      message: '📧 Enter contact email:',
-      validate: (input) => {
+      message: padQuestion('📧 Enter contact email:'),
+      validate: (input: string) => {
         const trimmed = input.trim();
         if (!trimmed) return 'Email is required.';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(trimmed) || 'Invalid email format.';
+        return emailRegex.test(trimmed) ? true : 'Invalid email format.';
       },
     },
     {
       type: 'input',
       name: 'organization',
-      message: '🏢 Organization (optional):',
+      message: padQuestion('🏢 Organization (optional):'),
     },
     {
-      type: 'list',
+      type: 'select',
       name: 'trustLevel',
-      message: '🔒 Trust level (optional):',
-      choices: ['founder', 'developer', 'maintainer', 'reviewer', 'researcher', 'contributor'],
-      default: '',
+      message: padQuestion('🔒 Trust level (optional):'),
+      choices: [
+        { name: 'founder', message: padQuestion('founder') },
+        { name: 'developer', message: padQuestion('developer') },
+        { name: 'maintainer', message: padQuestion('maintainer') },
+        { name: 'reviewer', message: padQuestion('reviewer') },
+        { name: 'researcher', message: padQuestion('researcher') },
+        { name: 'contributor', message: padQuestion('contributor') }
+      ],
+      initial: -1,
+    },
+    {
+      type: 'input',
+      name: 'adminName',
+      message: padQuestion('👤 Admin contact name:'),
+      validate: (input: string) => input.trim() !== '' ? true : 'Admin name is required.',
+    },
+    {
+      type: 'input',
+      name: 'adminEmail',
+      message: padQuestion('📧 Admin contact email:'),
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return trimmed && emailRegex.test(trimmed) ? true : 'Valid admin email required.';
+      },
+    },
+    {
+      type: 'input',
+      name: 'techName',
+      message: padQuestion('👨‍💻 Tech contact name:'),
+      validate: (input: string) => input.trim() !== '' ? true : 'Tech name is required.',
+    },
+    {
+      type: 'input',
+      name: 'techEmail',
+      message: padQuestion('📧 Tech contact email:'),
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return trimmed && emailRegex.test(trimmed) ? true : 'Valid tech email required.';
+      },
     },
     {
       type: 'confirm',
       name: 'confirm',
-      message: '✅ Confirm and save owner identity?',
-      default: true,
+      message: padQuestion('✅ Confirm and save owner identity?'),
+      initial: true,
     }
-  ]);
+  ];
+
+  let answers;
+  try {
+    answers = await prompt<{
+      ownerName: string;
+      email: string;
+      organization?: string;
+      trustLevel?: string;
+      adminName: string;
+      adminEmail: string;
+      techName: string;
+      techEmail: string;
+      confirm: boolean;
+    }>(questions);
+  } catch (err) {
+    paddedLog('Bye...', 'Owner identity prompt cancelled or failed.', PAD_WIDTH, 'warn', 'EXITED');
+    console.log()
+    return {
+      ownerName: '',
+      email: '',
+      organization: '',
+      trustLevel: ''
+    };
+  }
 
   const keysDir = path.resolve('.dokugent/data/owners');
   const allFolders = await fs.readdir(keysDir);
@@ -69,24 +135,43 @@ export async function promptOwnerWizard(): Promise<{
   const now = new Date();
 
   if (answers.confirm) {
+    const ownerId = createHash('sha256')
+      .update(`${answers.ownerName}:${answers.email}`)
+      .digest('hex');
     const ownerData: any = {
+      ownerId,
       ownerName: answers.ownerName,
       email: answers.email || null,
       organization: answers.organization || null,
       trustLevel: answers.trustLevel || null,
-      createdAt: now.toISOString(), // ISO 8601 string for data reliability
-      createdAtDisplay: now.toLocaleString() // Human-friendly format
+      contacts: {
+        admin: {
+          name: answers.adminName,
+          email: answers.adminEmail,
+        },
+        tech: {
+          name: answers.techName,
+          email: answers.techEmail,
+        }
+      },
+      createdAt: now.toISOString(),
+      createdAtDisplay: now.toLocaleString(),
+      cliVersion: DOKUGENT_CLI_VERSION,
+      schemaVersion: DOKUGENT_SCHEMA_VERSION,
+      createdVia: "DOKUGENT_CREATED_VIA"
     };
 
     await fs.ensureDir(path.dirname(OWNER_PATH));
     await fs.writeJson(OWNER_PATH, ownerData, { spaces: 2 });
 
-    console.log(`\n🔐 Owner metadata saved:\n   .dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json\n`);
+    // console.log(`\n🔐 Owner metadata saved:\n   .dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json\n`);
+    paddedLog('Owner metadata saved', `.dokugent/data/owners/${ownerSlug}/owner.${ownerSlug}.json`, PAD_WIDTH, 'success', 'SAVED');
 
     // console.log(`\n✅ Owner identity saved to .dokugent/data/owners/${ownerSlug}/latest\n`);
 
   } else {
-    console.log('\n❌ Owner identity setup cancelled.\n');
+    paddedLog('Bye...', 'Owner identity setup cancelled', PAD_WIDTH, 'warn');
+    console.log()
   }
 
   return {

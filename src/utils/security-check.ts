@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, phaseHeader } from '@utils/cli/ui';
+
 /**
  * Scans files in the given directories for basic compliance issues.
  *
@@ -100,10 +102,13 @@ export async function runSecurityCheck(context: 'security' | 'preview' | 'compil
   //   console.log('\n🔍 Files scanned:');
   //   scannedFiles.forEach(file => console.log(`   - ${file}`));
   // }
+  console.log()
+  paddedCompact('dokugent security initialized...', '', PAD_WIDTH, 'info');
 
   if (issues.length > 0) {
-    console.log('\n🚨 Security Issues Found:');
-    issues.forEach((issue) => console.log(`  - ${issue}`));
+    paddedDefault('', 'Security Issues Found', PAD_WIDTH, 'warn', 'WARN');
+    console.log()
+    issues.forEach((issue) => console.log(padMsg(`  - ${issue}`)));
   } else {
     // Replace
     // console.log('\n✅ No security issues found.\n');

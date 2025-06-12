@@ -10,6 +10,7 @@ import { writeWithBackup } from '../file-writer';
 import { resolveActivePath } from '../ls-utils';
 import { formatRelativePath } from '../format-path';
 import { estimateTokensFromText } from '../tokenizer';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 /**
  * Launches an interactive CLI wizard to define criteria for evaluating agent outputs.
  * Captures success conditions, failure conditions, and performance metrics.
@@ -199,6 +200,9 @@ export async function promptCriteriaWizard(force = false) {
     createdAtDisplay: now.toLocaleString(),
     lastModifiedAt: now.toISOString(),
     lastModifiedAtDisplay: now.toLocaleString(),
+    cliVersion: DOKUGENT_CLI_VERSION,
+    schemaVersion: DOKUGENT_SCHEMA_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA,
     estimatedTokens: 0, // will be updated below
     "Success Conditions": mergedSuccess,
     "Failure Conditions": mergedFailure,

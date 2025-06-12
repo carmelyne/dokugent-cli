@@ -23,7 +23,7 @@ import chalk from 'chalk';
  * - `ls`: List existing plan steps and their symlinks.
  * - (no symlink/use for plans; plan steps are auto-resolved per agent)
  * - `unlink <stepId>`: Removes a plan step symlink.
- * - `compile`: Rebuilds plan.md using only steps marked as linked in plan.index.md.
+ * - `compile`: Rebuilds plan.json using only steps marked as linked in plan.index.md.
  * - (default): Launches the interactive plan wizard.
  *
  * @param args CLI arguments passed to `dokugent plan`.
@@ -50,12 +50,12 @@ export async function runPlanCommand(args: string[]) {
           if (agent.agentName && agent.birth) {
             agentId = agent.agentName + '@' + agent.birth;
           }
-        } catch {}
+        } catch { }
       }
 
       const indexPath = path.join(planPath, 'plan.index.md');
       const stepFolder = path.join(planPath, 'steps');
-      const outputPath = path.join(planPath, 'plan.md');
+      const outputPath = path.join(planPath, 'plan.json');
 
       if (!(await fs.pathExists(indexPath))) {
         console.error('❌ plan.index.md not found. Cannot compile plan.');
@@ -76,28 +76,34 @@ export async function runPlanCommand(args: string[]) {
 
       if (!linkedSteps.length) {
         console.warn('⚠️ No linked steps found in plan.index.md.');
+        console.warn('👉 Tip: Make sure your step entries are in the format:');
+        console.warn('   step_id - linked');
+        console.warn('   or');
+        console.warn('   | Step | ID | linked |');
         return;
       }
 
       const files = await Promise.all(
         linkedSteps.map(async (stepId) => {
-          const filePath = path.join(stepFolder, `${stepId}.md`);
+          const filePath = path.join(stepFolder, `${stepId}.json`);
           if (await fs.pathExists(filePath)) {
             return await fs.readFile(filePath, 'utf-8');
           } else {
-            console.warn(`⚠️ Skipped missing step file: ${stepId}.md`);
+            console.warn(`⚠️ Skipped missing step file: ${stepId}.json`);
             return '';
           }
         })
       );
 
       const compiled = files.filter(Boolean).join('\n\n---\n\n');
-      await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
+      // to ask: when is this in compile happening? plan.md
+      //await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
+      await fs.writeFile(outputPath, compiled, 'utf-8');
       // Optionally show which agentId was used for this compile
       if (agentId) {
-        console.log(`✅ plan.md compiled for agent: ${agentId} with ${linkedSteps.length} steps.`);
+        console.log(`✅ plan.json compiled for agent: ${agentId} with ${linkedSteps.length} steps.`);
       } else {
-        console.log(`✅ plan.md compiled with ${linkedSteps.length} steps.`);
+        console.log(`✅ plan.json compiled with ${linkedSteps.length} steps.`);
       }
       return;
     }
@@ -107,7 +113,7 @@ export async function runPlanCommand(args: string[]) {
         console.error('❌ No active plan found to show.');
         return;
       }
-      const fullPath = path.join(planPath, 'plan.md');
+      const fullPath = path.join(planPath, 'plan.json');
       const output = await readPlanFile(fullPath);
       console.log('\n' + output);
       return;
@@ -146,17 +152,23 @@ export async function runPlanCommand(args: string[]) {
       }
 
       const stepFolder = path.join(planPath, 'steps');
-      const stepFiles = (await fs.readdir(stepFolder)).filter(f => f.endsWith('.md'));
+      const stepFiles = (await fs.readdir(stepFolder)).filter(f => f.endsWith('.json'));
 
-      const requiredSections = ['## Goal', '## Capabilities', '## Constraints', '## Tools It Can Use'];
-
+      const requiredKeys = ['goal', 'constraints'];
       let hasError = false;
+
       for (const file of stepFiles) {
-        const content = await fs.readFile(path.join(stepFolder, file), 'utf-8');
-        const missing = requiredSections.filter(section => !content.includes(section));
-        if (missing.length > 0) {
+        const fullPath = path.join(stepFolder, file);
+        try {
+          const json = JSON.parse(await fs.readFile(fullPath, 'utf-8'));
+          const missing = requiredKeys.filter(key => !(key in json));
+          if (missing.length > 0) {
+            hasError = true;
+            console.warn(`⚠️  ${file} is missing keys: ${missing.join(', ')}`);
+          }
+        } catch {
           hasError = true;
-          console.warn(`⚠️  ${file} is missing: ${missing.join(', ')}`);
+          console.warn(`❌  ${file} is not valid JSON or could not be parsed.`);
         }
       }
 
@@ -193,7 +205,7 @@ export async function runPlanCommand(args: string[]) {
       for (const line of lines) {
         if (!line.includes(' - ')) continue;
         const [stepId, status] = line.split(' - ').map(s => s.trim());
-        const filePath = path.join(stepFolder, `${stepId}.md`);
+        const filePath = path.join(stepFolder, `${stepId}.json`);
         const exists = await fs.pathExists(filePath);
         const meta: { stepId: string, status: string, exists: boolean, tokens?: number } = { stepId, status, exists };
         if (status === 'linked' && exists) {
@@ -226,13 +238,13 @@ export async function runPlanCommand(args: string[]) {
         // --- Begin estimated total tokens block
         const tokenEstimates = await Promise.all(
           linkedSteps.map(async (stepId) => {
-            const filePath = path.join(stepFolder, `${stepId}.md`);
+            const filePath = path.join(stepFolder, `${stepId}.json`);
             const content = await fs.readFile(filePath, 'utf-8');
             return Math.ceil(content.split(/\s+/).length / 0.75);
           })
         );
         const totalTokens = tokenEstimates.reduce((sum, tokens) => sum + tokens, 0);
-        console.log(`\n🧮 Estimated Total Tokens: \x1b[32m~${totalTokens}\x1b[0m tokens in plan.md\n`);
+        console.log(`\n🧮 Estimated Total Tokens: \x1b[32m~${totalTokens}\x1b[0m tokens in plan.json\n`);
         // --- End estimated total tokens block
       } else {
         console.log('\n⚠️ No linked steps found.\n');
@@ -254,35 +266,24 @@ export async function runPlanCommand(args: string[]) {
       }
 
       const stepFolder = path.join(planPath, 'steps');
-      const filePath = path.join(stepFolder, `${stepId}.md`);
+      const filePath = path.join(stepFolder, `${stepId}.json`);
       const indexPath = path.join(planPath, 'plan.index.md');
 
       if (await fs.pathExists(filePath)) {
-        console.warn(`⚠️ Step file ${stepId}.md already exists.`);
+        console.warn(`⚠️ Step file ${stepId}.json already exists.`);
         return;
       }
 
-      const content = `## Plan Step ID
-${stepId}
-
-## Plan Description
-
-## Agent Name
-${path.basename(planPath)}
-
-## Agent Role
-
-## Goal
-
-## Capabilities
-1.
-
-## Constraints
--
-
-## Tools It Can Use
--
-`;
+      const content = JSON.stringify({
+        id: stepId,
+        use: "",
+        input: "",
+        output: "",
+        description: "",
+        role: "",
+        goal: "",
+        constraints: [],
+      }, null, 2);
 
       await fs.writeFile(filePath, content, 'utf-8');
 
@@ -433,8 +434,8 @@ ${path.basename(planPath)}
 
       await fs.writeFile(indexPath, updatedLines.join('\n'), 'utf-8');
 
-      // Recompile plan.md
-      const outputPath = path.join(planPath, 'plan.md');
+      // Recompile plan.json
+      const outputPath = path.join(planPath, 'plan.json');
       const stepFolder = path.join(planPath, 'steps');
 
       // Only process valid lines, only those with 'linked'
@@ -450,19 +451,21 @@ ${path.basename(planPath)}
 
       const files = await Promise.all(
         linkedSteps.map(async (stepId) => {
-          const filePath = path.join(stepFolder, `${stepId}.md`);
+          const filePath = path.join(stepFolder, `${stepId}.json`);
           if (await fs.pathExists(filePath)) {
             return await fs.readFile(filePath, 'utf-8');
           } else {
-            console.warn(`⚠️ Skipped missing step file: ${stepId}.md`);
+            console.warn(`⚠️ Skipped missing step file: ${stepId}.json`);
             return '';
           }
         })
       );
 
       const compiled = files.filter(Boolean).join('\n\n---\n\n');
-      await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
-      console.log(`\n✅ Step '${stepId}' unlinked and plan.md recompiled.\n`);
+      // to ask: more on plan.md
+      // await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
+      await fs.writeFile(outputPath, compiled, 'utf-8');
+      console.log(`\n✅ Step '${stepId}' unlinked and plan.json recompiled.\n`);
       break;
     }
     case 'link': {
@@ -538,8 +541,8 @@ ${path.basename(planPath)}
 
       await fs.writeFile(indexPath, updatedLines.join('\n'), 'utf-8');
 
-      // Recompile plan.md
-      const outputPath = path.join(planPath, 'plan.md');
+      // Recompile plan.json
+      const outputPath = path.join(planPath, 'plan.json');
       const stepFolder = path.join(planPath, 'steps');
 
       // Only process valid lines, only those with 'linked'
@@ -555,19 +558,21 @@ ${path.basename(planPath)}
 
       const files = await Promise.all(
         linkedSteps.map(async (stepId) => {
-          const filePath = path.join(stepFolder, `${stepId}.md`);
+          const filePath = path.join(stepFolder, `${stepId}.json`);
           if (await fs.pathExists(filePath)) {
             return await fs.readFile(filePath, 'utf-8');
           } else {
-            console.warn(`⚠️ Skipped missing step file: ${stepId}.md`);
+            console.warn(`⚠️ Skipped missing step file: ${stepId}.json`);
             return '';
           }
         })
       );
 
       const compiled = files.filter(Boolean).join('\n\n---\n\n');
-      await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
-      console.log(`\n✅ Step '${stepId}' linked and plan.md recompiled.\n`);
+      // to ask: more about plan.md
+      // await fs.writeFile(outputPath, `# PLAN.md\n\n${compiled}`, 'utf-8');
+      await fs.writeFile(outputPath, compiled, 'utf-8');
+      console.log(`\n✅ Step '${stepId}' linked and plan.json recompiled.\n`);
       break;
     }
 
@@ -588,8 +593,8 @@ ${path.basename(planPath)}
       const indexPath = path.join(planPath, 'plan.index.md');
 
       const stepFiles = (await fs.readdir(stepFolder))
-        .filter(file => file.endsWith('.md'))
-        .map(file => file.replace('.md', ''));
+        .filter(file => file.endsWith('.json'))
+        .map(file => file.replace('.json', ''));
 
       // --- --rebuild-index logic
       if (rebuildIndex) {
@@ -643,7 +648,7 @@ ${path.basename(planPath)}
           console.log('\n📋 Status Report:\n');
           printedStatusHeader = true;
         }
-        console.warn(`⚠️ Listed in plan.index.md but missing .md file:`);
+        console.warn(`⚠️ Listed in plan.index.md but missing .json file:`);
         for (const { stepId } of missingFiles) {
           console.log(`   - ${stepId}`);
         }
@@ -656,7 +661,7 @@ ${path.basename(planPath)}
         }
         console.warn(`⚠️ Found step files not listed in plan.index.md:`);
         for (const id of unlistedFiles) {
-          console.log(`  - ${id}.md`);
+          console.log(`  - ${id}.json`);
         }
       }
 
@@ -697,7 +702,7 @@ ${path.basename(planPath)}
 
       if (createMissing) {
         for (const { stepId } of listedSteps) {
-          const filePath = path.join(stepFolder, `${stepId}.md`);
+          const filePath = path.join(stepFolder, `${stepId}.json`);
           // Only create if file does not exist
           if (!(await fs.pathExists(filePath))) {
             const content = `## Plan Step ID
@@ -722,7 +727,7 @@ ${path.basename(planPath)}
 -
 `;
             await fs.writeFile(filePath, content, 'utf-8');
-            console.log(`📝 Created missing step file: ${stepId}.md`);
+            console.log(`📝 Created missing step file: ${stepId}.json`);
           }
         }
       }
@@ -745,7 +750,7 @@ ${path.basename(planPath)}
           if (agent.agentName && agent.birth) {
             agentId = agent.agentName + '@' + agent.birth;
           }
-        } catch {}
+        } catch { }
       }
       try {
         // If agentId couldn't be determined from metadata, fallback to symlink
@@ -793,8 +798,8 @@ ${path.basename(planPath)}
               let stepFiles: string[] = [];
               try {
                 stepFiles = (await fs.readdir(stepsDir))
-                  .filter(f => f.endsWith('.md'))
-                  .map(f => f.replace('.md', ''));
+                  .filter(f => f.endsWith('.json'))
+                  .map(f => f.replace('.json', ''));
               } catch { }
 
               if (stepFiles.length) {

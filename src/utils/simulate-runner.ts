@@ -90,13 +90,28 @@ export async function runSimulateViaMistral() {
   for (const step of cert.plan?.steps || []) {
     let mockInput = step.input;
 
-    const mockPath = path.join('.dokugent/ops/mocks', mockInput);
-    if (await fs.pathExists(mockPath)) {
-      try {
-        mockInput = await fs.readFile(mockPath, 'utf-8');
-      } catch {
-        console.warn(`⚠️  Failed to read mock input file: ${mockPath}`);
+    const mockPaths = [
+      path.join('.dokugent/ops/mocks', step.use || step.tool || '', `${step.id}-input.md`),
+      path.join('.dokugent/ops/mocks/custom-tool', `${step.id}-input.md`),
+    ];
+
+    let mockInputResolved = mockInput;
+    let foundMock = false;
+
+    for (const p of mockPaths) {
+      if (await fs.pathExists(p)) {
+        try {
+          mockInputResolved = await fs.readFile(p, 'utf-8');
+          foundMock = true;
+          break;
+        } catch {
+          console.warn(`⚠️  Failed to read mock input file: ${p}`);
+        }
       }
+    }
+
+    if (!foundMock) {
+      console.warn(`⚠️  No specific mock file found for step '${step.id}'. Using raw input field.`);
     }
 
     console.log();
@@ -104,7 +119,7 @@ export async function runSimulateViaMistral() {
     paddedDefault('', `${step.use || step.tool}`, PAD_WIDTH, 'pink', 'TOOL');
     console.log();
 
-    // paddedDefault('', `${mockInput}`, PAD_WIDTH, 'success', 'INPUT');
+    // paddedDefault('', `${mockInputResolved}`, PAD_WIDTH, 'success', 'INPUT');
     paddedDefault('', `${step.output}`, PAD_WIDTH, 'success', 'OUTPUT');
     console.log();
 
@@ -122,7 +137,7 @@ export async function runSimulateViaMistral() {
       // console.log(`\n📜 Constraints: \n\n${ constraintList }`);
     }
 
-    const prompt = `Simulate step "${step.id || step.name}" using tool "${step.use || step.tool}".Input: \n${mockInput}\nConstraints: ${constraintList}.`;
+    const prompt = `Simulate step "${step.id || step.name}" using tool "${step.use || step.tool}".Input: \n${mockInputResolved}\nConstraints: ${constraintList}.`;
 
     let output = '';
 
@@ -147,14 +162,25 @@ export async function runSimulateViaMistral() {
       output = data.response || '[No response]';
     }
 
+    // Optional: write simulated output to the step.output file path if defined
+    if (step.output && typeof step.output === 'string' && step.output.endsWith('.md')) {
+      try {
+        await fs.ensureDir(path.dirname(step.output));
+        await fs.writeFile(step.output, output, 'utf-8');
+        console.log(`✅ Simulated output written to ${step.output}`);
+      } catch (err) {
+        console.warn(`⚠️ Failed to write simulated output to ${step.output}: ${err.message}`);
+      }
+    }
+
     console.log();
-    const wrappedInput = mockInput
+    const wrappedInput = mockInputResolved
       .split('\n')
       .flatMap((line: string) => line.match(/.{1,62}/g) || [''])
       .join('\n');
 
     ui.box(`ℹ Use Input  \n\n${wrappedInput}`, 'blue', 'left', 'round', PAD_WIDTH);
-    // paddedLongText('ℹ Input', '   ' + mockInput, 0, 'magenta');
+    // paddedLongText('ℹ Input', '   ' + mockInputResolved, 0, 'magenta');
 
     const wrappedOutput = output
       .split('\n')
@@ -179,7 +205,7 @@ export async function runSimulateViaMistral() {
     memory.push({
       step: step.id || step.name || '[unnamed]',
       tool: step.use || step.tool || '[unspecified]',
-      simulated_input: mockInput,
+      simulated_input: mockInputResolved,
       simulated_output: output,
       created_output: step.output,
       violated_constraints: violateMode
@@ -191,7 +217,7 @@ export async function runSimulateViaMistral() {
     });
 
     console.log();
-    const wrappedUsedOutput = mockInput
+    const wrappedUsedOutput = mockInputResolved
       .split('\n')
       .flatMap((line: string) => line.match(/.{1,62}/g) || [''])
       .join('\n');
@@ -206,13 +232,13 @@ export async function runSimulateViaMistral() {
   const certFileName = path.basename(certFile);
   const agentDir = path.dirname(certFile).split(path.sep).pop() || '';
   const agentFolder = path.join(MEMORY_PATH, agentDir);
-  const memFileName = certFileName.replace('.cert.json', `.memory - trail.json`);
+  const memFileName = certFileName.replace('.cert.json', `.memory-trail.json`);
   const isDanger = violateMode || overrideConstraints;
   const outFolder = isDanger ? path.join('.dokugent/ops/dangerzone', agentDir) : agentFolder;
   const dangerSuffix = violateMode ? '.violation' : overrideConstraints ? '.override' : '';
   const timestamp = Date.now();
   const baseName = memFileName.replace('.memory-trail.json', '');
-  const finalMemFile = path.join(outFolder, `${baseName}.memory - trail${dangerSuffix}.${timestamp}.json`);
+  const finalMemFile = path.join(outFolder, `${baseName}.memory-trail${dangerSuffix}.${timestamp}.json`);
 
   if (!dryRun) {
     await fs.ensureDir(outFolder);

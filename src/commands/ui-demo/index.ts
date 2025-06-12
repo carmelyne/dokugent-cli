@@ -346,6 +346,21 @@ export default function runUiDemo() {
 
   phaseHeader('1', 'Agent Identity Verification');
   phaseHeader('2', 'Security Checks', '#FFA500'); // uses orange hex
+
+  console.log()
+
+  console.log(padMsg(`Agent initialized with XX tokens.`));
+  console.log()
+
+  paddedSub('', glyphs.arrowRight);
+  paddedSub('Arrow Glyph', glyphs.arrowRight);
+
+  paddedDefault('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
+  paddedLog('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
+  console.log()
+  paddedCompact('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
+  paddedCompact('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'info', 'Info');
+  paddedCompact('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'success', 'Success');
 }
 
 // --- ADDED: Write UI demo sample log file ---
@@ -368,3 +383,17 @@ const sample = {
 };
 
 fs.outputJsonSync(path.join('.omnimodal/ui-demo/uiPath.log.json'), sample, { spaces: 2 });
+
+// Page
+
+console.log()
+
+console.log(padMsg(`Agent initialized with XX tokens.`));
+console.log()
+
+paddedSub('', glyphs.arrowRight);
+paddedSub('Arrow Glyph', glyphs.arrowRight);
+
+paddedDefault('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
+paddedLog('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
+paddedCompact('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');

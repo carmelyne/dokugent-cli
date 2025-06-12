@@ -13,6 +13,7 @@ import path from 'path';
 import chalk from 'chalk';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
 import { formatRelativePath } from '@utils/format-path';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 
 
 /**
@@ -361,6 +362,9 @@ export async function promptConventionsWizard(force = false) {
         lastModifiedAt: now.toISOString(),
         lastModifiedAtDisplay: now.toLocaleString(),
         estimatedTokens,
+        cliVersion: typeof DOKUGENT_CLI_VERSION !== 'undefined' ? DOKUGENT_CLI_VERSION : '',
+        schemaVersion: typeof DOKUGENT_SCHEMA_VERSION !== 'undefined' ? DOKUGENT_SCHEMA_VERSION : '',
+        createdVia: typeof DOKUGENT_CREATED_VIA !== 'undefined' ? DOKUGENT_CREATED_VIA : '',
         conventions: markdowns.map(f => ({
           llmName: path.basename(f, '.md'),
           file: path.basename(f),
@@ -377,6 +381,9 @@ export async function promptConventionsWizard(force = false) {
         lastModifiedAt: now.toISOString(),
         lastModifiedAtDisplay: now.toLocaleString(),
         estimatedTokens,
+        cliVersion: typeof DOKUGENT_CLI_VERSION !== 'undefined' ? DOKUGENT_CLI_VERSION : '',
+        schemaVersion: typeof DOKUGENT_SCHEMA_VERSION !== 'undefined' ? DOKUGENT_SCHEMA_VERSION : '',
+        createdVia: typeof DOKUGENT_CREATED_VIA !== 'undefined' ? DOKUGENT_CREATED_VIA : '',
         files: markdowns.map(f => path.basename(f))
       };
     }

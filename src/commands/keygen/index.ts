@@ -10,15 +10,26 @@ import { formatRelativePath } from '../../utils/format-path';
 import { promptSignerWizard } from '../../utils/wizards/signer-wizard';
 import { getTimestamp } from '../../utils/timestamp';
 import { runShowKeygen } from './show';
-import inquirer from 'inquirer';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 
 interface SignerData {
   signerName: string;
   email?: string;
   organization?: string;
   trustLevel?: string;
-  fingerprint?: string;
+  department?: string;
+  avatar?: string;
+  location?: string;
+  cliVersion?: string;
+  schemaVersion?: string;
+  createdVia?: string;
+  signerId?: string;
+  revoked?: boolean;
+  createdAt?: string;
+  createdAtDisplay?: string;
   publicKey?: string;
+  fingerprint?: string;
 }
 
 function prompt(question: string): Promise<string> {
@@ -65,6 +76,16 @@ export async function runKeygenCommand(args: string[] = []) {
     email: wizardResult.email,
     organization: wizardResult.organization,
     trustLevel: wizardResult.trustLevel,
+    department: wizardResult.department,
+    avatar: wizardResult.avatar,
+    location: wizardResult.location,
+    cliVersion: DOKUGENT_CLI_VERSION,
+    schemaVersion: DOKUGENT_SCHEMA_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA,
+    signerId: wizardResult.signerId || '',
+    revoked: false,
+    createdAt: wizardResult.createdAt || new Date().toISOString(),
+    createdAtDisplay: wizardResult.createdAtDisplay || new Date().toLocaleString()
   };
 
   if (!signerData?.signerName) {
@@ -95,10 +116,19 @@ export async function runKeygenCommand(args: string[] = []) {
     signerName: signerData.signerName,
     email: signerData.email || '',
     organization: signerData.organization || '',
-    publicKey,
-    fingerprint,
+    department: signerData.department || '',
     trustLevel: signerData.trustLevel || '',
-    createdAt: new Date().toISOString()
+    avatar: signerData.avatar || '',
+    location: signerData.location || '',
+    cliVersion: DOKUGENT_CLI_VERSION,
+    schemaVersion: DOKUGENT_SCHEMA_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA,
+    signerId: signerData.signerId || '',
+    revoked: false,
+    createdAt: signerData.createdAt || new Date().toISOString(),
+    createdAtDisplay: signerData.createdAtDisplay || new Date().toLocaleString(),
+    publicKey,
+    fingerprint
   };
 
   // Removed creation of signerFilePath and writing signer.json directly under signers
@@ -111,5 +141,8 @@ export async function runKeygenCommand(args: string[] = []) {
   await fs.ensureSymlink(keyFolder, symlinkLatest, 'dir');
 
   const relativePath = path.relative(process.cwd(), keyFolder);
-  console.log(`\n🔐 Signer keypair and metadata saved to:\n   ${relativePath}\n`);
+  // console.log(`\n🔐 Signer keypair and metadata saved to:\n   ${relativePath}\n`);
+  console.log();
+  paddedLog('Signer keypair and metadata saved to...', ` ${relativePath}`, PAD_WIDTH, 'success', 'SAVED');
+  console.log();
 }

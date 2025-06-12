@@ -1,3 +1,4 @@
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 import { promptAgentWizard } from '@utils/wizards/agent-wizard';
 import { confirmAndWriteFile } from '@utils/fs-utils';
 import fs from 'fs';
@@ -34,7 +35,10 @@ export function runAgentCommand() {
         ownerId: '',
         task: '',
         requiresConventions: false,
-        ecosystem
+        ecosystem,
+        cliVersion: DOKUGENT_CLI_VERSION,
+        schemaVersion: DOKUGENT_SCHEMA_VERSION,
+        createdVia: DOKUGENT_CREATED_VIA,
       };
       const identityPath = path.join(agentDir, 'identity.json');
       fs.writeFileSync(identityPath, JSON.stringify(identity, null, 2));
@@ -94,6 +98,7 @@ export function runAgentCommand() {
       await setAgentCurrent(slug);
       return;
     }
+    console.log()
     paddedCompact('dokugent agent initialized...', '', PAD_WIDTH, 'info');
     console.log()
     // fallback to wizard
@@ -102,6 +107,9 @@ export function runAgentCommand() {
       ...answers,
       ecosystem: answers.ecosystem,
       birth: getTimestamp(),
+      cliVersion: DOKUGENT_CLI_VERSION,
+      schemaVersion: DOKUGENT_SCHEMA_VERSION,
+      createdVia: DOKUGENT_CREATED_VIA,
     };
     const timestamp = getTimestamp();
     const agentId = `${typedAnswers.agentName}@${timestamp}`;

@@ -12,6 +12,7 @@ import { estimateTokensFromText } from '@utils/tokenizer';
 import getActiveAgentInfo from '@utils/agent-info';
 import chalk from 'chalk';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault } from '@utils/cli/ui';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 /**
  * Executes the `conventions` command dispatcher.
  *
@@ -198,7 +199,10 @@ export async function runConventionsCommand(args: string[]) {
                   llmName: path.basename(f, '.md'),
                   file: f,
                   content: ''
-                }))
+                })),
+                cliVersion: DOKUGENT_CLI_VERSION,
+                schemaVersion: DOKUGENT_SCHEMA_VERSION,
+                createdVia: DOKUGENT_CREATED_VIA,
               };
             } else {
               meta = {
@@ -206,7 +210,10 @@ export async function runConventionsCommand(args: string[]) {
                 type,
                 agentId,
                 createdAt: new Date().toISOString(),
-                files: markdowns
+                files: markdowns,
+                cliVersion: DOKUGENT_CLI_VERSION,
+                schemaVersion: DOKUGENT_SCHEMA_VERSION,
+                createdVia: DOKUGENT_CREATED_VIA,
               };
             }
 
