@@ -1,0 +1,7 @@
+[
+  "Extract audio from input video",
+  "Transcribe using Whisper or equivalent",
+  "Sample keyframes every 5 seconds",
+  "Run vision model on frames (e.g., Owl-ViT)",
+  "Summarize outputs using Graph-RAG"
+]

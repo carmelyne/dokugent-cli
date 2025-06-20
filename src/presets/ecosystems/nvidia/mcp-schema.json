@@ -1,0 +1,59 @@
+{
+  "$schema": "https://dokugent.com/schemas/mcp/v0.1",
+  "ecosystem": "nvidia",
+  "llmTargets": ["gpt-4", "claude-3", "gemini-1.5"],
+  "Intents": [
+    "summarize_video"
+  ],
+  "Tools": [
+    "extract_audio",
+    "transcribe_audio",
+    "sample_frames",
+    "detect_objects",
+    "summarize_graph"
+  ],
+  "Contracts": {
+    "extract_audio": {
+      "Input": {
+        "video": "string"
+      },
+      "Output": {
+        "audio": "string"
+      }
+    },
+    "transcribe_audio": {
+      "Input": {
+        "audio": "string"
+      },
+      "Output": {
+        "transcript": "string"
+      }
+    },
+    "sample_frames": {
+      "Input": {
+        "video": "string",
+        "interval": "number"
+      },
+      "Output": {
+        "frames": "string[]"
+      }
+    },
+    "detect_objects": {
+      "Input": {
+        "frames": "string[]"
+      },
+      "Output": {
+        "objects": "object[]"
+      }
+    },
+    "summarize_graph": {
+      "Input": {
+        "transcript": "string",
+        "objects": "object[]"
+      },
+      "Output": {
+        "summary": "string"
+      }
+    }
+  }
+}

@@ -739,10 +739,28 @@ ${path.basename(planPath)}
 
     case undefined:
     default: {
-      const agentSymlink = path.resolve('.dokugent/data/agents/current');
+      // Fallback logic to support both .dokugent/data/agents/current and .../latest
+      const candidatePaths = [
+        path.resolve('.dokugent/data/agents/current'),
+        path.resolve('.dokugent/data/agents/latest'),
+      ];
+
+      let agentSymlink: string | null = null;
+      for (const candidate of candidatePaths) {
+        if (await fs.pathExists(candidate)) {
+          agentSymlink = candidate;
+          break;
+        }
+      }
+
+      if (!agentSymlink) {
+        console.error('❌ No active agent profile found. Run `dokugent agent use <name>` first.');
+        return;
+      }
+
       // Dynamically determine agentId from agent metadata
       let agentId: string | null = null;
-      const agentMetaPath = path.resolve('.dokugent/data/agents/current/identity.json');
+      const agentMetaPath = path.join(agentSymlink, 'identity.json');
       if (await fs.pathExists(agentMetaPath)) {
         try {
           const agentRaw = await fs.readFile(agentMetaPath, 'utf-8');
@@ -815,11 +833,7 @@ ${path.basename(planPath)}
         console.log('\n🛠️ Launching plan wizard for new or custom steps...\n');
         await promptPlanWizard();
       } catch {
-        const agentExists = await fs.pathExists(agentSymlink);
-        if (!agentExists) {
-          console.error('❌ No active agent profile found. Run `dokugent agent use <name>` first.');
-          return;
-        }
+        // This block should only run if something else goes wrong, not agent missing
         console.warn('\n⚠️ No active plan found. Launching wizard...\n');
         await promptPlanWizard();
       }

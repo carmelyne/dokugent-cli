@@ -27,7 +27,7 @@ import { paddedLog, paddedSub } from '@utils/cli/ui';
 import { runAgentCommand } from '@src/commands/agent';
 import { runByoCommand } from '@src/commands/byo';
 import { runCertifyCommand } from '@src/commands/certify';
-import { runComplianceWizard } from '@src/commands/compliance';
+import { runComplianceCommand } from '@src/commands/compliance';
 import { runCompileCommand } from '@src/commands/compile';
 import { runConventionsCommand } from '@src/commands/conventions';
 import { runCriteriaCommand } from '@src/commands/criteria';
@@ -59,11 +59,7 @@ switch (command) {
     break;
   case 'compliance': {
     const agentArg = args[1];
-    if (!agentArg) {
-      console.error('\n❌ Missing required agent ID.\nUsage: dokugent compliance <agentId>\n');
-      process.exit(1);
-    }
-    runComplianceWizard(agentArg);
+    runComplianceCommand(agentArg);
     break;
   }
   case 'compile':
@@ -113,6 +109,9 @@ switch (command) {
     require('../src/commands/ui-demo').default?.();
     break;
   }
+  case 'memory':
+    require('../src/commands/memory');
+    break;
   default: {
     paddedLog("Dokugent CLI is ready", " ");
     paddedLog('dokugent <command> [flags]', '', 12, 'magenta', 'USAGE');
@@ -160,7 +159,7 @@ switch (command) {
     const knownCommands = [
       'agent', 'byo', 'certify', 'compliance', 'compile', 'conventions', 'criteria',
       'deploy', 'dryrun', 'init', 'inspect', 'keygen', 'owner', 'plan',
-      'preview', 'security', 'simulate', 'trace', 'ui-demo'
+      'preview', 'security', 'simulate', 'trace', 'ui-demo', 'memory'
     ];
     const suggestion = knownCommands.find(cmd => cmd.startsWith(input));
     if (suggestion) paddedLog(`Did you mean '${suggestion}'?`, '', 12, 'info', 'HINT');

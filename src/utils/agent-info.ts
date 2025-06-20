@@ -27,6 +27,6 @@ export default async function getActiveAgentInfo() {
   return {
     agentId,
     agentSlug: slug,
-    versionPath: resolved
+    versioanPath: resolved
   };
 }

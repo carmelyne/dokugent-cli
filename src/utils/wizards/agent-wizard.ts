@@ -27,6 +27,8 @@ export interface InitAnswers {
   birth: string;
   createdAt: string;
   createdAtDisplay: string;
+  steps: string[];
+  llmTargets: string[];
 }
 
 /**
@@ -56,48 +58,57 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
         avatar: '',
         birth: getTimestamp(),
         createdAt: now.toISOString(), // ISO 8601 string for data reliability
-        createdAtDisplay: now.toLocaleString() // Human-friendly format
+        createdAtDisplay: now.toLocaleString(), // Human-friendly format
+        steps: [],
+        llmTargets: ['gpt-4', 'claude-3', 'gemini-1.5'],
       };
 
       return defaults;
     }
-    const answers: any = await prompt([
+    console.log('[wizard] launching interactive prompt...');
+    const baseAnswers: any = await prompt([
       {
         type: 'input',
         name: 'agentName',
         message: padQuestion('What is the name of this agent?'),
         initial: 'summarybot',
-        validate: (input: string) => input.trim().length > 0 ? true : 'Agent name cannot be blank.'
+        validate: (input: string) =>
+          input.trim().length > 0 ? true : 'Agent name cannot be blank.',
       },
       {
         type: 'input',
         name: 'description',
         message: padQuestion('Briefly describe what this agent should do:'),
-        initial: 'Assists with summarizing input text'
+        initial: 'Assists with summarizing input text',
       },
       {
-        type: 'multiselect',
-        name: 'roles',
-        message: padQuestion('What roles will this agent perform?'),
+        type: 'select',
+        name: 'role',
+        message: padQuestion('What role will this agent perform?'),
         choices: [
-          { name: 'summarizer', message: padQuestion('summarizer') },
-          { name: 'formatter', message: padQuestion('formatter') },
-          { name: 'validator', message: padQuestion('validator') },
-          { name: 'router', message: padQuestion('router') },
-          { name: 'wizard', message: padQuestion('wizard') },
-          { name: 'other', message: padQuestion('other') }
+          padQuestion('summarizer'),
+          padQuestion('formatter'),
+          padQuestion('validator'),
+          padQuestion('router'),
+          padQuestion('wizard'),
+          padQuestion('other'),
         ],
-        validate: (value: any) =>
-          value.length > 0
-            ? true
-            : chalk.red('✖ You must select at least one role.')
-      },
+        result: (input: string) => input.trim(),
+      }
+    ]);
+
+    const role = baseAnswers.role;
+
+    const extraAnswers: any = await prompt([
       {
         type: 'input',
         name: 'customRole',
-        message: padQuestion('Enter custom role (if any):'),
-        skip: (state: any) => !(state.roles || []).includes('other'),
-        result: (input: string) => input.trim()
+        message: padQuestion('Enter the name of the custom role:'),
+        skip: () => {
+          // console.log('[wizard] role value:', role);
+          return role !== 'other';
+        },
+        result: (input: string) => input.trim(),
       },
       {
         type: 'input',
@@ -108,21 +119,29 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       },
       {
         type: 'input',
+        name: 'llmTargets',
+        message: padQuestion('Which LLM targets should this agent support? (comma-separated)'),
+        initial: 'gpt-4, claude-3, gemini-1.5',
+        format: (input: string) =>
+          input.split(',').map(s => s.trim()).filter(Boolean).join(', ')
+      },
+      {
+        type: 'input',
         name: 'avatar',
         message: padQuestion('Provide an avatar URL or description (optional):'),
-        initial: ''
+        initial: '',
       },
       {
         type: 'input',
         name: 'mainTask',
         message: padQuestion('What is the main task of this agent?'),
-        initial: 'Summarize input as 3 bullet points'
+        initial: 'Summarize input as 3 bullet points',
       },
       {
         type: 'confirm',
         name: 'requiresConventions',
         message: padQuestion('Does this agent require behavioral conventions?'),
-        initial: false
+        initial: false,
       },
       {
         type: 'select',
@@ -140,14 +159,22 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
         validate: (input: string) =>
           input?.trim().length > 0
             ? true
-            : chalk.red('✖ Please select an ecosystem option.')
-      }
+            : chalk.red('✖ Please select an ecosystem option.'),
+      },
+      {
+        type: 'input',
+        name: 'steps',
+        message: padQuestion('List step IDs for this agent (comma-separated):'),
+        initial: '',
+        result: (input: string) => input,
+      },
     ]);
 
-    const customRole = answers.customRole;
-    if (customRole) {
-      answers.roles = answers.roles.filter((r: string) => r !== 'other');
-      answers.roles.push(customRole);
+    const answers = { ...baseAnswers, ...extraAnswers };
+
+    if ((answers.role === 'other' || (answers.roles && Array.isArray(answers.roles) && answers.roles[0] === 'other')) && answers.customRole) {
+      answers.role = answers.customRole;
+      answers.roles = [answers.customRole];
     }
 
     // Sanitize all string fields: trim and collapse whitespace
@@ -158,21 +185,38 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     });
 
     answers.processableTypes = answers.processableTypes.split(',').map((s: string) => s.trim()).filter(Boolean);
+    answers.steps = answers.steps
+      ? answers.steps.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
+    // console.log('[wizard] parsed content types:', answers.processableTypes);
 
     const timestamp = getTimestamp();
     const now = new Date();
+
+    const summaryText = [
+      answers.agentName,
+      answers.description,
+      [answers.role].join(', '),
+      answers.processableTypes.join(', '),
+      answers.mainTask
+    ].join(' ');
+
+    const tokenCount = estimateTokensFromText(summaryText);
+
     const typedAnswers: InitAnswers & {
       cliVersion: string;
       schemaVersion: string;
       createdVia: string;
+      estimatedTokens: number;
     } = {
       agentName: answers.agentName,
       description: answers.description,
-      roles: answers.roles,
+      roles: [answers.role],
       processableTypes: answers.processableTypes,
       mainTask: answers.mainTask,
       requiresConventions: answers.requiresConventions,
       ecosystem: answers.ecosystem,
+      llmTargets: answers.llmTargets,
       avatar: answers.avatar || '',
       birth: timestamp,
       createdAt: now.toISOString(),
@@ -180,6 +224,8 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       cliVersion: DOKUGENT_CLI_VERSION,
       schemaVersion: DOKUGENT_SCHEMA_VERSION,
       createdVia: DOKUGENT_CREATED_VIA,
+      estimatedTokens: tokenCount,
+      steps: answers.steps,
     };
 
     const agentId = `${typedAnswers.agentName}@${timestamp}`;
@@ -189,16 +235,58 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
     // Update 'latest' symlink to point to the most recent agent folder
     const latestSymlinkPath = path.resolve('.dokugent/data/agents', 'latest');
     try {
-      if (fs.existsSync(latestSymlinkPath)) fs.unlinkSync(latestSymlinkPath);
+      fs.unlinkSync(latestSymlinkPath); // Force remove even if broken
+    } catch (err: unknown) {
+      if (err instanceof Error && (err as any).code !== 'ENOENT') {
+        paddedLog('Failed to remove old latest symlink', `${err.message}`, PAD_WIDTH, 'warn', 'FAILED');
+      } else if (!(err instanceof Error)) {
+        paddedLog('Failed to remove old latest symlink', `${String(err)}`, PAD_WIDTH, 'warn', 'FAILED');
+      }
+    }
+    try {
       fs.symlinkSync(agentFolder, latestSymlinkPath, 'dir');
-    } catch (err) {
-      paddedLog('Failed to create latest symlink', `${(err as Error).message || err}`, PAD_WIDTH, 'warn', 'FAILED');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        paddedLog('Failed to create latest symlink', `${err.message}`, PAD_WIDTH, 'warn', 'FAILED');
+      } else {
+        paddedLog('Failed to create latest symlink', `${String(err)}`, PAD_WIDTH, 'warn', 'FAILED');
+      }
     }
 
     fs.ensureDirSync(agentFolder);
     //complete files and folder structure on this timestamp
     // paddedLog('File', formatRelativePath(identityPath), PAD_WIDTH, 'success', 'SAVED');
     await confirmAndWriteFile(identityPath, JSON.stringify(typedAnswers, null, 2));
+
+    // Auto-create plan step stubs from listed step IDs
+    const stepDir = path.resolve('.dokugent/data/plans', agentId, 'steps');
+    await fs.ensureDir(stepDir);
+
+    const planIndexPath = path.resolve('.dokugent/data/plans', agentId, 'plan.index.md');
+    const existingIndex = (await fs.pathExists(planIndexPath))
+      ? (await fs.readFile(planIndexPath, 'utf-8')).split('\n')
+      : [];
+
+    const indexUpdates: string[] = [];
+
+    for (const stepId of typedAnswers.steps) {
+      const stepPath = path.join(stepDir, `${stepId}.json`);
+      const placeholder = {
+        id: stepId,
+        use: 'tool-name-here',
+        input: `mocks/${stepId}/input.md`,
+        output: `mocks/${stepId}/output.md`
+      };
+      await fs.writeJson(stepPath, placeholder, { spaces: 2 });
+
+      if (!existingIndex.some(line => line.startsWith(`${stepId} -`))) {
+        indexUpdates.push(`${stepId} - linked`);
+      }
+    }
+
+    if (indexUpdates.length > 0) {
+      await fs.writeFile(planIndexPath, [...existingIndex, ...indexUpdates].join('\n'), 'utf-8');
+    }
 
     if (typedAnswers.ecosystem && typedAnswers.ecosystem !== 'none') {
       const presetPath = path.resolve('src/presets/ecosystems', typedAnswers.ecosystem);
@@ -212,15 +300,7 @@ export async function promptAgentWizard(useDefaultsOnly = false): Promise<InitAn
       }
     }
 
-    const summaryText = [
-      typedAnswers.agentName,
-      typedAnswers.description,
-      typedAnswers.roles.join(', '),
-      typedAnswers.processableTypes.join(', '),
-      typedAnswers.mainTask
-    ].join(' ');
-
-    const tokenCount = estimateTokensFromText(summaryText);
+    // const tokenCount = estimateTokensFromText(summaryText);
     paddedLog('Estimated agent profile tokens', `~${tokenCount} tokens`, PAD_WIDTH, 'pink', 'TOKENS');
 
     if (!typedAnswers.ecosystem || typedAnswers.ecosystem === 'none') {

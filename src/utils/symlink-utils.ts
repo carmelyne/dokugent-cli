@@ -34,3 +34,22 @@ export async function updateSymlink(targetDir: string, name: string, versionedFo
   await fs.symlink(targetPath, symlinkPath, 'dir');
   console.log(`🔗 Symlink updated: ${name} → ${versionedFolder}`);
 }
+
+/**
+ * Resolves the real path of a symlink inside the .dokugent/data directory.
+ * Useful for getting the actual versioned folder behind a label like 'latest' or 'current'.
+ *
+ * @param name - The subdirectory inside .dokugent/data to resolve (e.g., 'agents', 'criteria')
+ * @returns {Promise<string>} The resolved path.
+ */
+export async function resolveSymlinkedPath(name: string): Promise<string> {
+  const baseDir = path.join('.dokugent', 'data', name);
+  const symlinkPath = path.resolve(baseDir);
+
+  if (!(await fs.pathExists(symlinkPath))) {
+    throw new Error(`Symlink path "${symlinkPath}" not found.`);
+  }
+
+  const realPath = await fs.realpath(symlinkPath);
+  return realPath;
+}

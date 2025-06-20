@@ -24,20 +24,6 @@ agents.yml
 .bak/
 */**/*bak*
 
-# Docs
-site
-# Prevent tracking mkdocs config edits for CLI site builds
-site/mkdocs.yml
-# (git update-index --assume-unchanged site/mkdocs.yml)
-
-# Supabase generated stuff
-.supabase/               # local metadata, not needed for deploy
-supabase/.temp/          # edge function temp files
-supabase/functions/**/node_modules/
-supabase/functions/**/dist/
-supabase.config.json
-supabase/
-
 # Env files
 .env
 

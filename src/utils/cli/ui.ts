@@ -32,6 +32,19 @@ export interface StepStatus {
   originalText: string;
 }
 
+/**
+ * UI Utility Object
+ *
+ * Provides centralized methods for formatted CLI output, including:
+ * - Logging (info, success, warning, error)
+ * - Headline formatting
+ * - Boxed messages
+ * - Spinners (step-based loading indicators)
+ * - Dividers and terminal links
+ * - Step status helpers (start, success, fail, info)
+ *
+ * Used across Dokugent CLI commands to maintain visual consistency and UX clarity.
+ */
 export const ui = {
   info: (msg: string) => console.log(chalk.blueBright(`INFO     `.padEnd(13) + msg)),
   success: (msg: string) => console.log(chalk.green(`SUCCESS  `.padEnd(13) + msg)),

@@ -1,74 +1,54 @@
-
-
-import inquirer from 'inquirer';
 import fs from 'fs-extra';
 import path from 'path';
 import { getTimestamp } from '../utils/timestamp';
 import { confirmAndWriteFile } from '../utils/fs-utils';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
+import getActiveAgentInfo from '@utils/agent-info';
+import { promptComplianceWizard } from '../utils/wizards/compliance-wizard';
 
-export async function runComplianceWizard(agentId: string) {
+export async function runComplianceCommand(agentId?: string) {
+  if (!agentId) {
+    const info = await getActiveAgentInfo();
+    agentId = info.agentId;
+  }
+
   console.log(`\n🛡️  Filling out compliance fields for: ${agentId}\n`);
 
-  const answers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'contactName',
-      message: "Contact person's full name:",
-      validate: (input: string) => input.trim() !== '' || 'Required'
-    },
-    {
-      type: 'input',
-      name: 'contactEmail',
-      message: 'Contact email address:',
-      validate: (input: string) =>
-        /\S+@\S+\.\S+/.test(input) || 'Must be a valid email'
-    },
-    {
-      type: 'input',
-      name: 'dataRetention',
-      message: 'How long is data retained? (e.g., 7 days, indefinite)',
-      validate: (input: string) => input.trim() !== '' || 'Required'
-    },
-    {
-      type: 'checkbox',
-      name: 'dataSensitivity',
-      message: 'What sensitive data may be handled?',
-      choices: ['location', 'biometrics', 'identifiers', 'health', 'financial']
-    },
-    {
-      type: 'list',
-      name: 'legalBasis',
-      message: 'Legal basis for data processing:',
-      choices: [
-        'consent',
-        'contract',
-        'legal_obligation',
-        'vital_interest',
-        'public_task',
-        'legitimate_interest'
-      ]
-    },
-    {
-      type: 'input',
-      name: 'authorizedUsers',
-      message: 'Authorized user roles (comma-separated):',
-      filter: (input: string) => input.split(',').map(s => s.trim()).filter(Boolean)
-    }
-  ]);
+  const answers = await promptComplianceWizard();
 
+  const now = new Date();
   const output = {
-    contact: {
-      name: answers.contactName,
-      email: answers.contactEmail
+    complianceOfficer: {
+      name: answers.complianceSigner.name,
+      email: answers.complianceSigner.email,
+      role: 'Governance Contact (AIGP/GDPR)',
+      signerId: `${answers.complianceSigner.email}#${answers.complianceSigner.fingerprint}`,
+      publicKey: answers.complianceSigner.publicKey,
+      fingerprint: answers.complianceSigner.fingerprint,
+      sha256: null
     },
     dataRetention: answers.dataRetention,
     dataSensitivity: answers.dataSensitivity,
     legalBasis: answers.legalBasis,
-    authorizedUsers: answers.authorizedUsers
+    authorizedUsers: answers.authorizedUsers,
+    purpose: answers.purpose,
+    dataSources: answers.dataSources,
+    transfersOutsideJurisdiction: answers.transfersOutsideJurisdiction,
+    usesProfiling: answers.usesProfiling,
+    selfAssessedRisk: answers.selfAssessedRisk,
+    supportsDSAR: answers.supportsDSAR,
+    complianceDateAt: now.toISOString(),
+    complianceDateAtDisplay: now.toLocaleString(),
+    cliVersion: DOKUGENT_CLI_VERSION,
+    schemaVersion: DOKUGENT_SCHEMA_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA,
   };
 
-  const compliancePath = path.resolve('.dokugent/data/compliance', agentId, 'compliance.json');
+  const info = await getActiveAgentInfo();
+  agentId = info.agentId;
+  const agentSlug = info.agentSlug;
+  const compliancePath = path.resolve('.dokugent/data/compliance', agentSlug, 'compliance.json');
   await confirmAndWriteFile(compliancePath, JSON.stringify(output, null, 2));
 
-  console.log(`\n✅ Compliance metadata saved to:\n   \x1b[34m.dokugent/data/compliance/${agentId}/compliance.json\x1b[0m\n`);
+  console.log(`\n✅ Compliance metadata saved to:\n   \x1b[34m.dokugent/data/compliance/${agentSlug}/compliance.json\x1b[0m\n`);
 }

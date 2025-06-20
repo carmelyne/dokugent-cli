@@ -5,6 +5,7 @@
  */
 import fs from 'fs-extra';
 import path from 'path';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
 
 /**
  * Safely writes contents to a file, creating a timestamped backup if the file already exists.
@@ -31,7 +32,8 @@ export async function writeWithBackup(
 
     await fs.ensureDir(dir);
     await fs.copy(targetPath, backupPath);
-    console.log(`\n📦 Backup created at\n   ${backupPath}`);
+    // console.log(`\n📦 Backup created at\n   ${backupPath}`);
+    paddedLog('File', backupPath, PAD_WIDTH, 'orange', 'BACKUP');
   }
 
   await fs.outputFile(targetPath, contents);

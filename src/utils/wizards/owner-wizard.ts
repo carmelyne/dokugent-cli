@@ -158,7 +158,7 @@ export async function promptOwnerWizard(): Promise<{
       createdAtDisplay: now.toLocaleString(),
       cliVersion: DOKUGENT_CLI_VERSION,
       schemaVersion: DOKUGENT_SCHEMA_VERSION,
-      createdVia: "DOKUGENT_CREATED_VIA"
+      createdVia: DOKUGENT_CREATED_VIA
     };
 
     await fs.ensureDir(path.dirname(OWNER_PATH));

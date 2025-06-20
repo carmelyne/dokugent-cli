@@ -93,26 +93,45 @@ export async function runSimulateViaMistral() {
     const mockPaths = [
       path.join('.dokugent/ops/mocks', step.use || step.tool || '', `${step.id}-input.md`),
       path.join('.dokugent/ops/mocks/custom-tool', `${step.id}-input.md`),
+      path.join('.dokugent/ops/mocks', step.use || step.tool || '', `input.md`),
     ];
 
     let mockInputResolved = mockInput;
     let foundMock = false;
 
+    paddedLog('Mock Resolver', `Attempting to resolve input for: ${step.id}`, PAD_WIDTH, 'purple', 'CHECK MOCK')
+    console.log();
     for (const p of mockPaths) {
+      console.log(padMsg(`→ Checking: ${p}`));
       if (await fs.pathExists(p)) {
         try {
           mockInputResolved = await fs.readFile(p, 'utf-8');
           foundMock = true;
+          console.log(padMsg(`${chalk.green('✔')} Found: ${p}`));
           break;
         } catch {
-          console.warn(`⚠️  Failed to read mock input file: ${p}`);
+          console.warn(padMsg(`${chalk.red('ℹ')} Failed to read mock input file: ${p}`));
         }
       }
     }
 
     if (!foundMock) {
-      console.warn(`⚠️  No specific mock file found for step '${step.id}'. Using raw input field.`);
+      console.warn(padMsg(`${chalk.red('ℹ')} No specific mock file found for step '${step.id}'. Using raw input field.`));
     }
+
+    // --- HIGH RISK SKIP BLOCK ---
+    const trifecta = step.security?.trifecta || [];
+    const riskLevel = step.security?.riskLevel || 'Low';
+
+    if (riskLevel === 'High' && !violateMode && !overrideConstraints && !process.argv.includes('--force')) {
+      console.warn(`⚠️  Step "${step.id}" is marked HIGH RISK due to:`);
+      for (const tag of trifecta) {
+        console.warn(`   - ${tag}`);
+      }
+      console.warn('   → Skipping this step unless --force or override flags are passed.\n');
+      continue;
+    }
+    // --- END HIGH RISK SKIP BLOCK ---
 
     console.log();
     paddedDefault('', `${step.id || step.name}`, PAD_WIDTH, 'pink', 'STEP');
@@ -169,7 +188,11 @@ export async function runSimulateViaMistral() {
         await fs.writeFile(step.output, output, 'utf-8');
         console.log(`✅ Simulated output written to ${step.output}`);
       } catch (err) {
-        console.warn(`⚠️ Failed to write simulated output to ${step.output}: ${err.message}`);
+        if (err instanceof Error) {
+          console.warn(`⚠️ Failed to write simulated output to ${step.output}: ${err.message}`);
+        } else {
+          console.warn(`⚠️ Failed to write simulated output to ${step.output}: ${String(err)}`);
+        }
       }
     }
 

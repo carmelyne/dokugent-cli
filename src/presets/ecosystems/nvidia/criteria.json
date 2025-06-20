@@ -1,0 +1,11 @@
+{
+  "name": "extract_audio",
+  "description": "Extracts audio track from a video file.",
+  "input": {
+    "video": "string"
+  },
+  "output": {
+    "audio": "string"
+  },
+  "schema_version": "0.1"
+}

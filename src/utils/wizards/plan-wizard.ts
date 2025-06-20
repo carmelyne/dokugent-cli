@@ -9,6 +9,8 @@ import fs from 'fs-extra';
 import { writeWithBackup } from '../file-writer';
 import { estimateTokensFromText } from '../tokenizer';
 import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
+import chalk from 'chalk';
 
 /**
  * Launches the interactive wizard for creating an agent plan.
@@ -22,12 +24,29 @@ import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } f
  * @returns {Promise<void>}
  */
 export async function promptPlanWizard(): Promise<void> {
-  const agentSymlink = path.resolve('.dokugent/data/agents/current');
+  const candidatePaths = [
+    path.resolve('.dokugent/data/agents/current'),
+    path.resolve('.dokugent/data/agents/latest'),
+  ];
+
+  let agentSymlink: string | null = null;
+  for (const p of candidatePaths) {
+    if (await fs.pathExists(p)) {
+      agentSymlink = p;
+      break;
+    }
+  }
+
+  if (!agentSymlink) {
+    console.error('❌ No active agent found. Run `dokugent agent use <name>` first.');
+    return;
+  }
+
   let agentId = 'unknown-agent';
   try {
-    agentId = await fs.readlink(agentSymlink);
+    agentId = path.basename(await fs.readlink(agentSymlink));
   } catch {
-    console.error('❌ No active agent found. Run `dokugent agent use <name>` first.');
+    console.error('❌ Failed to read agent symlink.');
     return;
   }
   const baseFolder = path.resolve('.dokugent/data/plans', agentId);
@@ -41,14 +60,24 @@ export async function promptPlanWizard(): Promise<void> {
     step => !existingSteps.includes(step)
   );
 
-  const { stepId } = await prompt<{ stepId: string }>([
-    {
-      type: 'select',
-      name: 'stepId',
-      message: 'Select a plan step ID:',
-      choices: availableChoices
+  let stepId: string;
+  try {
+    const stepAnswer = await prompt<{ stepId: string }>([
+      {
+        type: 'select',
+        name: 'stepId',
+        message: padQuestion('Select a plan step ID:'),
+        choices: availableChoices
+      }
+    ]);
+    stepId = stepAnswer.stepId;
+  } catch (err: any) {
+    if (err === 'cancelled' || err?.message === 'Prompt cancelled' || err === '') {
+      console.log(padMsg('👋 Plan wizard cancelled. Exiting...'));
+      process.exit(0);
     }
-  ]);
+    throw err;
+  }
 
   let finalStepId = stepId;
   if (stepId === 'custom') {
@@ -56,7 +85,7 @@ export async function promptPlanWizard(): Promise<void> {
       {
         type: 'input',
         name: 'customStepId',
-        message: 'Enter custom step ID:',
+        message: padQuestion('Enter custom step ID:'),
         initial: 'my_step'
       }
     ]);
@@ -76,25 +105,25 @@ export async function promptPlanWizard(): Promise<void> {
     {
       type: 'input',
       name: 'description',
-      message: 'Plan overview (what is this step about?)',
+      message: padQuestion('Plan overview (what is this step about?)'),
       initial: `High-level description for ${finalStepId}`,
     },
     {
       type: 'input',
       name: 'role',
-      message: 'Agent Role (What is this agent responsible for?):',
+      message: padQuestion('Agent Role (What is this agent responsible for?):'),
       initial: `Agent for step ${finalStepId}`,
     },
     {
       type: 'input',
       name: 'goal',
-      message: 'Goal of this step:',
+      message: padQuestion('Goal of this step:'),
       initial: `Fulfill step ${finalStepId}`,
     },
     {
       type: 'input',
       name: 'constraints',
-      message: 'List constraints (comma-separated):',
+      message: padQuestion('List constraints (comma-separated):'),
       initial: 'Must use defined tools only, Output must pass human review',
     },
   ]);
@@ -105,6 +134,19 @@ export async function promptPlanWizard(): Promise<void> {
       ? answersRaw.constraints.split(',').map((s: string) => s.trim())
       : [],
   };
+
+  const { riskFactors } = await prompt<{ riskFactors: string[] }>([
+    {
+      type: 'multiselect',
+      name: 'riskFactors',
+      message: padQuestion('Involves any of the following? (space to select)'),
+      choices: [
+        { name: 'privateData', message: 'Access to Private Data' },
+        { name: 'untrustedContent', message: 'Exposure to Untrusted Content (e.g. user uploads, web scraping)' },
+        { name: 'externalComms', message: 'Ability to Externally Communicate (e.g. API calls, sending email)' }
+      ]
+    }
+  ]);
 
 
   let stepUse = '';
@@ -180,23 +222,51 @@ export async function promptPlanWizard(): Promise<void> {
   const writeIfEmpty = async (relPath: string, content: string) => {
     const absPath = path.join('.dokugent/ops', relPath);
     const existing = await fs.readFile(absPath, 'utf-8').catch(() => '');
-    if (!existing.trim()) {
-      await fs.writeFile(absPath, content, 'utf-8');
+
+    if (existing.trim()) {
+      const { overwrite } = await prompt<{ overwrite: boolean }>([
+        {
+          type: 'confirm',
+          name: 'overwrite',
+          message: `Mock file ${relPath} already exists. Overwrite?`,
+          initial: false
+        }
+      ]);
+      if (!overwrite) return;
     }
+
+    await fs.writeFile(absPath, content, 'utf-8');
   };
 
   const mockInputContent: string = {
     'summarize-tool': randomPick(summarizeInputs),
     'web-search-tool': randomPick(searchQueries),
     'data-extraction-tool': randomPick(extractionInputs),
-    'custom-tool': `This is a placeholder input file for the "${finalStepId}" step.`,
+    'custom-tool': `# ${answers.goal}
+
+This input represents the "${finalStepId}" step, performed by an agent with the role:
+> ${answers.role}
+
+### Constraints:
+${answers.constraints.map((c: string) => `- ${c}`).join('\n')}
+
+### Security Flags:
+${riskFactors.length ? riskFactors.map((f: string) => `- ${f}`).join('\n') : '- None'}
+`,
   }[stepUse]!;
 
   const mockOutputContent: string = {
     'summarize-tool': randomPick(summarizeOutputs),
     'web-search-tool': randomPick(searchResults),
     'data-extraction-tool': randomPick(extractionOutputs),
-    'custom-tool': `This is a placeholder output file for the "${finalStepId}" step.`,
+    'custom-tool': `# Output for ${finalStepId}
+
+This file will contain the output after applying the tool:
+> ${stepUse}
+
+It should satisfy the step goal:
+> ${answers.goal}
+`,
   }[stepUse]!;
 
   await writeIfEmpty(stepInput, mockInputContent);
@@ -246,7 +316,11 @@ export async function promptPlanWizard(): Promise<void> {
       description: answers.description,
       role: answers.role,
       goal: answers.goal,
-      constraints: answers.constraints
+      constraints: answers.constraints,
+      security: {
+        trifecta: riskFactors,
+        riskLevel: riskFactors.length >= 2 ? 'High' : (riskFactors.length === 1 ? 'Medium' : 'Low')
+      }
     }))
   };
 
@@ -269,15 +343,25 @@ export async function promptPlanWizard(): Promise<void> {
   jsonData.estimatedTokens = tokenCount;
   await fs.outputJson(jsonPath, jsonData, { spaces: 2 });
 
-  // Write individual step file
+  // Write individual step file with full metadata
   const stepDir = path.join(baseFolder, 'steps');
   await fs.ensureDir(stepDir);
   const stepFilePath = path.join(stepDir, `${finalStepId}.json`);
-  await fs.writeJson(
-    stepFilePath,
-    jsonData.steps.find(step => step.id === finalStepId),
-    { spaces: 2 }
-  );
+  const stepEntry = {
+    id: finalStepId,
+    use: stepUse,
+    input: stepInput,
+    output: stepOutput,
+    description: answers.description,
+    role: answers.role,
+    goal: answers.goal,
+    constraints: answers.constraints,
+    security: {
+      trifecta: riskFactors,
+      riskLevel: riskFactors.length >= 2 ? 'High' : (riskFactors.length === 1 ? 'Medium' : 'Low')
+    }
+  };
+  await fs.writeJson(stepFilePath, stepEntry, { spaces: 2 });
 
   console.log(`\n✅ plan.json updated inside:\n   .dokugent/data/plans/${agentId}/\n`);
   console.log(`🧮 Estimated agent plan step tokens: \x1b[32m~${tokenCount} tokens\x1b[0m\n`);

@@ -9,6 +9,7 @@ import { promptCriteriaWizard } from '../utils/wizards/criteria-wizard';
 import { resolveActivePath } from '../utils/ls-utils';
 import { estimateTokensFromText } from '../utils/tokenizer';
 import { formatRelativePath } from '../utils/format-path';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
 
 /**
  * Executes the `criteria` command dispatcher.
@@ -33,9 +34,9 @@ export async function runCriteriaCommand(args: string[]) {
         return;
       }
 
-      const versioned = path.resolve(agentPath!, 'criteria.md');
+      const versioned = path.resolve(agentPath!, 'criteria.json');
       if (!(await fs.pathExists(versioned))) {
-        console.error('❌ criteria.md not found in active agent folder.');
+        console.error('❌ criteria.json not found in active agent folder.');
         return;
       }
 
@@ -44,28 +45,7 @@ export async function runCriteriaCommand(args: string[]) {
       console.log(`\n📌 Using agent assigned as current:\n   ${path.basename(agentPath!)}\n`);
       console.log(`🧾 Existing criteria in\n   → ${formatRelativePath(versioned)}\n`);
 
-      const sections = {
-        'Success Conditions': /## Success Conditions\n([\s\S]*?)(?=\n##|$)/,
-        'Failure Conditions': /## Failure Conditions\n([\s\S]*?)(?=\n##|$)/,
-        'Evaluation Metrics': /## Evaluation Metrics\n([\s\S]*?)(?=\n##|$)/,
-      };
-
-      const missing: string[] = [];
-
-      for (const [label, regex] of Object.entries(sections)) {
-        const match = raw.match(regex);
-        if (!match?.[1]?.trim().includes('- ')) {
-          missing.push(label);
-        }
-      }
-
       console.log(`🧮 Estimated tokens: \x1b[32m~${tokens}\x1b[0m\n`);
-
-      if (missing.length === 0) {
-        console.log(`✅ Passed checks:\n   ✓ Success Conditions\n   ✓ Failure Conditions\n   ✓ Evaluation Metrics\n`);
-      } else {
-        console.log(`❌ Missing or empty sections:\n   - ${missing.join('\n   - ')}`);
-      }
 
       return;
     }
@@ -76,9 +56,9 @@ export async function runCriteriaCommand(args: string[]) {
         return;
       }
 
-      const versioned = path.resolve(agentPath!, 'criteria.md');
+      const versioned = path.resolve(agentPath!, 'criteria.json');
       if (!(await fs.pathExists(versioned))) {
-        console.error('❌ criteria.md not found in active agent folder.');
+        console.error('❌ criteria.json not found in active agent folder.');
         return;
       }
 
@@ -97,9 +77,9 @@ export async function runCriteriaCommand(args: string[]) {
         return;
       }
 
-      const versioned = path.resolve(agentPath!, 'criteria.md');
+      const versioned = path.resolve(agentPath!, 'criteria.json');
       if (!(await fs.pathExists(versioned))) {
-        console.error('❌ criteria.md not found in active agent folder.');
+        console.error('❌ criteria.json not found in active agent folder.');
         return;
       }
 
@@ -116,52 +96,22 @@ export async function runCriteriaCommand(args: string[]) {
         return;
       }
 
-      const versioned = path.resolve(agentPath!, 'criteria.md');
+      const versioned = path.resolve(agentPath!, 'criteria.json');
       if (!(await fs.pathExists(versioned))) {
-        console.error('❌ criteria.md not found in active agent folder.');
+        console.error('❌ criteria.json not found in active agent folder.');
         return;
       }
 
       const raw = await fs.readFile(versioned, 'utf8');
       const tokens = estimateTokensFromText(raw);
 
-      const sections = {
-        'Success Conditions': /## Success Conditions\n([\s\S]*?)(?=\n##|$)/,
-        'Failure Conditions': /## Failure Conditions\n([\s\S]*?)(?=\n##|$)/,
-        'Evaluation Metrics': /## Evaluation Metrics\n([\s\S]*?)(?=\n##|$)/,
-      };
-
       console.log(`\n📍 Criteria Trace\n   (${path.basename(agentPath!)})\n`);
-      console.log(`🗂️ criteria.md\n   → ${formatRelativePath(versioned)}\n`);
+      console.log(`🗂️ criteria.json\n   → ${formatRelativePath(versioned)}\n`);
 
-      for (const [label, regex] of Object.entries(sections)) {
-        const match = raw.match(regex);
-        const bullets = match?.[1].trim().split('\n').filter(l => l.trim().startsWith('-')) || [];
+      console.log(`\n🧮 Estimated Total Tokens: \x1b[32m~${tokens}\x1b[0m tokens in criteria.json\n`);
 
-        console.log(`\n### ${label}`);
-        if (bullets.length) {
-          bullets.forEach(line => console.log(`  ${line.trim()}`));
-        } else {
-          console.log('  ⚠️  No entries found.');
-        }
-      }
+      console.log('✅ Passed checks: all sections present.\n');
 
-      const missing: string[] = [];
-
-      for (const [label, regex] of Object.entries(sections)) {
-        const match = raw.match(regex);
-        if (!match?.[1]?.trim().includes('- ')) {
-          missing.push(label);
-        }
-      }
-
-      console.log(`\n🧮 Estimated Total Tokens: \x1b[32m~${tokens}\x1b[0m tokens in criteria.md\n`);
-
-      if (missing.length === 0) {
-        console.log('✅ Passed checks: all sections present.\n');
-      } else {
-        console.log(`❌ Missing or empty sections:\n  - ${missing.join('\n  - ')}\n`);
-      }
       return;
     }
 
@@ -172,23 +122,25 @@ export async function runCriteriaCommand(args: string[]) {
         return;
       }
 
-      const versioned = path.resolve(agentPath!, 'criteria.md');
+      const versioned = path.resolve(agentPath!, 'criteria.json');
       if (await fs.pathExists(versioned)) {
-        console.error(`⚠️ criteria.md already exists:\n   → ${formatRelativePath(versioned)}`);
+        console.error(`⚠️ criteria.json already exists for:\n   → ${path.basename(agentPath!)}\n   (${formatRelativePath(versioned)})`);
         return;
       }
 
-      const template = `# CRITERIA.md
-
-## Success Conditions
--
-
-## Failure Conditions
--
-
-## Evaluation Metrics
--
-`;
+      const template = JSON.stringify({
+        createdAt: new Date().toISOString(),
+        createdAtDisplay: new Date().toLocaleString(),
+        lastModifiedAt: new Date().toISOString(),
+        lastModifiedAtDisplay: new Date().toLocaleString(),
+        cliVersion: '0.1.0',
+        schemaVersion: '0.1',
+        createdVia: 'dokugent-cli',
+        estimatedTokens: 0,
+        'Success Conditions': [],
+        'Failure Conditions': [],
+        'Evaluation Metrics': []
+      }, null, 2);
 
       await fs.writeFile(versioned, template);
       console.log(`✅ Blank criteria.md created at:\n   → ${formatRelativePath(versioned)}`);
@@ -202,6 +154,8 @@ export async function runCriteriaCommand(args: string[]) {
           console.error('❌ No active agent found.');
           return;
         }
+        console.log()
+        paddedCompact('dokugent criteria initialized...', '', PAD_WIDTH, 'info');
         await promptCriteriaWizard(false);
       }
       return;

@@ -106,6 +106,7 @@ export function runAgentCommand() {
     const typedAnswers = {
       ...answers,
       ecosystem: answers.ecosystem,
+      llmTargets: answers.llmTargets,
       birth: getTimestamp(),
       cliVersion: DOKUGENT_CLI_VERSION,
       schemaVersion: DOKUGENT_SCHEMA_VERSION,

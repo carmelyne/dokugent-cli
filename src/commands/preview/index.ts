@@ -69,6 +69,12 @@ export async function runPreviewCommand(): Promise<void> {
   // Resolve previewer (multi-previewer strategy)
   const previewerDir = path.join('.dokugent/keys', 'signers');
   const previewers = (await fs.readdir(previewerDir)).filter(name => !name.startsWith('.'));
+  if (previewers.length === 0) {
+    paddedLog(`${glyphs.cross} No Key Found`, 'No previewers found in .dokugent/keys/signers', PAD_WIDTH, 'warn', 'WARNING');
+    paddedLog(`${glyphs.info} Create key`, `Run 'dokugent keygen' to create a preview identity key before proceeding`, PAD_WIDTH, 'blue', 'HELP');
+    console.log()
+    return;
+  }
 
   let selectedPreviewer = previewers[0];
   if (previewers.length > 1) {
@@ -94,6 +100,12 @@ export async function runPreviewCommand(): Promise<void> {
 
   // Resolve owner selection
   const ownerDirs = (await fs.readdir(path.join('.dokugent', 'data', 'owners'))).filter(name => !name.startsWith('.'));
+  if (ownerDirs.length === 0) {
+    paddedLog(`${glyphs.cross} No Owner Found`, 'No owner identities found in .dokugent/data/owners', PAD_WIDTH, 'warn', 'WARNING');
+    paddedLog(`${glyphs.info} Create owner`, `Run 'dokugent owner' to create an owner identity before proceeding`, PAD_WIDTH, 'blue', 'HELP');
+    console.log();
+    return;
+  }
   let selectedOwner = ownerDirs[0];
   if (ownerDirs.length > 1) {
     const { selected } = await inquirer.prompt([
@@ -116,13 +128,103 @@ export async function runPreviewCommand(): Promise<void> {
     throw new Error(`❌ Expected owner file '${ownerJsonFile}' not found in .dokugent/data/owners/${selectedOwner}`);
   }
 
-  const [agent, planJson, conventionsRaw, owner, previewer] = await Promise.all([
+  let conventionsRaw: any = {
+    conventions: [],
+    cliVersion: DOKUGENT_CLI_VERSION,
+    schemaVersion: DOKUGENT_SCHEMA_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA
+  };
+
+  const [agent, planJson, owner, previewer] = await Promise.all([
     fs.readJson(agentMetaPath),
     fs.readJson(planPath),
-    fs.readJson(conventionsMetaPath),
     fs.readJson(ownerPath),
     fs.readJson(previewerPath),
   ]);
+
+  // Validate plan steps input/output files and security flags
+  // Support --doctor and --fix mode for mock validation
+  const isDoctorMode = process.argv.includes('--doctor');
+  const isFixMode = process.argv.includes('--fix');
+  const mockErrors: string[] = [];
+  let hasPlanChanged = false;
+  if (Array.isArray(planJson.steps)) {
+    for (const step of planJson.steps) {
+      // Compute correct input/output paths
+      const correctInput = `mocks/custom-tool/${step.id}-input.md`;
+      const correctOutput = `mocks/custom-tool/${step.id}-output.md`;
+      const inputPath = path.join(base, correctInput);
+      const outputPath = path.join(base, correctOutput);
+      const inputExists = await fs.pathExists(inputPath);
+      const outputExists = await fs.pathExists(outputPath);
+
+      // Auto-create missing files if --fix is enabled
+      if (!inputExists && isFixMode) {
+        await fs.outputFile(inputPath, `<!-- TODO: Fill input for step ${step.id} -->\n`);
+      }
+      if (!outputExists && isFixMode) {
+        await fs.outputFile(outputPath, `<!-- TODO: Fill output for step ${step.id} -->\n`);
+      }
+
+      // Check if step.input/output are correct, and fix if needed
+      const inputMismatch = step.input !== correctInput;
+      const outputMismatch = step.output !== correctOutput;
+      if ((inputMismatch || outputMismatch) && isFixMode) {
+        step.input = correctInput;
+        step.output = correctOutput;
+        hasPlanChanged = true;
+      }
+
+      // Re-check if files exist after fix attempt
+      const finalInputExists = await fs.pathExists(inputPath);
+      const finalOutputExists = await fs.pathExists(outputPath);
+      if (!finalInputExists || !finalOutputExists) {
+        const msg = `${glyphs.cross} Mock file validation failed for step "${step.id}".\n→ Expected: ${correctInput}, ${correctOutput}`;
+        if (isDoctorMode) {
+          mockErrors.push(msg);
+          continue;
+        } else {
+          throw new Error(msg);
+        }
+      }
+      // Security warnings
+      if (step.security) {
+        if (step.security.riskLevel === "High") {
+          console.warn(`⚠️  High risk step "${step.id}" flagged with: riskLevel`);
+        }
+        if (Array.isArray(step.security.trifecta) && step.security.trifecta.length > 0) {
+          console.warn(`⚠️  High risk step "${step.id}" flagged with: ${step.security.trifecta.join(', ')}`);
+        }
+      }
+    }
+    // After the loop, if doctor mode and issues, print them and return
+    if (isDoctorMode && mockErrors.length > 0) {
+      console.log();
+      paddedLog(`${glyphs.cross} Mock Validation Issues`, '', PAD_WIDTH, 'warn', 'WARNING');
+      for (const err of mockErrors) {
+        paddedSub('', err);
+      }
+      paddedLog(`${glyphs.info} Suggestion`, `Fix the above issues or run with 'dokugent preview --doctor --fix' for auto-correction.`, PAD_WIDTH, 'blue', 'HELP');
+      console.log();
+      return;
+    }
+    // --- Early return after --fix if plan changed ---
+    if (isFixMode && hasPlanChanged) {
+      await fs.writeJson(planPath, planJson, { spaces: 2 });
+      paddedLog('Plan file updated', `Corrected mock paths saved to ${planPath}`, PAD_WIDTH, 'success', 'FIXED');
+      paddedLog(`${glyphs.check} Fix Applied`, `Please review the generated mock files before rerunning preview.`, PAD_WIDTH, 'info', 'NOTICE');
+      return;
+    }
+  }
+
+  if (await fs.pathExists(conventionsMetaPath)) {
+    const fileRaw = await fs.readJson(conventionsMetaPath);
+    conventionsRaw = fileRaw;
+  } else {
+    paddedLog(`${glyphs.cross} No Conventions Found`, 'No conventions found in .dokugent/data/conventions/dev/latest', PAD_WIDTH, 'warn', 'WARNING');
+    paddedLog(`${glyphs.info} Optional`, `If you'd like to define conventions for your agent, run 'dokugent conventions'`, PAD_WIDTH, 'blue', 'HELP');
+    console.log();
+  }
   // Inject correct previewer name from folder context
   previewer.previewerName = selectedPreviewer;
 
@@ -300,6 +402,8 @@ export async function runPreviewCommand(): Promise<void> {
   } else {
     certObject.criteria = { error: 'criteria.json not found in current/latest' };
   }
+
+  // (Mock validation and --fix/--doctor logic moved above certObject construction)
 
   // Count tokens in the certificate object
   // console.log(JSON.stringify(certObject, null, 2));

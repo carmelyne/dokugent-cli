@@ -397,3 +397,7 @@ paddedSub('Arrow Glyph', glyphs.arrowRight);
 paddedDefault('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
 paddedLog('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
 paddedCompact('Uh oh...', 'No plan directory found.', PAD_WIDTH, 'warn');
+
+
+console.log()
+paddedCompact('dokugent criteria initialized...', '', PAD_WIDTH, 'info');
