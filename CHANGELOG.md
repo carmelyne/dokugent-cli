@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/carmelyne/dokugent-cli/compare/v1.1.2...v1.2.0) (2025-06-21)
+
+
+### Features
+
+* add memory command, restructure NVIDIA presets, and update plan/criteria wizardsfeat: add memory command, restructure NVIDIA presets, and update plan/criteria wizards ([382a419](https://github.com/carmelyne/dokugent-cli/commit/382a419c0cada22d9226e35ffb5fac052ae9af7b))
+
 ### [1.1.2](https://github.com/carmelyne/dokugent-cli/compare/v1.1.1...v1.1.2) (2025-06-12)
 
 ### [1.1.1](https://github.com/carmelyne/dokugent-cli/compare/v1.1.0...v1.1.1) (2025-06-09)
