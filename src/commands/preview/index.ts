@@ -6,10 +6,12 @@ import { runSecurityCheck } from '@utils/security-check';
 import { loadBlacklist } from '@security/loaders';
 import { updateSymlink } from '@utils/symlink-utils';
 import crypto from 'crypto';
-import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, printLabeledBox, paddedSubCompact } from '@utils/cli/ui';
+// import { printLabeledBox } from '@utils/cli/box'; // adjust import path if needed
 import chalk from 'chalk';
 import ora from 'ora';
 import { slowPrint } from '@utils/cli/slowPrint';
+import { console } from 'inspector';
 
 export async function runPreviewCommand(): Promise<void> {
   let DOKUGENT_CLI_VERSION = '0.0.0';
@@ -72,11 +74,12 @@ export async function runPreviewCommand(): Promise<void> {
   if (previewers.length === 0) {
     paddedLog(`${glyphs.cross} No Key Found`, 'No previewers found in .dokugent/keys/signers', PAD_WIDTH, 'warn', 'WARNING');
     paddedLog(`${glyphs.info} Create key`, `Run 'dokugent keygen' to create a preview identity key before proceeding`, PAD_WIDTH, 'blue', 'HELP');
-    console.log()
+    console.log();
     return;
   }
 
   let selectedPreviewer = previewers[0];
+  console.log()
   if (previewers.length > 1) {
     const { selected } = await inquirer.prompt([
       {
@@ -188,6 +191,10 @@ export async function runPreviewCommand(): Promise<void> {
         }
       }
       // Security warnings
+      // [DEBUG] Log step.security before checking
+      console.log('[DEBUG] Step Security:', step.security);
+      // Fallback if security field is missing
+      step.security = step.security || {};
       if (step.security) {
         if (step.security.riskLevel === "High") {
           console.warn(`⚠️  High risk step "${step.id}" flagged with: riskLevel`);
@@ -217,9 +224,26 @@ export async function runPreviewCommand(): Promise<void> {
     }
   }
 
+  // Load conventions.meta.json
   if (await fs.pathExists(conventionsMetaPath)) {
-    const fileRaw = await fs.readJson(conventionsMetaPath);
-    conventionsRaw = fileRaw;
+    const meta = await fs.readJson(conventionsMetaPath);
+    // Only include its individual convention entries, not the meta wrapper
+    conventionsRaw = {
+      conventions: [],
+      cliVersion: meta.cliVersion,
+      schemaVersion: meta.schemaVersion,
+      createdVia: meta.createdVia
+    };
+    if (meta.conventions && Array.isArray(meta.conventions)) {
+      for (const entry of meta.conventions) {
+        if (entry.file === 'conventions.meta.json') continue; // Skip metadata file
+        conventionsRaw.conventions.push({
+          llmName: entry.llmName,
+          file: entry.file,
+          content: entry.content || {}
+        });
+      }
+    }
   } else {
     paddedLog(`${glyphs.cross} No Conventions Found`, 'No conventions found in .dokugent/data/conventions/dev/latest', PAD_WIDTH, 'warn', 'WARNING');
     paddedLog(`${glyphs.info} Optional`, `If you'd like to define conventions for your agent, run 'dokugent conventions'`, PAD_WIDTH, 'blue', 'HELP');
@@ -318,11 +342,19 @@ export async function runPreviewCommand(): Promise<void> {
   }
 
   for (const item of conventionsRaw.conventions) {
+    // Skip if item.file is 'conventions.meta.json' (do not re-add the meta wrapper)
+    if (item.file === 'conventions.meta.json') continue;
     const filePath = path.join(conventionsDir, item.file);
-    const content = await fs.readFile(filePath, 'utf-8');
-    item.content = convertMarkdownToJSON(content);
+    if (item.file.endsWith('.json')) {
+      item.content = await fs.readJson(filePath);
+    } else {
+      const markdown = await fs.readFile(filePath, 'utf-8');
+      item.content = convertMarkdownToJSON(markdown);
+    }
   }
 
+  // Remove any hardcoded deepseek.json and qwen.json entries if already present from metadata
+  // (This is now handled by only including meta.conventions entries above)
   const conventions = conventionsRaw;
 
   const now = new Date();
@@ -335,7 +367,8 @@ export async function runPreviewCommand(): Promise<void> {
     email: previewer.email,
     publicKey: previewer.publicKey,
     fingerprint: previewer.fingerprint ?? crypto.createHash('sha256').update(previewer.publicKey).digest('hex'),
-    previewKeyVersion: path.basename(path.dirname(previewerPath))
+    previewKeyVersion: path.basename(path.dirname(previewerPath)),
+    trustLevel: previewer.trustLevel ?? 'unverified'
   };
 
   const certObject: any = {
@@ -410,7 +443,22 @@ export async function runPreviewCommand(): Promise<void> {
   const tokenSummary = estimateTokensFromText(JSON.stringify(certObject));
   const tokenCount = typeof tokenSummary === 'number' ? tokenSummary : (tokenSummary as any)?.total ?? 'N/A';
 
-  // paddedLog('🧠 Estimated Token Usage', `${tokenCount} tokens`);
+  // Optional debug token breakdown
+  const breakdown = [
+    ['agent', estimateTokensFromText(JSON.stringify(certObject.agent))],
+    ['plan', estimateTokensFromText(JSON.stringify(certObject.plan))],
+    ['criteria', estimateTokensFromText(JSON.stringify(certObject.criteria))],
+    ['conventions', estimateTokensFromText(JSON.stringify(certObject.conventions))],
+    ['owner', estimateTokensFromText(JSON.stringify(certObject.owner))],
+    ['previewer', estimateTokensFromText(JSON.stringify(certObject.previewer))],
+    ['versions', estimateTokensFromText(JSON.stringify(certObject.sourceVersions))],
+  ];
+
+  const SOFT_WARN = 4000;
+  const HARD_WARN = 12000;
+
+  // Inject estimated token count into preview object for later validation
+  certObject.estimatedTokens = tokenCount;
 
   // Write preview JSON file with agent identity in filename
   const agentName = agent.agentName;
@@ -470,15 +518,40 @@ export async function runPreviewCommand(): Promise<void> {
     ui.divider();
   }
   paddedLog('Preview JSON Content\n', "", PAD_WIDTH, 'magenta', 'JSON');
-  // paddedSub('', JSON.stringify(certObject, null, 2));
   const certJson = JSON.stringify(certObject, null, 2);
-  await slowPrint(certJson, 1); // you can tweak the delay
-  // paddedSub('', certJson);
-  console.log()
+  await slowPrint(certJson, 1);
+
   paddedLog('File', `${previewFile}`, PAD_WIDTH, 'success', 'SAVED');
   paddedLog('Estimated Token Usage', `${tokenCount} tokens\n`, PAD_WIDTH, 'pink', 'TOKENS');
+  if (typeof tokenCount === 'number') {
+    if (tokenCount > HARD_WARN) {
+      paddedLog(
+        `${glyphs.alert} Certified Token Total: ${tokenCount}`,
+        `${glyphs.alert} Token count exceeds typical model limits and may fail on cert or inference.`,
+        PAD_WIDTH,
+        'warn',
+        'WARNING'
+      );
+    } else if (tokenCount > SOFT_WARN) {
+      paddedLog(
+        `${glyphs.info} Token Count Notice: ${tokenCount}`,
+        'ℹ️ Consider splitting or compressing content to avoid inference/runtime issues beyond 8192 tokens.',
+        PAD_WIDTH,
+        'blue',
+        'NOTICE'
+      );
+    }
+  }
+  console.log();
+  paddedCompact('Token Breakdown', '', PAD_WIDTH, 'info');
+  for (const [key, rawValue] of breakdown as [string, any][]) {
+    const value = typeof rawValue === 'object' && rawValue !== null ? rawValue.total : rawValue;
+    if (typeof value === 'number') {
+      paddedSubCompact('', `${key}: ${value} tokens`);
+    }
+  }
+  console.log();
   const bts = agentId.split('@')[1];
   const certHint = `${agentName}@${bts}`;
-  paddedLog(`To certify agent: ${certHint} next, run`, `dokugent certify`, PAD_WIDTH, 'blue', 'HELP');
-  console.log()
+  paddedLog(`To certify agent: ${certHint} next, run`, `dokugent certify\n`, PAD_WIDTH, 'blue', 'HELP');
 }

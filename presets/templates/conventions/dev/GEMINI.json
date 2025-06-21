@@ -1,0 +1,41 @@
+{
+  "llmName": "GEMINI",
+  "content": {
+    "Setup Conventions": [
+      "Define task scope clearly, especially if combining text and images.",
+      "State input modality (text, image, or both) at the beginning of the prompt.",
+      "Keep prompts fact-dense and grounded—Gemini prioritizes factuality."
+    ],
+    "Tool Usage": [
+      "Use tools that preprocess or chunk large documents before passing to Gemini.",
+      "Pairs well with retrieval systems for grounded generation.",
+      "Avoid chaining too many tools—Gemini works best with tight context."
+    ],
+    "Prompting Patterns": [
+      "Best performance with factual QA, instruction-following, and summarization.",
+      "Use role-based prompting (e.g., “Act as a researcher…”).",
+      "Embedding a few key examples improves reliability."
+    ],
+    "Review and Validation": [
+      "Use external validation or criteria.md constraints to ensure factual consistency.",
+      "Incorporate truth-check tools if available.",
+      "Verify consistency across multi-modal outputs."
+    ],
+    "Feedback Loops": [
+      "Gemini responds well to clarification cycles (e.g., “Refine your answer given this…”).",
+      "Design flows where it reuses earlier output and critiques it.",
+      "Allow it to compare responses and explain preference."
+    ],
+    "Common Pitfalls to Avoid": [
+      "Gemini may hallucinate details if prompts are vague.",
+      "Struggles with creative or speculative tasks unless heavily scaffolded.",
+      "May produce conflicting answers without prompt anchoring."
+    ],
+    "Integration Notes": [
+      "Performs best with high-quality, well-structured inputs.",
+      "Multimodal inputs must be preprocessed and referenced explicitly.",
+      "Use JSON from preview to pass in token-limited, scoped instructions."
+    ],
+    "Source": "Informed by Google's Gemini technical overviews, model behavior benchmarks, and AI usage studies."
+  }
+}

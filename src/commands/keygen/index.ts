@@ -75,7 +75,7 @@ export async function runKeygenCommand(args: string[] = []) {
     signerName: wizardResult.signerName,
     email: wizardResult.email,
     organization: wizardResult.organization,
-    trustLevel: wizardResult.trustLevel,
+    trustLevel: wizardResult.trustLevel || 'unverified',
     department: wizardResult.department,
     avatar: wizardResult.avatar,
     location: wizardResult.location,

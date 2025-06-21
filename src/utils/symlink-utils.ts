@@ -44,12 +44,34 @@ export async function updateSymlink(targetDir: string, name: string, versionedFo
  */
 export async function resolveSymlinkedPath(name: string): Promise<string> {
   const baseDir = path.join('.dokugent', 'data', name);
-  const symlinkPath = path.resolve(baseDir);
+  const currentPath = path.resolve(baseDir, 'current');
+  const fallbackPath = path.resolve(baseDir, 'latest');
 
-  if (!(await fs.pathExists(symlinkPath))) {
-    throw new Error(`Symlink path "${symlinkPath}" not found.`);
+  console.log(`🔍 Resolving symlink for: ${name}`);
+  console.log(`📂 Base Directory: ${baseDir}`);
+  console.log(`📎 currentPath: ${currentPath}`);
+  console.log(`📎 fallbackPath: ${fallbackPath}`);
+
+  const currentExists = await fs.pathExists(currentPath);
+  const fallbackExists = await fs.pathExists(fallbackPath);
+
+  console.log(`✅ currentExists: ${currentExists}`);
+  console.log(`✅ fallbackExists: ${fallbackExists}`);
+
+  if (!currentExists && !fallbackExists) {
+    throw new Error(`Neither "current" nor "latest" symlinks found in "${baseDir}".`);
   }
 
-  const realPath = await fs.realpath(symlinkPath);
-  return realPath;
+  const symlinkPath = currentExists ? currentPath : fallbackPath;
+
+  console.log(`🔗 Attempting to resolve symlink at path: ${symlinkPath}`);
+  try {
+    const realPath = await fs.realpath(symlinkPath);
+    console.log(`📌 Resolved symlink path: ${realPath}`);
+    return realPath;
+  } catch (err) {
+    console.error(`❌ Failed to resolve symlink at: ${symlinkPath}`);
+    console.error(err);
+    throw err;
+  }
 }

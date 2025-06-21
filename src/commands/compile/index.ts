@@ -148,6 +148,7 @@ export async function runCompileCommand(agentId?: string) {
     currentIdentity = JSON.parse(fs.readFileSync(latestIdentityPath, 'utf-8'));
     identitySource = 'latest';
     ui.phaseHeaderCompact('Current identity not found. Checking latest agent identity', `${currentIdentity.agentName}@${currentIdentity.birth}`);
+    console.log();
   } else {
     compileStatusLog('✖ Failed', 'Agent Identity Verification', 'fail');
     throw new Error('❌ Neither "current" nor "latest" identity.json found in .dokugent/data/agents/');

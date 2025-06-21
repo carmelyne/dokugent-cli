@@ -10,6 +10,9 @@ import { createHash } from 'crypto';
 import inquirer from 'inquirer';
 import { getTimestamp } from '@utils/timestamp';
 import { version as pkgVersion } from '../../../package.json';
+import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
+import { estimateTokensFromText } from '@utils/tokenizer';
+import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, printLabeledBox, paddedSubCompact } from '@utils/cli/ui';
 
 export async function runCertifyCommand(agentArg?: string) {
   console.log('🔧 Certify command setup in progress...');
@@ -113,6 +116,18 @@ export async function runCertifyCommand(agentArg?: string) {
 
   // Step 3: Load preview file and validate structure
   const previewJson = await fs.readJson(previewPath);
+
+  // Validate token count by re-estimating tokens from preview content
+  const { estimatedTokens, ...previewClone } = previewJson;
+  const recalculatedPreviewTokens = estimateTokensFromText(JSON.stringify(previewClone));
+  if (previewJson.estimatedTokens !== recalculatedPreviewTokens) {
+    console.error(`❌ Token drift detected: preview file content has changed since it was generated.`);
+    console.error(`➡️ Stored preview tokens: ${previewJson.estimatedTokens}`);
+    console.error(`➡️ Current preview tokens: ${recalculatedPreviewTokens}`);
+    console.error(`🛑 Certification halted. Run \`dokugent preview\` again before certifying.`);
+    return;
+  }
+
   if (!previewJson.previewer || typeof previewJson.previewer !== 'object') {
     console.error('❌ Cannot certify: missing previewer metadata.');
     console.error('➡️ Please run `dokugent preview` before certifying.');
@@ -126,26 +141,29 @@ export async function runCertifyCommand(agentArg?: string) {
   // Inject certifier block from loaded signer object (updated fields)
   const certifier = {
     certifierName: selectedOwner,
-    certifiedAt: new Date().toLocaleString(),
+    certifiedAt: now.toISOString(),
+    certifiedAtDisplay: now.toLocaleString(),
     email: signer.email,
     publicKey: signer.publicKey,
     fingerprint: signer.fingerprint,
-    keyVersion: 'latest'
+    keyVersion: signer.keyVersion || 'latest'
   };
 
   // Inject Doku Metadata (updated fields)
   const metadata: any = {
     format: 'doku-cert',
-    version: 'v1.0.0',
-    schema: 'https://dokugent.org/schema/v1.json',
-    generatedAt: new Date().toLocaleString(),
-    generator: `dokugent@${pkgVersion}`,
-    experimental: false,
-    uri: agentUri,
+    version: DOKUGENT_SCHEMA_VERSION,
+    schema: DOKUGENT_SCHEMA_VERSION,
+    generator: DOKUGENT_CLI_VERSION,
+    createdVia: DOKUGENT_CREATED_VIA,
+    generatedAt: now.toISOString(),
+    generatedAtDisplay: now.toLocaleString(),
     certifierFingerprint: signer.fingerprint || '',
     certifierKeyVersion: 'latest',
+    experimental: false,
     validFrom,
     validUntil,
+    uri: agentUri,
   };
 
   const certifiedOutput = {
@@ -153,6 +171,29 @@ export async function runCertifyCommand(agentArg?: string) {
     certifier,
     metadata
   };
+
+  metadata.certifiedTokens = JSON.stringify(certifiedOutput).length; // approximate count
+  // Token breakdown block
+  const breakdown = [
+    ['agent', estimateTokensFromText(JSON.stringify(certifiedOutput.agent))],
+    ['plan', estimateTokensFromText(JSON.stringify(certifiedOutput.plan))],
+    ['criteria', estimateTokensFromText(JSON.stringify(certifiedOutput.criteria))],
+    ['conventions', estimateTokensFromText(JSON.stringify(certifiedOutput.conventions))],
+    ['owner', estimateTokensFromText(JSON.stringify(certifiedOutput.owner))],
+    ['previewer', estimateTokensFromText(JSON.stringify(certifiedOutput.previewer))],
+    ['versions', estimateTokensFromText(JSON.stringify(certifiedOutput.sourceVersions))],
+  ];
+
+  console.log();
+  paddedCompact('Token Breakdown', '', 12, 'info');
+  for (const [key, rawValue] of breakdown as [string, any][]) {
+    const value = typeof rawValue === 'object' && rawValue !== null ? rawValue.total : rawValue;
+    if (typeof value === 'number') {
+      paddedSubCompact('', `${key}: ${value} tokens`);
+    }
+  }
+  console.log();
+  console.log(`📦 Certified Token Total: ${metadata.certifiedTokens}`);
 
   // Calculate SHA256 hash of the stringified JSON
   const hash = createHash('sha256').update(JSON.stringify(certifiedOutput)).digest('hex');

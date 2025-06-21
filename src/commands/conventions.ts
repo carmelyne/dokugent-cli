@@ -188,34 +188,18 @@ export async function runConventionsCommand(args: string[]) {
             const targetPath = await fs.realpath(latestLink);
             const markdowns = await globby('*.md', { cwd: targetPath });
 
-            let meta;
-            if (type === 'dev') {
-              meta = {
-                by: 'wizard',
-                type,
-                agentId,
-                createdAt: new Date().toISOString(),
-                conventions: markdowns.map(f => ({
-                  llmName: path.basename(f, '.md'),
-                  file: f,
-                  content: ''
-                })),
-                cliVersion: DOKUGENT_CLI_VERSION,
-                schemaVersion: DOKUGENT_SCHEMA_VERSION,
-                createdVia: DOKUGENT_CREATED_VIA,
-              };
-            } else {
-              meta = {
-                by: 'wizard',
-                type,
-                agentId,
-                createdAt: new Date().toISOString(),
-                files: markdowns,
-                cliVersion: DOKUGENT_CLI_VERSION,
-                schemaVersion: DOKUGENT_SCHEMA_VERSION,
-                createdVia: DOKUGENT_CREATED_VIA,
-              };
-            }
+            if (!markdowns.length) continue;
+
+            const meta = {
+              by: type === 'dev' ? 'dev wizard with markdown' : 'non-dev wizard',
+              type,
+              agentId,
+              createdAt: new Date().toISOString(),
+              files: markdowns,
+              cliVersion: DOKUGENT_CLI_VERSION,
+              schemaVersion: DOKUGENT_SCHEMA_VERSION,
+              createdVia: DOKUGENT_CREATED_VIA,
+            };
 
             const metaPath = path.join(targetPath, 'conventions.meta.json');
             await fs.writeJson(metaPath, meta, { spaces: 2 });

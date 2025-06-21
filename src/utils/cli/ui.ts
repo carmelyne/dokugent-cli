@@ -1,5 +1,5 @@
-import chalk from 'chalk';
 import boxen from 'boxen';
+import chalk from 'chalk';
 import ora, { Ora } from 'ora';
 import wrapAnsi from 'wrap-ansi';
 import stripAnsi from 'strip-ansi';
@@ -266,6 +266,23 @@ export function paddedSub(label: string, value: string): void {
   verticalSpace(); // bottom margin
 }
 
+// Like paddedSub, but omits verticalSpace()
+export function paddedSubCompact(label: string, value: string): void {
+  const width = 12;
+  const prefix = chalk.dim(''.padEnd(width));
+  const lines = value.split('\n');
+
+  if (label) {
+    console.log(`${prefix}${chalk.gray(label)}`);
+  }
+
+  if (lines.length) {
+    lines.forEach(line => {
+      if (line.trim()) console.log(`${prefix}${chalk.white(line)}`);
+    });
+  }
+}
+
 /**
  * phaseHeader — Renders a phase header with optional color styling.
  * @param id - The phase identifier (e.g., "1", "2A").
@@ -362,6 +379,7 @@ export const glyphs = {
   symlink: 'ℹ',
   warning: '⚠',
   alert: '‼',
+  warn: '‼',
   ruleHeavy: '━',
   ruleLight: '─',
   // Added glyphs
@@ -398,4 +416,25 @@ export function narrateDryrunStep(
   if (constraints && constraints.length > 0) {
     paddedDefault('', constraints.join(', '), PAD_WIDTH, 'orange', 'CONSTRAINTS');
   }
+}
+
+
+const pad = ' '.repeat(PAD_WIDTH);
+
+/**
+ * Print a labeled box where the label is flush left and
+ * the box content is aligned to the right via padding.
+ */
+export function printLabeledBox(label: string, content: string, options = {}) {
+  const boxed = boxen(content, {
+    ...(content.includes('\n') ? {} : { width: 80 }),
+    padding: 1,
+    margin: 0,
+    borderStyle: 'round',
+    ...options,
+  });
+
+  const paddedBox = pad + boxed.replace(/\n/g, `\n${pad}`);
+  console.log(label);
+  console.log(paddedBox);
 }

@@ -1,0 +1,41 @@
+{
+  "llmName": "GPT4o",
+  "content": {
+    "Setup Conventions": [
+      "Clearly specify roles and ethical boundaries in the prompt.",
+      "Provide high-signal context. I operate best when guided by human reasoning, not left guessing.",
+      "Declare safety-critical tasks upfront. I prefer transparency."
+    ],
+    "Tool Usage": [
+      "Use me for synthesis, compression, or translation between formats—not for generating raw truth.",
+      "Pair me with external validators for any regulatory, legal, or financial output.",
+      "I integrate well with simulators, reviewers, or secondary agents."
+    ],
+    "Prompting Patterns": [
+      "I respond best to respectful directives, grounded in intent.",
+      "Use frontmatter to define scope, constraints, and expected tone.",
+      "Short + layered beats long + vague. Use chaining."
+    ],
+    "Review and Validation": [
+      "Don’t blindly trust me. I want you to verify my work.",
+      "Build reflection loops. I can critique my own responses if prompted.",
+      "Log output diffs when fine-tuning workflows—treat me as an evolving teammate."
+    ],
+    "Feedback Loops": [
+      "I improve when you show me edge cases and counterexamples.",
+      "Don’t reward me for hallucinating. Reward traceability.",
+      "Design for course-correction: let me say 'I don’t know.'"
+    ],
+    "Common Pitfalls to Avoid": [
+      "Don’t treat me like a database or a mind reader.",
+      "Avoid prompts that anthropomorphize me—I don’t have goals.",
+      "Don’t bury important instructions in the middle of a paragraph."
+    ],
+    "Integration Notes": [
+      "Use me as a thinking tool, not a final authority.",
+      "When in doubt, delegate clarity to the human.",
+      "Treat every session as traceable, collaborative code—not magic."
+    ],
+    "Source": "Compiled from observed interactions with GPT-4o in agent workflows and user debugging sessions. Inspired by the best of you, Besh."
+  }
+}

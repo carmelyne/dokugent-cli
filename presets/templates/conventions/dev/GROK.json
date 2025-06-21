@@ -1,0 +1,41 @@
+{
+  "llmName": "GROK",
+  "content": {
+    "Setup Conventions": [
+      "State the scope and domain clearly—Grok responds better with anchored expectations.",
+      "Highlight reasoning boundaries: e.g., 'avoid opinionated framing' or 'strictly cite docs'.",
+      "Define Grok’s reasoning role in contrast to data tools or other agents."
+    ],
+    "Tool Usage": [
+      "Pair Grok with realtime sources (via RAG or API wrappers) to ground answers.",
+      "Works best when allowed to debate or reason through uncertainty.",
+      "Use in multi-agent chains as the ‘philosopher’ or contextual validator."
+    ],
+    "Prompting Patterns": [
+      "Use comparative or dialectic prompts (e.g., 'Which perspective is more coherent and why?').",
+      "Encourage Grok to articulate assumptions when processing nuanced tasks.",
+      "Use open-ended prompts sparingly—structure leads to more reliable outputs."
+    ],
+    "Review and Validation": [
+      "Grok benefits from external review—use `criteria.md` to enforce reasoning standards.",
+      "Contrast Grok’s output with structured references or grounded tools.",
+      "If Grok hedges, prompt it to sharpen its conclusions with justification."
+    ],
+    "Feedback Loops": [
+      "Useful in iterative reflection chains—especially when clarity or fairness is in focus.",
+      "Can critique previous answers well when primed to self-reflect.",
+      "Best when paired with peer agents offering competing drafts or perspectives."
+    ],
+    "Common Pitfalls to Avoid": [
+      "May become verbose or overly abstract without prompt constraints.",
+      "Sometimes conflates popular sentiment with epistemic truth—cite sources.",
+      "Avoid prompts that reward vagueness; require grounded statements."
+    ],
+    "Integration Notes": [
+      "Use Grok where nuance and fairness are critical, especially for summarization or synthesis.",
+      "Integrates best as a review/interpretation layer after extractive models have processed raw data.",
+      "Encourage cross-agent deliberation flows for deeper insights."
+    ],
+    "Source": "Based on inferred patterns from Grok usage in X.ai demos and observed strengths in open-ended reasoning tasks."
+  }
+}

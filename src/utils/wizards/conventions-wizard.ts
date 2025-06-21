@@ -14,6 +14,7 @@ import chalk from 'chalk';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
 import { formatRelativePath } from '@utils/format-path';
 import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
+import { globby } from 'globby';
 
 
 /**
@@ -51,13 +52,21 @@ export async function promptConventionsWizard(force = false) {
       : path.resolve(process.cwd(), '.dokugent/conventions/templates');
     const conventionsBase = path.join(process.cwd(), '.dokugent/data/conventions');
     const agentCurrentSymlink = path.join(process.cwd(), '.dokugent/data/agents/current');
+    const agentLatestSymlink = path.join(process.cwd(), '.dokugent/data/agents/latest');
 
     let agentId = '';
     try {
       agentId = await fs.readlink(agentCurrentSymlink);
-    } catch (err) {
-      console.log(`⚠️ Could not read current agent symlink at ${agentCurrentSymlink}. Please ensure it exists.`);
-      return;
+    } catch {
+      try {
+        const agentLatestSymlink = path.join(process.cwd(), '.dokugent/data/agents/latest');
+        agentId = await fs.readlink(agentLatestSymlink);
+        paddedLog(`⚠️ Using agent from 'latest' symlink at`, formatRelativePath(agentLatestSymlink), PAD_WIDTH, 'warn', 'SYMLINK');
+        console.log();
+      } catch {
+        console.log(padMsg(`⚠️ Could not read current or latest agent symlink. Please ensure one exists.`));
+        return;
+      }
     }
 
     const availableTypes = ['dev'];
@@ -102,7 +111,8 @@ export async function promptConventionsWizard(force = false) {
         }
       ]);
 
-      const targetPath = path.join(conventionsBase, customName, agentId);
+      const agentSlug = path.basename(agentId);
+      const targetPath = path.join(conventionsBase, customName, agentSlug);
 
       if (await fs.pathExists(targetPath) && !force) {
         console.log(`⚠️ ${path.relative(process.cwd(), targetPath)} already exists. Use --force to overwrite.`);
@@ -151,18 +161,19 @@ export async function promptConventionsWizard(force = false) {
     let selectedAgents: string[] = [];
 
     if (selectedType === 'dev') {
-      const devTargetPath = path.join(conventionsBase, selectedType, agentId);
+      const agentSlug = path.basename(agentId);
+      const devTargetPath = path.join(conventionsBase, selectedType, agentSlug);
       await fs.ensureDir(devTargetPath);
-      const existingFiles = (await fs.readdir(devTargetPath)).filter(f => f.endsWith('.md'));
+      const existingFiles = (await fs.readdir(devTargetPath)).filter(f => f.endsWith('.json'));
 
       const baseFilenames = [
-        'CLAUDE.md',
-        'CODEX.md',
-        'GEMINI.md',
-        'GPT4.md',
-        'GROK.md',
-        'LLM-CORE.md',
-        'MISTRAL.md',
+        'CLAUDE.json',
+        'CODEX.json',
+        'GEMINI.json',
+        'GPT4o.json',
+        'GROK.json',
+        'LLM-CORE.json',
+        'MISTRAL.json',
       ];
       const remainingChoices = baseFilenames.filter(f => !existingFiles.includes(f));
 
@@ -198,11 +209,11 @@ export async function promptConventionsWizard(force = false) {
           {
             type: 'input',
             name: 'customFiles',
-            message: padQuestion('Enter file names (comma-separated, e.g., notes.md, summary.md):'),
+            message: padQuestion('Enter file names (comma-separated, e.g., deepseek.json, qwen.json, xwin.json):'),
             validate: (input: string) => {
               const files = input.split(',').map(f => f.trim());
-              if (files.length === 0 || files.some(f => !f.endsWith('.md'))) {
-                return 'All filenames must end in .md (e.g., myfile.md)';
+              if (files.length === 0 || files.some(f => !f.endsWith('.json'))) {
+                return 'All filenames must end in .json (e.g., myfile.json)';
               }
               return true;
             }
@@ -230,11 +241,11 @@ export async function promptConventionsWizard(force = false) {
           {
             type: 'input',
             name: 'customFiles',
-            message: padQuestion('Enter file names (comma-separated, e.g., deepseek.md, qwen.md, xwin.md):'),
+            message: padQuestion('Enter file names (comma-separated, e.g., deepseek.json, qwen.json, xwin.json):'),
             validate: (input: string) => {
               const files = input.split(',').map(f => f.trim());
-              if (files.length === 0 || files.some(f => !f.endsWith('.md'))) {
-                return 'All filenames must end in .md (e.g., myfile.md)';
+              if (files.length === 0 || files.some(f => !f.endsWith('.json'))) {
+                return 'All filenames must end in .json (e.g., myfile.json)';
               }
               return true;
             }
@@ -253,7 +264,8 @@ export async function promptConventionsWizard(force = false) {
       }
     }
 
-    const targetPath = path.join(conventionsBase, selectedType, agentId);
+    const agentSlug = path.basename(agentId);
+    const targetPath = path.join(conventionsBase, selectedType, agentSlug);
 
     // if (await fs.pathExists(targetPath) && !force) {
     //   console.log(`📂 Adding to existing folder: ${path.relative(process.cwd(), targetPath)}`);
@@ -271,7 +283,10 @@ export async function promptConventionsWizard(force = false) {
             await fs.copy(srcPath, destPath);
           } else {
             console.log(chalk.hex('#FFA500')(`${glyphs.warning} ${padQuestion(`Template not found for ${agentFile}. Creating placeholder..`)}`));
-            await fs.outputFile(destPath, `# ${agentFile}\n\nAdd your conventions here.\n`);
+            await fs.outputFile(destPath, JSON.stringify({
+              llmName: path.basename(agentFile, '.json').toUpperCase(),
+              content: {}
+            }, null, 2));
           }
         } catch (err) {
           console.error(`❌ Failed to scaffold ${agentFile}:`, err);
@@ -297,7 +312,7 @@ export async function promptConventionsWizard(force = false) {
       }
 
       const updatedConventions = selectedAgents.map(f => ({
-        llmName: path.basename(f, '.md').toUpperCase(),
+        llmName: path.basename(f, '.json').toUpperCase(),
         file: f.toLowerCase(),
         content: ""
       }));
@@ -336,14 +351,22 @@ export async function promptConventionsWizard(force = false) {
     } catch { }
     await fs.symlink(targetPath, symlinkPath, 'dir');
     const metaPath = path.join(targetPath, 'conventions.meta.json');
-    // Gather markdown files in the targetPath
-    const markdowns = await getAllMarkdownFiles(targetPath);
+    // Gather convention files in the targetPath (recursively for .md, .json, etc.)
+    let conventionFiles: string[] = [];
+    if (selectedType === 'dev') {
+      conventionFiles = (await fs.readdir(targetPath))
+        .filter(f => f.endsWith('.json'))
+        .map(f => path.join(targetPath, f));
+    } else {
+      // Recursively find all .md and .json files in targetPath
+      conventionFiles = (await globby(['**/*.md', '**/*.json'], { cwd: targetPath })).sort();
+    }
     // --- Begin: Token estimation and timestamp ---
     const now = new Date();
     let estimatedTokens = 0;
     try {
       const allText = (
-        await Promise.all(markdowns.map(async f => fs.readFile(f, 'utf-8')))
+        await Promise.all(conventionFiles.map(async f => fs.readFile(f, 'utf-8')))
       ).join('\n\n');
       const { estimateTokensFromText } = await import('../tokenizer');
       estimatedTokens = estimateTokensFromText(allText);
@@ -354,9 +377,9 @@ export async function promptConventionsWizard(force = false) {
     let meta;
     if (selectedType === 'dev') {
       meta = {
-        by: 'wizard',
+        by: 'dev wizard',
         type: selectedType,
-        agentId,
+        agentId: path.basename(agentId),
         createdAt: now.toISOString(),
         createdAtDisplay: now.toLocaleString(),
         lastModifiedAt: now.toISOString(),
@@ -365,17 +388,17 @@ export async function promptConventionsWizard(force = false) {
         cliVersion: typeof DOKUGENT_CLI_VERSION !== 'undefined' ? DOKUGENT_CLI_VERSION : '',
         schemaVersion: typeof DOKUGENT_SCHEMA_VERSION !== 'undefined' ? DOKUGENT_SCHEMA_VERSION : '',
         createdVia: typeof DOKUGENT_CREATED_VIA !== 'undefined' ? DOKUGENT_CREATED_VIA : '',
-        conventions: markdowns.map(f => ({
-          llmName: path.basename(f, '.md'),
+        conventions: conventionFiles.map(f => ({
+          llmName: path.basename(f, '.json'),
           file: path.basename(f),
           content: ''
         }))
       };
     } else {
       meta = {
-        by: 'wizard',
+        by: 'non-dev wizard',
         type: selectedType,
-        agentId,
+        agentId: path.basename(agentId),
         createdAt: now.toISOString(),
         createdAtDisplay: now.toLocaleString(),
         lastModifiedAt: now.toISOString(),
@@ -384,7 +407,7 @@ export async function promptConventionsWizard(force = false) {
         cliVersion: typeof DOKUGENT_CLI_VERSION !== 'undefined' ? DOKUGENT_CLI_VERSION : '',
         schemaVersion: typeof DOKUGENT_SCHEMA_VERSION !== 'undefined' ? DOKUGENT_SCHEMA_VERSION : '',
         createdVia: typeof DOKUGENT_CREATED_VIA !== 'undefined' ? DOKUGENT_CREATED_VIA : '',
-        files: markdowns.map(f => path.basename(f))
+        files: conventionFiles
       };
     }
     // Write meta JSON to conventions.meta.json
@@ -392,26 +415,34 @@ export async function promptConventionsWizard(force = false) {
 
     // FINAL LOGS
     paddedLog('What is the convention type?', selectedType, PAD_WIDTH, 'magenta', 'CONV');
-    paddedSub('What agent is this for?', agentId);
+    paddedSub('What agent is this for?', formatRelativePath(agentId));
 
     if (selectedAgents && selectedAgents.length > 0) {
       paddedSub('Selected convention files', selectedAgents.join(', '));
     }
-    paddedDefault("Convention folder contents", `(${markdowns.length})`, PAD_WIDTH, 'success', 'SAVED');
-    const sortedFiles = [...markdowns].sort((a, b) => a.localeCompare(b));
-    const renderedList = sortedFiles.map(f => {
-      const line = `${glyphs.arrowRight} ${formatRelativePath(f)}`;
-      if (selectedType === 'dev' && selectedAgents?.includes(path.basename(f))) {
-        return chalk.green(line);
-      }
-      return line;
-    }).join('\n');
-    paddedSub('', renderedList);
+    if (selectedType === 'dev') {
+      paddedDefault("Convention folder contents", `(${conventionFiles.length})`, PAD_WIDTH, 'success', 'SAVED');
+      const sortedFiles = [...conventionFiles].sort((a, b) => a.localeCompare(b));
+      const renderedList = sortedFiles.map(f => {
+        const line = `${glyphs.arrowRight} ${formatRelativePath(f)}`;
+        if (selectedType === 'dev' && selectedAgents?.includes(path.basename(f))) {
+          return chalk.green(line);
+        }
+        return line;
+      }).join('\n');
+      paddedSub('', renderedList);
+    }
     paddedSub('Conventions Json File', formatRelativePath(metaPath));
+
+    const fallbackEditTarget =
+      selectedAgents?.[0] ||
+      (conventionFiles && conventionFiles.length > 0 && conventionFiles[0]
+        ? path.basename(conventionFiles[0])
+        : '');
 
     paddedLog(
       'To assign a version as the current agent',
-      `dokugent conventions --edit ${selectedAgents && selectedAgents.length > 0 ? selectedAgents[0] : (path.basename(markdowns[0]) || '')}`,
+      `dokugent conventions --edit ${fallbackEditTarget}`,
       PAD_WIDTH,
       'blue',
       'HELP'
