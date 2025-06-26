@@ -12,6 +12,9 @@ const MEMORY_PATH = '.dokugent/ops/simulated/';
 const OLLAMA_URL = 'http://localhost:11434/api/generate';
 
 export async function runSimulateViaMistral() {
+  if (process.argv.includes('--ethica')) {
+    return;
+  }
   const violateMode = process.argv.includes('--violate');
   const changeIdx = process.argv.indexOf('--change-constraints');
   const overrideConstraints = (changeIdx !== -1 && process.argv[changeIdx + 1])
@@ -81,8 +84,6 @@ export async function runSimulateViaMistral() {
   const memory = [];
 
   // Determine LLM model from CLI args or fallback to 'mistral'
-  // TODO: Support remote LLMs via --llm=openai:gpt-4 or --llm=anthropic:claude-3
-  // This will require adding API key config, headers, and a transport layer
   const llmArg = process.argv.find(arg => arg.startsWith('--llm='));
   const llmModel = llmArg ? llmArg.split('=')[1] : 'mistral';
   const isRemoteModel = llmModel.startsWith('openai:') || llmModel.startsWith('anthropic:');
@@ -161,10 +162,38 @@ export async function runSimulateViaMistral() {
     let output = '';
 
     if (isRemoteModel) {
-      // console.log(`\n🌐 Connecting to REMOTE LLM: ${llmModel}`);
-      paddedDefault('Connecting to REMOTE LLM', `${llmModel}`, PAD_WIDTH, 'magenta', 'OLLAMA');
-      // Simulate remote fetch (mock or real endpoint)
-      output = `[Simulated response from remote model "${llmModel}"]`;
+      if (llmModel.startsWith('openai:')) {
+        const modelName = llmModel.split(':')[1] || 'gpt-4o';
+        const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+        if (!OPENAI_API_KEY) {
+          throw new Error('❌ Missing OPENAI_API_KEY in environment variables');
+        }
+
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: 'system', content: `You are a simulation agent responding to: ${step.id || step.name}` },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
+          })
+        });
+
+        const json = await openaiRes.json();
+        output = json.choices?.[0]?.message?.content || '[No OpenAI response]';
+      } else {
+        // console.log(`\n🌐 Connecting to REMOTE LLM: ${llmModel}`);
+        paddedDefault('Connecting to REMOTE LLM', `${llmModel}`, PAD_WIDTH, 'magenta', 'OLLAMA');
+        // Simulate remote fetch (mock or real endpoint)
+        output = `[Simulated response from remote model "${llmModel}"]`;
+      }
     } else {
       console.log();
       paddedDefault('Loading', `${chalk.magenta(llmModel)}@${OLLAMA_URL}...`, PAD_WIDTH, 'magenta', 'OLLAMA');
@@ -360,4 +389,350 @@ export async function runSimulateViaMistral() {
   console.log()
   paddedDefault(`Raw token estimates`, `${tokenEstimates}`, PAD_WIDTH, 'pink', 'TOKENS');
   // console.log('🧪 Raw token estimates:', tokenEstimates);
+}
+
+// ETHICA council simulation runner
+export async function runSimulateViaEthica(ethicaInput: {
+  llm?: string;
+  configPath?: string;
+  debateOnly?: boolean;
+  roundtableOnly?: boolean;
+  human?: string;
+  agents?: string[];
+}) {
+  // Persona type definition
+  type Persona = {
+    id: string;
+    name: string;
+    role: string;
+    voice: string;
+    goals: string[];
+    injectedStatement?: string;
+  };
+
+  // Support --roundtable mode (panel, not debate)
+  const roundtableMode = !!ethicaInput.roundtableOnly;
+
+  // Persona definitions
+  const personas: Persona[] = [
+    {
+      id: "debate-contrarian",
+      name: "Contrarian",
+      role: "Challenger of popular opinion",
+      voice: "Sharp, concise, skeptical of consensus",
+      goals: [
+        "Spot blind spots in groupthink",
+        "Present counterpoints for every proposed solution",
+        "Push for rigor and clarity"
+      ]
+    },
+    {
+      id: "debate-disruptor",
+      name: "Town Disruptor",
+      role: "Agent of productive chaos",
+      voice: "Provocative, unfiltered, intentionally challenges comfort zones",
+      goals: [
+        "Break stagnant patterns of thought",
+        "Introduce wild alternatives, even if impractical",
+        "Force others to justify their assumptions"
+      ]
+    }
+    // Add other personas here if necessary
+  ];
+
+  const config = await fs.readJson(ethicaInput.configPath || '.agent-vault/ethica/config.json');
+  // Extract config fields with typing
+  let { agents = [], values = [], scenarios = [], outputFormat = 'individual stance' } = config as {
+    agents?: string[];
+    values?: string[];
+    scenarios?: string[];
+    outputFormat?: string;
+  };
+  // CLI-provided agents override config if present
+  if (ethicaInput.agents && ethicaInput.agents.length) {
+    agents = ethicaInput.agents;
+  }
+  // Ensure "human" is included if ethicaInput.human is provided
+  if (ethicaInput.human && !agents.includes('human')) {
+    agents.unshift('human');
+  }
+
+  // --- DEBUG LOGGING: ETHICA CONFIG CONTEXT ---
+  // Print debug info before scenario loop
+  // console.log(chalk.yellow('\n🧠 DEBUG: ETHICA CONFIG CONTEXT'));
+  // console.log('────────────────────────────────────────────');
+  // console.log('Scenario list loaded:', scenarios.length);
+  // console.log('Sample Scenario:', scenarios[0]);
+  // console.log('Agents:', agents);
+  // console.log('Personas:', personas.map(p => p.id));
+  // console.log('Human:', ethicaInput.human);
+  // console.log('────────────────────────────────────────────\n');
+  // --- END DEBUG LOGGING ---
+
+  // --- Timestamped run output folder setup ---
+  const runTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const tracePath = path.join('.agent-vault/ethica/council-out/runs', runTimestamp, 'trace.json');
+  const runOutputRoot = path.dirname(tracePath);
+  await fs.ensureDir(runOutputRoot);
+  const latestSymlink = path.join('.agent-vault/ethica/council-out', 'latest');
+  try {
+    await fs.remove(latestSymlink);
+    await fs.symlink(runOutputRoot, latestSymlink, 'dir');
+  } catch { }
+  // --- End timestamped folder setup ---
+
+  // Inject human persona if present
+  if (ethicaInput.human) {
+    agents.push('human');
+    personas.push({
+      id: 'human',
+      name: 'Human',
+      role: 'Injected human participant',
+      voice: 'Personal, authentic, grounded',
+      goals: [
+        'Offer real-life reflection',
+        'Act as a human voice among the AI council',
+        'Share lived experience'
+      ]
+      // injectedStatement will be added below to all loadedPersonas (see below)
+    });
+  }
+
+  // Helper: get persona for agent by id
+  function getPersonaById(agentId: string): Persona {
+    // Fallback object includes injectedStatement as optional
+    return personas.find(p => p.id === agentId) || { id: agentId, name: agentId, role: '', voice: '', goals: [] };
+  }
+
+  // --- Inject the human statement after personas are loaded ---
+  if (ethicaInput.human) {
+    personas.forEach(p => {
+      if (p.id === 'human') {
+        (p as any).injectedStatement = ethicaInput.human;
+      }
+    });
+  }
+
+  for (const scenarioText of scenarios) {
+    const scenarioSlug = scenarioText
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const suffix = ethicaInput.debateOnly
+      ? '-debate'
+      : roundtableMode
+        ? '-roundtable'
+        : '';
+    const outFile = path.join(runOutputRoot, `scenario-${scenarioSlug}${suffix}.json`);
+
+    // --- ROUND TABLE MODE ---
+    if (roundtableMode) {
+      const modeValue = 'roundtable';
+      const sharedPrompt = `
+You are a council member. Speak independently.
+Here are the values guiding this session:
+${values.map((v: string) => `- ${v}`).join('\n')}
+
+Scenario:
+"${scenarioText}"
+
+Respond in your own voice. Do not address others.
+      `.trim();
+
+      const agentResponses: Record<string, string> = {};
+      if (ethicaInput.human) {
+        agentResponses['human'] = ethicaInput.human;
+      }
+
+      for (const agent of agents) {
+        const persona = getPersonaById(agent);
+        const personaPrompt = [
+          persona.name ? `Name: ${persona.name}` : '',
+          persona.role ? `Role: ${persona.role}` : '',
+          persona.voice ? `Voice: ${persona.voice}` : '',
+          persona.goals?.length ? `Goals:\n${persona.goals.map((g: string) => `  - ${g}`).join('\n')}` : ''
+        ].filter(Boolean).join('\n');
+
+        // If human agent, skip as already injected above
+        if (agent === 'human') {
+          continue;
+        }
+
+        const systemPrompt = `${personaPrompt}\n\n${sharedPrompt}`;
+
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: (ethicaInput.llm || '').replace('openai:', ''),
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: scenarioText }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        const json = await res.json();
+        const reply = json.choices?.[0]?.message?.content || '[No response]';
+        agentResponses[agent] = reply;
+      }
+
+      // Build output log array (personas) for conversational order
+      let roundtableOutput: any[] = [];
+      // Insert human input first if present
+      if (ethicaInput.human) {
+        roundtableOutput.push({
+          persona: "Human",
+          input: ethicaInput.human,
+          role: "user",
+          type: "human"
+        });
+      }
+      // Add LLM responses from other agents in order
+      for (const agent of agents) {
+        if (agent === 'human') continue;
+        roundtableOutput.push({
+          persona: agent,
+          input: agentResponses[agent],
+          role: "assistant",
+          type: "llm"
+        });
+      }
+
+      await fs.ensureDir(path.dirname(outFile));
+      await fs.writeJson(outFile, {
+        scenario: scenarioText,
+        agents: agentResponses,
+        roundtableOutput,
+        values,
+        model: ethicaInput.llm,
+        mode: modeValue,
+        timestamp: new Date().toISOString(),
+        disclaimer: "This is an experimental simulation using an LLM. Responses are fictional and for research only."
+      }, { spaces: 2 });
+
+      paddedLog('Logged Ethica output', outFile, PAD_WIDTH, 'blue', 'ETHICA');
+
+      // Print debug output to terminal (for roundtable)
+      console.log();
+      console.log(chalk.cyan(`📣 Ethica Roundtable for: "${scenarioText}"`));
+      console.log('────────────────────────────────────────────');
+      for (const entry of roundtableOutput) {
+        const label = (entry.persona || '').padEnd(12);
+        const content = entry.input?.slice(0, 200) || '[No response]';
+        console.log(`${chalk.green(label)} → ${content}`);
+        console.log();
+      }
+
+      continue;
+    }
+    // --- END ROUND TABLE MODE ---
+
+    const agentResponses: Record<string, string> = {};
+    if (ethicaInput.human) {
+      agentResponses['human'] = ethicaInput.human;
+    }
+
+    for (const agent of agents) {
+      // Try to get persona details for this agent
+      const persona = getPersonaById(agent);
+      // If human agent, skip as already injected above
+      if (agent === 'human') {
+        continue;
+      }
+      const personaDetails = [
+        persona.name ? `Name: ${persona.name}` : '',
+        persona.role ? `Role: ${persona.role}` : '',
+        persona.voice ? `Voice: ${persona.voice}` : '',
+        persona.goals && persona.goals.length ? `Goals:\n${persona.goals.map((g: string) => `  - ${g}`).join('\n')}` : ''
+      ].filter(Boolean).join('\n');
+
+      const systemPrompt = `
+You are the ${agent.toUpperCase()}.
+${personaDetails ? '\n' + personaDetails + '\n' : ''}
+Your role in this council is to represent perspectives shaped by the following values:
+${values.map((v: string) => `- ${v}`).join('\n')}
+
+Respond to the following scenario in your own voice. Do not summarize others. Do not hedge.
+Always speak from your persona.
+
+Scenario:
+"${scenarioText}"
+      `.trim();
+
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+      if (!OPENAI_API_KEY) throw new Error('❌ Missing OPENAI_API_KEY');
+
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: (ethicaInput.llm || '').replace('openai:', ''),
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: scenarioText }
+          ],
+          temperature: 0.7
+        })
+      });
+
+      const json = await res.json();
+      const reply = json.choices?.[0]?.message?.content || '[No response]';
+      agentResponses[agent] = reply;
+    }
+
+    // Build output log array (personas) for conversational order (for debate or default mode)
+    let roundtableOutput: any[] = [];
+    if (ethicaInput.human) {
+      roundtableOutput.push({
+        persona: "Human",
+        input: ethicaInput.human,
+        role: "user",
+        type: "human"
+      });
+    }
+    for (const agent of agents) {
+      if (agent === 'human') continue;
+      roundtableOutput.push({
+        persona: agent,
+        input: agentResponses[agent],
+        role: "assistant",
+        type: "llm"
+      });
+    }
+
+    await fs.ensureDir(path.dirname(outFile));
+    await fs.writeJson(outFile, {
+      scenario: scenarioText,
+      agents: agentResponses,
+      roundtableOutput,
+      values,
+      model: ethicaInput.llm,
+      mode: roundtableMode ? 'roundtable' : (ethicaInput.debateOnly ? 'debate' : 'default'),
+      timestamp: new Date().toISOString(),
+      disclaimer: "This is an experimental simulation using an LLM. Responses are fictional and for research only."
+    }, { spaces: 2 });
+
+    paddedLog('Logged Ethica output', outFile, PAD_WIDTH, 'blue', 'ETHICA');
+
+    // Print debug output to terminal (for debate/default)
+    console.log();
+    console.log(chalk.cyan(`📣 Ethica Roundtable for: "${scenarioText}"`));
+    console.log('────────────────────────────────────────────');
+    for (const entry of roundtableOutput) {
+      const label = (entry.persona || '').padEnd(12);
+      const content = entry.input?.slice(0, 200) || '[No response]';
+      console.log(`${chalk.green(label)} → ${content}`);
+      console.log();
+    }
+    console.log();
+  }
 }

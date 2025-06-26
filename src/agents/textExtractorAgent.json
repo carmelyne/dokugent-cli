@@ -1,0 +1,12 @@
+{
+  "id": "textExtractorAgent",
+  "description": "Orchestrates compression, classification, formatting, metadata extraction.",
+  "tools": [
+    "classify",
+    "compress",
+    "extractMetadata",
+    "summarize"
+  ],
+  "trustLevel": "moderate",
+  "escapeHatch": false
+}

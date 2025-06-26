@@ -69,13 +69,26 @@ npm install -g dokugent
 - ✅ [`dokugent compile`](https://dokugent.com/commands/dokugent-compile/) — Build deployable agent bundle
 - ✅ [`dokugent deploy`](https://dokugent.com/commands/dokugent-deploy/) — Run full deploy (preview → certify → compile)
 
-### debug
+### debug and analysis
 
 - ✅ [`dokugent dryrun`](https://dokugent.com/commands/dokugent-dryrun/) — Simulate plan execution without real actions
 - ✅ [`dokugent inspect`](https://dokugent.com/commands/dokugent-inspect/) — Inspect agent cert or plan (local or MCP)
 - ✅ [`dokugent security`](https://dokugent.com/commands/dokugent-security/) — Scan for file-level threats
 - ✅ [`dokugent simulate`](https://dokugent.com/commands/dokugent-simulate/) — Run simulated agent logic with any LLM on your Ollama
 - ✅ [`dokugent trace`](https://dokugent.com/commands/dokugent-trace/) — Trace agent behavior from a dokuUri
+
+### mcp
+
+- ✅ [`dokugent mcp-schema`](https://dokugent.com/commands/dokugent-mcp-schema/) — Generate MCP-compatible JSON schema for agent plans
+
+### governance
+
+- ✅ [`dokugent audit`](https://dokugent.com/commands/dokugent-audit/) — Verify agent project structure and check for missing or malformed files
+- ✅ [`dokugent ethica`](https://dokugent.com/commands/dokugent-ethica/) — Simulate ethical dilemmas, persona debates, and council-based reasoning flows
+- ✅ [`dokugent security`](https://dokugent.com/commands/dokugent-security/) — Scan and detect risks in agent metadata and input files
+- ✅ [`dokugent status`](https://dokugent.com/commands/dokugent-status/) — Classify agent readiness across lifecycle stages
+- ✅ [`dokugent trace`](https://dokugent.com/commands/dokugent-trace/) — Trace agent behavior for transparency and audits
+- 🔲 [`dokugent redteam`](https://dokugent.com/commands/dokugent-redteam/) — Stress-test agent plans with adversarial vectors
 
 ## 🧪 Coming Soon
 

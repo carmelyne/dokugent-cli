@@ -5,10 +5,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { spawn } from 'child_process';
-import { promptCriteriaWizard } from '../utils/wizards/criteria-wizard';
-import { resolveActivePath } from '../utils/ls-utils';
-import { estimateTokensFromText } from '../utils/tokenizer';
-import { formatRelativePath } from '../utils/format-path';
+import { promptCriteriaWizard } from '@utils/wizards/criteria-wizard';
+import { resolveActivePath } from '@utils/ls-utils';
+import { estimateTokensFromText } from '@utils/tokenizer';
+import { formatRelativePath } from '@utils/format-path';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
 
 /**

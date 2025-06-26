@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import * as ui from '@utils/cli/ui';
 import { estimateTokensFromText, warnIfExceedsLimit } from '@utils/tokenizer';
+import { runTokenTrustCheck } from '@utils/security/token-check';
 import { runSecurityCheck } from '@utils/security-check';
 import { AGENT_DIR, CERT_DIR, BYO_DIR, LOG_DIR, REPORTS_DIR, AGENTS_CONFIG_DIR, COMPILED_DIR } from '@constants/paths';
 
@@ -336,6 +337,11 @@ export async function runCompileCommand(agentId?: string) {
       const jsonString = JSON.stringify(certifiedJson);
       const tokenEstimate = estimateTokensFromText(jsonString);
 
+      runTokenTrustCheck({
+        estimatedTokens: tokenEstimate,
+        context: 'compile'
+      });
+
       compileStatusLog('Tokens', `Estimated token count: ${tokenEstimate}`, 'magenta');
 
       warnIfExceedsLimit('compiler', tokenEstimate, { maxTokenLoad: meta.maxTokenLoad });
@@ -462,7 +468,7 @@ export async function runCompileCommand(agentId?: string) {
     fs.writeFileSync(compiledCertPath, JSON.stringify(compiledCert, null, 2), 'utf-8');
     fs.writeFileSync(compiledShaPath, hash, 'utf-8');
     console.log();
-    ui.paddedDefault('', '→ ' + agentCompiledDir, 12, 'magenta', 'COMPILED AT');
+    ui.paddedDefault('', 'File → ' + agentCompiledDir, 12, 'magenta', 'COMPILED');
     ui.paddedLog('Cert saved:', path.basename(compiledCertPath), 12, 'success', 'CERT');
     // ui.paddedLog(`Saved | Cert path: .dokugent/ops/compiled/{agentId}/`, agentId, 12, 'success', 'CERT SAVED');
     ui.paddedLog('SHA256 hash saved:', path.basename(compiledShaPath), 12, 'info', 'SHA256');

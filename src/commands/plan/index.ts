@@ -6,12 +6,12 @@
  */
 import path from 'path';
 import fs from 'fs-extra';
-import { readPlanFile, getPlanStepFile } from '../utils/plan-utils';
+import { readPlanFile, getPlanStepFile } from '@utils/plan-utils';
 import { spawn } from 'child_process';
-import { promptPlanWizard } from '../utils/wizards/plan-wizard';
-// import { planLs } from '../utils/ls-utils';
-// import { updateSymlink } from '../utils/symlink-utils';
-import { formatRelativePath } from '../utils/format-path';
+import { promptPlanWizard } from '@utils/wizards/plan-wizard';
+// import { planLs } from '@utils/ls-utils';
+// import { updateSymlink } from '@utils/symlink-utils';
+import { formatRelativePath } from '@utils/format-path';
 // import { planLs } from '@utils/ls-utils';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion } from '@utils/cli/ui';
 import chalk from 'chalk';

@@ -41,8 +41,10 @@ import { runPlanCommand } from '@src/commands/plan';
 import { runPreviewCommand } from '@src/commands/preview';
 import { runSecurity } from '@src/commands/security';
 import { runSimulateCommand } from '@src/commands/simulate';
+import { runSimulateViaEthica } from '@utils/simulate-runner';
 import { runTraceCommand } from '@src/commands/trace';
 // import { runUiCommand } from '@src/commands/ui';
+// import { runRedteamCommand } from '../src/commands/redteam';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -77,6 +79,11 @@ switch (command) {
   case 'dryrun':
     runDryrunCommand?.();
     break;
+  case 'ethica':
+    import('@src/commands/ethica').then(({ runEthicaCommand }) => {
+      runEthicaCommand?.();
+    });
+    break;
   case 'init':
     runInitCommand?.();
     break;
@@ -99,7 +106,7 @@ switch (command) {
     runSecurity?.();
     break;
   case 'simulate':
-    runSimulateCommand?.();
+    runSimulateCommand?.({ llm: undefined, configPath: undefined, human: "[No human input provided]" }, { debateOnly: false });
     break;
   case 'trace':
     runTraceCommand?.(args.slice(1));
@@ -112,6 +119,9 @@ switch (command) {
   case 'memory':
     require('../src/commands/memory');
     break;
+  // case 'redteam':
+  //   runRedteamCommand();
+  //   break;
   default: {
     paddedLog("Dokugent CLI is ready", " ");
     paddedLog('dokugent <command> [flags]', '', 12, 'magenta', 'USAGE');
@@ -159,7 +169,7 @@ switch (command) {
     const knownCommands = [
       'agent', 'byo', 'certify', 'compliance', 'compile', 'conventions', 'criteria',
       'deploy', 'dryrun', 'init', 'inspect', 'keygen', 'owner', 'plan',
-      'preview', 'security', 'simulate', 'trace', 'ui-demo', 'memory'
+      'preview', 'security', 'simulate', 'trace', 'ui-demo', 'memory', 'redteam'
     ];
     const suggestion = knownCommands.find(cmd => cmd.startsWith(input));
     if (suggestion) paddedLog(`Did you mean '${suggestion}'?`, '', 12, 'info', 'HINT');

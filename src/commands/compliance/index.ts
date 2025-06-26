@@ -1,10 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { getTimestamp } from '../utils/timestamp';
-import { confirmAndWriteFile } from '../utils/fs-utils';
+import { getTimestamp } from '@utils/timestamp';
+import { confirmAndWriteFile } from '@utils/fs-utils';
 import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 import getActiveAgentInfo from '@utils/agent-info';
-import { promptComplianceWizard } from '../utils/wizards/compliance-wizard';
+import { promptComplianceWizard } from '@utils/wizards/compliance-wizard';
 
 export async function runComplianceCommand(agentId?: string) {
   if (!agentId) {

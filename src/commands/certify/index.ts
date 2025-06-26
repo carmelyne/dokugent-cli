@@ -12,10 +12,14 @@ import { getTimestamp } from '@utils/timestamp';
 import { version as pkgVersion } from '../../../package.json';
 import { DOKUGENT_CLI_VERSION, DOKUGENT_SCHEMA_VERSION, DOKUGENT_CREATED_VIA } from '@constants/schema';
 import { estimateTokensFromText } from '@utils/tokenizer';
-import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, printLabeledBox, paddedSubCompact } from '@utils/cli/ui';
+import { paddedLog, padMsg, PAD_WIDTH, paddedCompact, glyphs, printLabeledBox, paddedSubCompact } from '@utils/cli/ui';
+import { compileStatusLog } from '@utils/cli/compile';
+import { runTokenTrustCheck } from '@utils/security/token-check';
 
 export async function runCertifyCommand(agentArg?: string) {
-  console.log('🔧 Certify command setup in progress...');
+
+  paddedLog('dokugent agent initialized...', '', PAD_WIDTH, 'info');
+
 
   // Step 1: Detect agent ID
   const agentsBase = path.join('.dokugent', 'data', 'agents');
@@ -28,14 +32,15 @@ export async function runCertifyCommand(agentArg?: string) {
   } else if (await fs.pathExists(latestAgentLink)) {
     agentFolderPath = await fs.realpath(latestAgentLink);
   } else {
-    console.error('❌ No agent found. Please run `dokugent agent` first.');
+    console.error(padMsg(`${glyphs.warning} No agent found. Please run dokugent agent first.`));
     return;
   }
 
   const agentFolderName = path.basename(agentFolderPath);
   const [agentId, birthTimestamp] = agentFolderName.split('@');
-  console.log('🧪 agentId:', agentId);
-  console.log('🧪 birthTimestamp:', birthTimestamp);
+  compileStatusLog('agentId', agentId, 'blue');
+  compileStatusLog('birthstamp', birthTimestamp, 'blue');
+
 
   // Ensure certificate generation date is not earlier than agent creation date
   const birthDate = new Date(birthTimestamp);
@@ -57,8 +62,9 @@ export async function runCertifyCommand(agentArg?: string) {
     return;
   }
 
-  console.log(`🪪 Detected agent: ${agentId}`);
-
+  // console.log(`🪪 Detected agent: ${agentId}`);
+  compileStatusLog('Agent', agentId, 'blue');
+  console.log();
   // Step 2: Prompt for signing key
   const keysBasePath = path.join('.dokugent', 'keys', 'signers');
   if (!(await fs.pathExists(keysBasePath))) {
@@ -107,8 +113,8 @@ export async function runCertifyCommand(agentArg?: string) {
     console.error('❌ No private key found. Run `dokugent keygen` first to create a signing key.');
     return;
   }
-
-  console.log(`🔐 Using signing key from: ${selectedKeyPath}`);
+  console.log();
+  console.log(padMsg(`Using signing key from: ${selectedKeyPath}`));
 
   // Load signer.json
   const signerPath = path.join(keysBasePath, selectedOwner, 'latest', `${selectedOwner}.meta.json`);
@@ -193,14 +199,19 @@ export async function runCertifyCommand(agentArg?: string) {
     }
   }
   console.log();
-  console.log(`📦 Certified Token Total: ${metadata.certifiedTokens}`);
+  paddedLog('Estimated Token Usage', `${metadata.certifiedTokens}`, PAD_WIDTH, 'pink', 'TOKENS');
+  // console.log(`📦 Certified Token Total: ${metadata.certifiedTokens}`);
+  runTokenTrustCheck({
+    estimatedTokens: metadata.certifiedTokens,
+    context: 'certify'
+  });
 
   // Calculate SHA256 hash of the stringified JSON
   const hash = createHash('sha256').update(JSON.stringify(certifiedOutput)).digest('hex');
   certifiedOutput.metadata.sha256 = hash;
 
-  console.log('🧾 Preview validated and metadata injected.');
-  console.log(`🔐 SHA256: ${hash}`);
+  console.log(padMsg(`${glyphs.starFilled} Preview validated and metadata injected.`));
+  console.log(padMsg(`${glyphs.starFilled} SHA256: ${hash}`));
 
   // Step 4: Save to .dokugent/ops/certified/
   const certOutputDir = path.join('.dokugent', 'ops', 'certified', agentId);
@@ -247,7 +258,9 @@ export async function runCertifyCommand(agentArg?: string) {
   const sha256 = hash2.digest('hex');
   const shaPath2 = certOutputPath.replace('.cert.json', '.cert.sha256');
   await fs.outputFile(shaPath2, sha256);
-  console.log(`🔐 SHA256: ${sha256}`);
-
-  console.log(`✅ Certified output saved to: ${certOutputPath}`);
+  console.log(padMsg(`${glyphs.starFilled} SHA256: ${sha256}`));
+  console.log();
+  console.log(padMsg(`${glyphs.check} Certified output saved to:`));
+  console.log(padMsg(`${certOutputPath}`));
+  console.log();
 }

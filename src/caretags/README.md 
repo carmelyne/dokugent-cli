@@ -1,0 +1,22 @@
+# Caretags
+
+Caretags are structured log messages that trace meaningful decisions, warnings, or judgments within Dokugent CLI workflows.
+
+They help track agent behavior, enforce trust boundaries, and ensure auditability during simulation, preview, certification, and compilation.
+
+---
+
+## Caretag Boundaries
+
+🚫 **Do not emit caretags from the view layer.**
+
+The view layer (e.g., `paddedLog`, `printTable`, or other UI utilities) is responsible only for formatting or displaying data. It should not emit caretags, as it makes no decisions and holds no judgment.
+
+✅ Caretags should only be emitted from logic layers that evaluate, validate, or gate agent behavior — such as:
+
+- `runTokenTrustCheck`
+- `evaluateRefusal`
+- `validatePlanTrace`
+- `checkSignatureTrust`
+
+Caretags represent *semantic decisions*, not style.

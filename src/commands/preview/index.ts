@@ -5,6 +5,7 @@ import { estimateTokensFromText } from '@utils/tokenizer';
 import { runSecurityCheck } from '@utils/security-check';
 import { loadBlacklist } from '@security/loaders';
 import { updateSymlink } from '@utils/symlink-utils';
+import { runTokenTrustCheck } from '@utils/security/token-check';
 import crypto from 'crypto';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, printLabeledBox, paddedSubCompact } from '@utils/cli/ui';
 // import { printLabeledBox } from '@utils/cli/box'; // adjust import path if needed
@@ -454,8 +455,6 @@ export async function runPreviewCommand(): Promise<void> {
     ['versions', estimateTokensFromText(JSON.stringify(certObject.sourceVersions))],
   ];
 
-  const SOFT_WARN = 4000;
-  const HARD_WARN = 12000;
 
   // Inject estimated token count into preview object for later validation
   certObject.estimatedTokens = tokenCount;
@@ -523,25 +522,10 @@ export async function runPreviewCommand(): Promise<void> {
 
   paddedLog('File', `${previewFile}`, PAD_WIDTH, 'success', 'SAVED');
   paddedLog('Estimated Token Usage', `${tokenCount} tokens\n`, PAD_WIDTH, 'pink', 'TOKENS');
-  if (typeof tokenCount === 'number') {
-    if (tokenCount > HARD_WARN) {
-      paddedLog(
-        `${glyphs.alert} Certified Token Total: ${tokenCount}`,
-        `${glyphs.alert} Token count exceeds typical model limits and may fail on cert or inference.`,
-        PAD_WIDTH,
-        'warn',
-        'WARNING'
-      );
-    } else if (tokenCount > SOFT_WARN) {
-      paddedLog(
-        `${glyphs.info} Token Count Notice: ${tokenCount}`,
-        'ℹ️ Consider splitting or compressing content to avoid inference/runtime issues beyond 8192 tokens.',
-        PAD_WIDTH,
-        'blue',
-        'NOTICE'
-      );
-    }
-  }
+  runTokenTrustCheck({
+    estimatedTokens: typeof tokenCount === 'number' ? tokenCount : 0,
+    context: 'preview'
+  });
   console.log();
   paddedCompact('Token Breakdown', '', PAD_WIDTH, 'info');
   for (const [key, rawValue] of breakdown as [string, any][]) {
