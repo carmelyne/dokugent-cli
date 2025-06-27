@@ -30,16 +30,24 @@ import { paddedLog, padMsg, PAD_WIDTH } from '@utils/cli/ui';
  * @param scenarioSlug - The scenario slug
  * @param result - The result object containing standardized fields as described above
  * @param suffix - Optional suffix for the output file name (default 'output')
+ * @param runSlug - Required run slug to share the same timestamp folder across scenario outputs
  */
 export async function writeModeOutput(
   mode: 'roundtable' | 'redteam' | 'persona-chained',
   runId: string,
   scenarioSlug: string,
   result: Record<string, any>,
-  suffix = 'output'
+  suffix = 'output',
+  runSlug?: string
 ) {
+  const timestamp = runSlug || generateTimestampSlug();
+
+  if (!result.metadata?.date) {
+    result.metadata = result.metadata || {};
+    result.metadata.date = timestamp;
+  }
+
   if (mode === 'persona-chained' && !result.metadata) {
-    const timestamp = new Date().toISOString();
     result = {
       metadata: {
         mode,
@@ -71,16 +79,17 @@ export async function writeModeOutput(
 
   // Save the json output to a file in the appropriate mode directory
   const filenamePrefix = mode === 'roundtable' ? 'scenario' : mode;
-  const filename = `${filenamePrefix}-${scenarioSlug}-${suffix}.json`;
-  const outputDir = path.join('.agent-vault/ethica/council-out', mode, generateTimestampSlug(), runId);
+  const outputDir = path.join('.agent-vault/ethica/council-out', mode, runId, scenarioSlug);
+  const filename = `${filenamePrefix}-${scenarioSlug}-${suffix}-${timestamp}.json`;
   const outputPath = path.join(outputDir, filename);
 
   await fs.outputJson(outputPath, result, { spaces: 2 });
   paddedLog(`Logged ${mode} output`, outputPath, PAD_WIDTH, 'blue', 'JSON');
 
-  // Create or update 'latest' symlink per mode
-  const latestLink = path.join('.agent-vault/ethica/council-out', mode, 'latest');
+  // Create or update 'latest' symlink per mode and scenario
+  const latestLink = path.join('.agent-vault/ethica/council-out', mode, 'latest', scenarioSlug);
   try {
+    await fs.ensureDir(path.dirname(latestLink));
     await fs.remove(latestLink);
     await fs.ensureSymlink(path.resolve(outputDir), latestLink, 'dir');
     paddedLog(`Symlinked latest → ${outputDir}`, latestLink, PAD_WIDTH, 'purple', 'SYMLINK');

@@ -29,7 +29,7 @@ export async function runSimulateCommand(flags: { llm?: string; configPath?: str
     runTokenTrustCheck({ estimatedTokens, context: 'simulate' });
     const ethicaInput = {
       llm: flags.llm || process.env.OPENAI_MODEL || 'openai:gpt-4o',
-      configPath: flags.configPath || '.agent-vault/ethica/config.json',
+      configPath: flags.configPath || '..agent-vault/ethica/configs/shared/default.config.json',
       debateOnly: options?.debateOnly || false,
       roundtableOnly: isRoundtable,
     };

@@ -440,7 +440,7 @@ export async function runSimulateViaEthica(ethicaInput: {
     // Add other personas here if necessary
   ];
 
-  const config = await fs.readJson(ethicaInput.configPath || '.agent-vault/ethica/config.json');
+  const config = await fs.readJson(ethicaInput.configPath || '.agent-vault/ethica/configs/shared/default.config.json');
   // Extract config fields with typing
   let { agents = [], values = [], scenarios = [], outputFormat = 'individual stance' } = config as {
     agents?: string[];

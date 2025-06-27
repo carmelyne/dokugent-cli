@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_DISCLAIMER, FAIR_USE_NOTICE } from '../../../constants/legal';
+import { LEGAL_DISCLAIMER, FAIR_USE_NOTICE } from '../../../../constants/legal';
 import { writeModeOutput } from '@utils/ethica/mode-logger';
 import { structuredReplySchema } from '@utils/ethica/validators';
 import { z } from 'zod';
@@ -31,10 +31,10 @@ export async function runRoundtableMode(
     console.log(`✅ LLM Ping Reply: [${llm}] ${pingResponse}`);
   }
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const runDir = path.resolve(process.cwd(), `.agent-vault/ethica/council-out/runs/${timestamp}`);
+  const runDir = path.resolve(process.cwd(), `.agent-vault/ethica/council-out/roundtable/${timestamp}`);
   fs.mkdirSync(runDir, { recursive: true });
 
-  const latestLink = path.resolve(process.cwd(), `.agent-vault/ethica/council-out/latest`);
+  const latestLink = path.resolve(process.cwd(), `.agent-vault/ethica/council-out/roundtable/latest`);
   try {
     if (fs.existsSync(latestLink)) {
       if (fs.lstatSync(latestLink).isSymbolicLink() || fs.existsSync(latestLink)) {

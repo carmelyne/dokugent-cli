@@ -42,6 +42,20 @@ Start local. Scale safely. Pay only when it matters.
 npm install -g dokugent
 ```
 
+📘 [Full Setup Guide](https://dokugent.com/getting-started/)
+
+## 🚧 Pre-release Notice
+
+This is a **founder’s release (v0.1)** designed for testing structure, simulation, and governance flows. It is not production-ready, and automated test coverage is not yet implemented.
+
+🧪 That said:
+
+- Core features **do work**
+- We eat our own dogfood daily
+- CLI feedback is welcome!
+
+If you're exploring agent governance or traceability workflows, we’d love your input. Feel free to open issues or start a discussion.
+
 ---
 
 ## 🔧 CLI Commands
@@ -93,6 +107,7 @@ npm install -g dokugent
 ## 🧪 Coming Soon
 
 - 🔲 `dokugent fetch` — download community-contributed agent plans and templates
+- 🔲 `dokugent test` — run internal CLI checks and command tests (coming after v0.1 release)
 
 ## 🧱 Philosophy
 
@@ -137,9 +152,33 @@ This project is built by a small but mighty squad:
 
 Dokugent is licensed under the [PolyForm Shield License 1.0.0](https://polyformproject.org/licenses/shield/1.0.0/).
 
-✅ Use it for personal projects, client work, or internal tooling
+>This is a protective open-source license designed to encourage collaboration while preventing direct competition.
 
-❌ You can’t use it to build a competing product or service
+✅ You can:
+
+- Use Dokugent for personal projects
+- Use it in client work
+- Integrate it into internal tooling
+
+❌ You can’t:
+
+- Use it to build a directly competing product or service
+
+⚠️ TL;DR: It’s open to build with, not open to clone against.
+
+---
+
+📬 Contact Me
+
+Have questions, feedback, or want to collaborate?
+
+Carmelyne Thompson
+
+- 💻 [carmelyne.com](https://carmelyne.com)
+- 🧵 [@carmelyne](https://www.threads.com/@carmelyne)
+- ✖️ [@carmelyne](https://www.x.com/@carmelyne)
+- 💼 [linkedin.com/in/carmelyne](https://linkedin.com/in/carmelyne)
+- 📧 Email: <hello@carmelyne.com>
 
 ---
 
