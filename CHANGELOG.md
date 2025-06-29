@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/carmelyne/dokugent-cli/compare/v1.3.1...v1.4.0) (2025-06-29)
+
+
+### Features
+
+* **ethica:** implement roundtable-serial multi-scenario + output standardization ([39829a8](https://github.com/carmelyne/dokugent-cli/commit/39829a8fc96863762386059c793a7c8c7e6ec5d6))
+
 ### [1.3.1](https://github.com/carmelyne/dokugent-cli/compare/v1.3.0...v1.3.1) (2025-06-27)
 
 ## [1.3.0](https://github.com/carmelyne/dokugent-cli/compare/v1.2.0...v1.3.0) (2025-06-26)
