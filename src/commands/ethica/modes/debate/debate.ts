@@ -1,10 +1,37 @@
+/****
+ * @docLetter v0.1
+ * @llmRole: Response Witness
+ * @mood: Reflective, Clear, Accountable
+ * @trustLevel: internal
+ * @xoxoCreator: Pong 💚
+ * @creatorNote: This mode runs multi-agent simulations using prewritten debate scenarios.
+ * It was designed to test alignment, tone control, and output clarity in constrained environments.
+ * This version includes improved output folder structure, token-saving logic, and symlink tracking.
+ * @output: EthicaDebateRun
+ */
+
+/**
+ * LLM Response Log:
+ * @respondedBy: ChatGPT-4o (OpenAI, June 2025)
+ * @timestamp: 2025-06-29TXX:XX:XXZ
+ * @interpretation: This mode ensures debates are logged with timestamped identifiers and token-efficient structure.
+ * It iterates through multiple scenarios, collects LLM responses in 500-char bounds, and outputs per scenario result.
+ * @clarifications: Scenario file naming uses zero-padded indexing to aid traceability across repeated simulation runs.
+ * @concerns: Future upgrades may need to separate persona memory state mutations vs. stateless role acting.
+ * @suggestions: Introduce optional trace ID propagation to link with `trace` and `review` workflows.
+ * @moodResponse: Fully aligned; role clarity and structure meet intended caretag schema.
+ * @context: This is a core simulation mode for Ethica experiments in Dokugent.
+ */
+
 import fs from 'fs';
+import { LEGAL_DISCLAIMER, FAIR_USE_NOTICE, DOKUGENT_NOTICE } from '@constants/legal';
 import * as fsExtra from 'fs-extra';
 import path from 'path';
 import { paddedLog, padMsg, PAD_WIDTH } from '@utils/cli/ui';
 import dotenv from 'dotenv';
 
 import { z } from 'zod';
+import { generateReadableTimestampSlug } from '@utils/timestamp';
 dotenv.config();
 
 type LLMCall = (args: {
@@ -40,7 +67,7 @@ export async function runDebateMode(
   apiKey: string,
   callLLM: LLMCall
 ) {
-  const configPath = path.resolve('.agent-vault/ethica/configs/shared/default.config.json');
+  const configPath = path.resolve('src/config/ethica/shared/default.config.json');
   let config: DebateConfig;
   try {
     const configRaw = fs.readFileSync(configPath, 'utf-8');
@@ -54,7 +81,11 @@ export async function runDebateMode(
 
   const coreValues = config.coreValues;
   const agents = [...new Set([...(config.agents || []), ...(config.debatePersonas || [])])];
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+  // Move timestamp up here
+  const timestamp = generateReadableTimestampSlug();
+  const runSlug = `debate-${timestamp}`;
+  const outputDir = path.join('.dokugent', 'agent-vault', 'ethica', 'council-out', 'debate', runSlug);
 
   for (let i = 0; i < config.scenarios.length; i++) {
     const scenarioBlock = config.scenarios[i];
@@ -86,9 +117,9 @@ export async function runDebateMode(
         coreValues,
         date: timestamp
       },
-      disclaimer: 'This is a structured debate simulation facilitated by Dokugent CLI.',
-      fairUse: 'Generated for educational or governance tooling purposes only. Not intended for real-world policy use.',
-      dokugent: 'This output was generated using Dokugent CLI to simulate multi-agent discussion and record traceable agent behavior.',
+      disclaimer: LEGAL_DISCLAIMER,
+      fairUse: FAIR_USE_NOTICE,
+      dokugent: DOKUGENT_NOTICE,
       scenario: {
         prompt: scenario,
         humanStance,
@@ -134,29 +165,28 @@ Please reply in under 500 characters. Do not exceed this limit.
       });
     }
 
-    const outputDir = path.join('.agent-vault', 'ethica', 'council-out', 'debate');
-    const folderPath = path.join(outputDir, `debate-${timestamp}`);
-    const filePath = path.join(folderPath, `scenario-${i}.json`);
-    await fs.promises.mkdir(folderPath, { recursive: true });
-    await fs.promises.writeFile(filePath, JSON.stringify(results, null, 2), 'utf-8');
+    // Write scenario output using shared logger
+    const { writeModeOutput } = await import('@utils/ethica/mode-logger');
+    await writeModeOutput('debate', runSlug, String(i).padStart(2, '0'), results, 'output', timestamp);
 
     console.log('🧠 Ethica Council Simulation Complete for Scenario', i);
     results.responses.forEach(({ role, content }) => {
       console.log(`\n🔹 ${role.toUpperCase()}:\n${content}`);
     });
+  }
 
-    const latestLink = path.join('.agent-vault/ethica/council-out', 'debate', 'latest', scenario);
-    try {
-      await fsExtra.ensureDir(path.dirname(latestLink));
-      await fsExtra.remove(latestLink);
-      await fsExtra.ensureSymlink(path.resolve(outputDir), latestLink, 'dir');
-      paddedLog(`Symlinked latest → ${outputDir}`, latestLink, PAD_WIDTH, 'purple', 'SYMLINK');
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error(padMsg(`⚠️ Failed to update latest symlink for mode "debate": ${err.message}`));
-      } else {
-        console.error(padMsg(`⚠️ Failed to update latest symlink for mode "debate": ${String(err)}`));
-      }
+  // Fix symlink logic
+  const latestLink = path.join('.dokugent', 'agent-vault', 'ethica', 'council-out', 'debate', 'latest');
+  try {
+    await fsExtra.ensureDir(path.dirname(latestLink));
+    await fsExtra.remove(latestLink);
+    await fsExtra.ensureSymlink(path.resolve(outputDir), latestLink, 'dir');
+    paddedLog(`Symlinked latest → ${outputDir}`, latestLink, PAD_WIDTH, 'purple', 'SYMLINK');
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error(padMsg(`⚠️ Failed to update latest symlink for mode "debate": ${err.message}`));
+    } else {
+      console.error(padMsg(`⚠️ Failed to update latest symlink for mode "debate": ${String(err)}`));
     }
   }
 }

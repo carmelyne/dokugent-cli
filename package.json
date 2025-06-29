@@ -1,5 +1,5 @@
 {
-  "name": "dokugent-cli-v0.1",
+  "name": "dokugent-cli",
   "version": "1.3.1",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "dokugent": "bin/register.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "Carmelyne M. Thompson",
   "license": "ISC",
   "description": "",
   "devDependencies": {
@@ -30,6 +30,7 @@
     "asciichart": "^1.5.25",
     "boxen": "^8.0.1",
     "chalk": "^4.1.2",
+    "cpy-cli": "^5.0.0",
     "enquirer": "^2.4.1",
     "enquirer-prompts": "^1.0.0",
     "ora": "^8.2.0",

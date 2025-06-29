@@ -1,3 +1,4 @@
+import path from 'path';
 import { runSimulateViaMistral, runSimulateViaEthica } from '../../utils/simulate-runner';
 import { ui, paddedLog, paddedSub, printTable, menuList, padMsg, PAD_WIDTH, paddedCompact, glyphs, paddedDefault, padQuestion, paddedLongText, phaseHeader } from '@utils/cli/ui';
 import { wrapWithHangingIndent } from '@utils/cli/wrap-utils';
@@ -29,7 +30,7 @@ export async function runSimulateCommand(flags: { llm?: string; configPath?: str
     runTokenTrustCheck({ estimatedTokens, context: 'simulate' });
     const ethicaInput = {
       llm: flags.llm || process.env.OPENAI_MODEL || 'openai:gpt-4o',
-      configPath: flags.configPath || '..agent-vault/ethica/configs/shared/default.config.json',
+      configPath: flags.configPath || path.resolve('src/config/ethica/shared/default.config.json'),
       debateOnly: options?.debateOnly || false,
       roundtableOnly: isRoundtable,
     };

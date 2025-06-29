@@ -440,7 +440,7 @@ export async function runSimulateViaEthica(ethicaInput: {
     // Add other personas here if necessary
   ];
 
-  const config = await fs.readJson(ethicaInput.configPath || '.agent-vault/ethica/configs/shared/default.config.json');
+  const config = await fs.readJson(ethicaInput.configPath || 'src/config/ethica/shared/default.config.json');
   // Extract config fields with typing
   let { agents = [], values = [], scenarios = [], outputFormat = 'individual stance' } = config as {
     agents?: string[];
@@ -471,10 +471,10 @@ export async function runSimulateViaEthica(ethicaInput: {
 
   // --- Timestamped run output folder setup ---
   const runTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const tracePath = path.join('.agent-vault/ethica/council-out/runs', runTimestamp, 'trace.json');
+  const tracePath = path.join('.dokugent/agent-vault/ethica/simulation', runTimestamp, 'trace.json');
   const runOutputRoot = path.dirname(tracePath);
   await fs.ensureDir(runOutputRoot);
-  const latestSymlink = path.join('.agent-vault/ethica/council-out', 'latest');
+  const latestSymlink = path.join('.dokugent/agent-vault/ethica/simulation', 'latest');
   try {
     await fs.remove(latestSymlink);
     await fs.symlink(runOutputRoot, latestSymlink, 'dir');

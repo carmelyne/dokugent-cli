@@ -62,7 +62,7 @@ export async function runRoundtablePersonaChained(
     });
   }
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const runDir = path.resolve(process.cwd(), `.agent-vault/ethica/council-out/runs/${timestamp}`);
+  const runDir = path.resolve(process.cwd(), `.dokugent/agent-vault/ethica/council-out/persona-chained/${timestamp}`);
   fs.mkdirSync(runDir, { recursive: true });
 
   const scenarioBlock = config.scenarios[0]; // only first scenario for now

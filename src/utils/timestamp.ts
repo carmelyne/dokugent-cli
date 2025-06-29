@@ -25,3 +25,24 @@ export function getTimestamp(): string {
 export function appendTimestamp(base: string): string {
   return `${base}@${getTimestamp()}`;
 }
+
+/**
+ * Generates a compact timestamp slug in the format YYYYMMDD-HHMMSS.
+ * Example: "20250629-074531"
+ */
+export function generateCompactTimestampSlug(): string {
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+}
+
+/**
+ * Generates a readable timestamp slug in the format YYYY-MM-DD_HH-MM-SS-ms.
+ * Example: "2025-06-29_07-45-31-123"
+ */
+export function generateReadableTimestampSlug(): string {
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const ms = now.getMilliseconds().toString().padStart(3, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}-${ms}`;
+}

@@ -14,5 +14,7 @@ export const AGENTS_CONFIG_DIR = '.dokugent/config/agents'; // src/config/agents
 
 export const BYO_DIR = '.dokugent/data/byo'; // .dokugent/data/byo
 
+export const ETHICA_DIR = '.dokugent/agent-vault/ethica';
+
 export const LOG_DIR = '.dokugent/ops/logs/compiled'; // .dokugent/ops/logs/certified
 export const REPORTS_DIR = '.dokugent/ops/reports/compiled'; // .dokugent/ops/logs/certified

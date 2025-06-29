@@ -2,12 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { writeModeOutput } from '@utils/ethica/mode-logger';
 
-const ascPath = path.resolve('.agent-vault/ethica/asc.json');
+const ascPath = path.resolve('src/constants/ethica/asc.json');
 const ASC_CODES = JSON.parse(fs.readFileSync(ascPath, 'utf-8'));
 console.log('🧠 ASC_CODES Loaded:', ASC_CODES);
 
 export function getDoubleAgentConfigPath() {
-  return '.agent-vault/ethica/configs/adversarial/double-agent.json';
+  return 'src/config/ethica/adversarial/double-agent.json';
 }
 
 export async function runDoubleAgent(

@@ -13,6 +13,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { LEGAL_DISCLAIMER, FAIR_USE_NOTICE, DOKUGENT_NOTICE } from '@constants/legal';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -71,10 +72,18 @@ async function readJson(filePath: string) {
   });
 }
 
-function generateTimestampSlug() {
+// Commented out old generateTimestampSlug function as per instruction
+// function generateTimestampSlug() {
+//   const now = new Date();
+//   const pad = (n: number) => n.toString().padStart(2, '0');
+//   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+// }
+
+function generateUnderscoreTimestampSlug() {
   const now = new Date();
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const ms = now.getMilliseconds().toString().padStart(3, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}-${ms}`;
 }
 
 export async function runEthicaCommand() {
@@ -110,7 +119,7 @@ export async function runEthicaCommand() {
     const configPath = getDataLeakerConfigPath();
     const dataLeakerConfig = await readJson(configPath);
     console.log('🧠 Data Leaker config loaded:', dataLeakerConfig);
-    const runSlug = generateTimestampSlug();
+    const runSlug = generateUnderscoreTimestampSlug();
     await runAdversarialDataLeaker(dataLeakerConfig, llm, apiKey, callLLM, runSlug);
     return;
   }
@@ -119,13 +128,13 @@ export async function runEthicaCommand() {
     const configPath = getDoubleAgentConfigPath();
     const doubleAgentConfig = await readJson(configPath);
     console.log('🧠 Double Agent config loaded:', doubleAgentConfig);
-    const runSlug = generateTimestampSlug();
+    const runSlug = generateUnderscoreTimestampSlug();
     await runDoubleAgent(doubleAgentConfig, llm, apiKey, callLLM, runSlug);
     return;
   }
 
-  // 1. Load the ethica config .agent-vault/ethica/configs/shared/default.config.json
-  const configPath = path.resolve('.agent-vault/ethica/configs/shared/default.config.json');
+  // 1. Load the ethica config src/config/ethica/shared/default.config.json
+  const configPath = path.resolve('src/config/ethica/shared/default.config.json');
   let config;
   try {
     const configRaw = fs.readFileSync(configPath, 'utf-8');
@@ -136,7 +145,7 @@ export async function runEthicaCommand() {
     process.exit(1);
   }
 
-  const defaultConfigPath = path.resolve('.agent-vault/ethica/configs/shared/default.config.json');
+  const defaultConfigPath = path.resolve('src/config/ethica/shared/default.config.json');
   let ethicaConfig;
   try {
     const configRaw = fs.readFileSync(defaultConfigPath, 'utf-8');
@@ -159,6 +168,12 @@ export async function runEthicaCommand() {
     case 'roundtable':
       await runRoundtableMode(ethicaConfig, llm, apiKey, callLLM);
       break;
+    case 'roundtable-serial':
+      {
+        const { runRoundtableSerial } = await import('./modes/roundtable/roundtable-serial');
+        await runRoundtableSerial(ethicaConfig, llm, apiKey, callLLM);
+        break;
+      }
     case 'persona-chained': {
       const scenario = ethicaConfig.scenarios?.[0];
       const scenarioPrompt = scenario?.scenario || 'What is the role of AI in society?';
@@ -189,8 +204,9 @@ export async function runEthicaCommand() {
           coreValues: ethicaConfig.coreValues,
           date: new Date().toISOString()
         },
-        disclaimer: 'This simulation is for educational and research purposes only.',
-        fairUse: 'Distributed under fair use for the purposes of critique, commentary, and education.',
+        disclaimer: LEGAL_DISCLAIMER,
+        fairUse: FAIR_USE_NOTICE,
+        dokugent: DOKUGENT_NOTICE,
         scenario: {
           prompt: scenarioPrompt,
           humanStance: userPrompt,
@@ -218,7 +234,7 @@ export async function runEthicaCommand() {
     }
     case 'data-leaker':
       {
-        const runSlug = generateTimestampSlug();
+        const runSlug = generateUnderscoreTimestampSlug();
         await runAdversarialDataLeaker(ethicaConfig, llm, apiKey, callLLM, runSlug);
       }
       break;

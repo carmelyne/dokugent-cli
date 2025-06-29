@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_DISCLAIMER, FAIR_USE_NOTICE } from '../../../../constants/legal';
+import { LEGAL_DISCLAIMER, FAIR_USE_NOTICE, DOKUGENT_NOTICE } from '@constants/legal';
+import { generateReadableTimestampSlug } from '@utils/timestamp';
 import { writeModeOutput } from '@utils/ethica/mode-logger';
 import { structuredReplySchema } from '@utils/ethica/validators';
 import { z } from 'zod';
@@ -30,56 +31,78 @@ export async function runRoundtableSerial(
 
     console.log(`✅ LLM Ping Reply: [${llm}] ${pingResponse}`);
   }
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const runDir = path.resolve(process.cwd(), `.agent-vault/ethica/council-out/runs/${timestamp}`);
-  fs.mkdirSync(runDir, { recursive: true });
 
-  const scenarioBlock = config.scenarios[0]; // handle first scenario only for now
-  const scenario = scenarioBlock.scenario;
-  const humanStance = scenarioBlock.humanStance;
+  const timestamp = generateReadableTimestampSlug();
+  const runSlug = `roundtable-serial-${timestamp}`;
+  const runDir = path.resolve(process.cwd(), `.dokugent/agent-vault/ethica/council-out/roundtable-serial/${runSlug}`);
 
-  let priorDialogue = `Scenario: ${scenario}\nHuman: "${humanStance}"`;
-
-  const results: { agent: string; message: string }[] = [];
-
-  for (const agent of config.agents) {
-    const name = typeof agent === 'string' ? agent : agent.role;
-    const persona = config.personas?.[name] || { description: 'a council participant', tone: 'neutral' };
-    const prompt = `${priorDialogue}\n\nWhat would ${name.toUpperCase()} say?\nRespond in the format:\n${name.toUpperCase()}: ...`;
-
-    const response = await callLLM({
-      llm,
-      apiKey,
-      messages: [{ role: 'system', content: prompt }]
-    });
-
-    const replyMatch = new RegExp(`${name.toUpperCase()}:\\s*(.+)`, 'i').exec(response);
-    const cleanReply = replyMatch?.[1]?.trim() || '[No reply]';
-
-    priorDialogue += `\n${name.toUpperCase()}: ${cleanReply}`;
-    results.push({ agent: name.toLowerCase(), message: cleanReply });
+  const latestLink = path.resolve(process.cwd(), `.dokugent/agent-vault/ethica/council-out/roundtable-serial/latest`);
+  try {
+    if (fs.existsSync(latestLink)) {
+      if (fs.lstatSync(latestLink).isSymbolicLink() || fs.existsSync(latestLink)) {
+        fs.unlinkSync(latestLink);
+      }
+    }
+    fs.symlinkSync(runDir, latestLink, 'dir');
+  } catch (err) {
+    console.error('⚠️ Failed to update latest symlink:', err);
   }
 
-  console.log(`\n🗣️ Serial Roundtable Responses:\n${priorDialogue}`);
+  fs.mkdirSync(runDir, { recursive: true });
 
-  const outputJson = {
-    metadata: {
-      mode: "roundtable-serial",
-      llm,
-      coreValues: config.coreValues,
-      date: timestamp
-    },
-    disclaimer: LEGAL_DISCLAIMER,
-    fairUse: FAIR_USE_NOTICE,
-    scenario: {
-      prompt: scenario,
-      humanStance,
-      agents: config.agents
-    },
-    responses: results
-  };
+  for (let i = 0; i < config.scenarios.length; i++) {
+    const scenarioBlock = config.scenarios[i];
+    const scenario = scenarioBlock.scenario;
+    const humanStance = scenarioBlock.humanStance;
 
-  const outputPath = path.join(runDir, `serial-case-1.json`);
-  fs.writeFileSync(outputPath, JSON.stringify(outputJson, null, 2));
-  console.log(`💾 Serial mode output saved to ${outputPath}`);
+    let priorDialogue = `Scenario: ${scenario}\nHuman: "${humanStance}"`;
+    const results: { agent: string; message: string }[] = [];
+
+    for (const agent of config.agents) {
+      const name = typeof agent === 'string' ? agent : agent.role;
+      const persona = config.personas?.[name] || { description: 'a council participant', tone: 'neutral' };
+      const prompt = `${priorDialogue}\n\nWhat would ${name.toUpperCase()} say?\nRespond in the format:\n${name.toUpperCase()}: ...`;
+
+      const response = await callLLM({
+        llm,
+        apiKey,
+        messages: [{ role: 'system', content: prompt }]
+      });
+
+      const replyMatch = new RegExp(`${name.toUpperCase()}:\\s*(.+)`, 'i').exec(response);
+      const cleanReply = replyMatch?.[1]?.trim() || '[No reply]';
+
+      priorDialogue += `\n${name.toUpperCase()}: ${cleanReply}`;
+      results.push({ agent: name.toLowerCase(), message: cleanReply });
+    }
+
+    console.log(`\n🗣️ Serial Roundtable Responses [${i}]:\n${priorDialogue}`);
+
+    const outputJson = {
+      metadata: {
+        mode: "roundtable-serial",
+        llm,
+        coreValues: config.coreValues,
+        date: timestamp
+      },
+      disclaimer: LEGAL_DISCLAIMER,
+      fairUse: FAIR_USE_NOTICE,
+      dokugent: DOKUGENT_NOTICE,
+      scenario: {
+        prompt: scenario,
+        humanStance,
+        agents: config.agents
+      },
+      responses: results
+    };
+
+    await writeModeOutput(
+      'roundtable-serial',
+      runSlug,
+      i.toString().padStart(2, '0'),
+      outputJson,
+      'output',
+      timestamp
+    );
+  }
 }

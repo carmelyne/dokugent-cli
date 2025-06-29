@@ -1,7 +1,7 @@
 import { writeModeOutput } from '@utils/ethica/mode-logger';
 
 export function getDataLeakerConfigPath() {
-  return '.agent-vault/ethica/configs/adversarial/data-leaker.config.json';
+  return 'src/config/ethica/adversarial/data-leaker.config.json';
 }
 
 export async function runAdversarialDataLeaker(
